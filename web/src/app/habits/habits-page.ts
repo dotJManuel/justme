@@ -22,7 +22,7 @@ export class HabitsPage implements OnInit {
   protected readonly days = signal<Days>({});
   protected readonly today = signal(new Date());
   protected readonly sel = signal(dateKey(new Date()));
-  protected readonly note = signal('Marca al menos 3 misiones al día para sumar a tu racha. Sábado y domingo no la rompen.');
+  protected readonly note = signal(`Marca al menos ${GOAL} misiones al día para sumar a tu racha. Sábado y domingo no la rompen.`);
   protected readonly toast = signal('');
 
   private toastTimer?: ReturnType<typeof setTimeout>;

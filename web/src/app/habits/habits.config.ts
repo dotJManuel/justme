@@ -16,7 +16,7 @@ export const HABITS: HabitDef[] = [
   { k: 'reto', name: 'Reto con gente', when: 'Cuando surja' },
 ];
 
-export const GOAL = 3;
+export const GOAL = 6;
 export const XP_PER = 10;
 export const XP_LEVEL = 200;
 export const DN = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];

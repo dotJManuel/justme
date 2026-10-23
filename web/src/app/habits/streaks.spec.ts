@@ -1,6 +1,7 @@
+import { GOAL, HABITS } from './habits.config';
 import { computeStreaks, Days } from './streaks';
 
-const DONE = { celular: true, leetcode: true, grabacion: true };
+const DONE = Object.fromEntries(HABITS.slice(0, GOAL).map((h) => [h.k, true]));
 
 describe('computeStreaks', () => {
   it('el fin de semana no rompe la racha', () => {
