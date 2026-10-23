@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../environments/environment';
 
-// Misiones marcadas de un día: { leetcode: true, ingles: true, ... }
-export type Habits = Record<string, boolean>;
+// Misiones marcadas de un día: { leetcode: "2026-10-23T14:15:03.000Z", ingles: true, ... }
+// El valor es la hora (ISO) en que se dio el check; `true` es una marca antigua sin hora.
+export type Habits = Record<string, boolean | string>;
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {

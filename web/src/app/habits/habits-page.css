@@ -41,6 +41,7 @@ h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
 .habit.on .chk{background:var(--done);border-color:var(--done)}
 .habit.on .chk::after{content:"";width:8px;height:14px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .habit.on .xp{color:var(--done)}
+.habit .at{font-size:.8rem;font-weight:700;color:var(--done);font-variant-numeric:tabular-nums;white-space:nowrap}
 .note{font-size:.85rem;color:var(--muted);text-align:center;margin:0}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:.9rem}
 @media (prefers-reduced-motion: reduce){.bar i,.habit{transition:none}}

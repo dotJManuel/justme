@@ -1,4 +1,5 @@
 import { Habits } from '../supabase.service';
+import { MN } from './habits.config';
 
 /** "YYYY-MM-DD" -> misiones marcadas ese día */
 export type Days = Record<string, Habits>;
@@ -41,6 +42,15 @@ export function addDays(d: Date, n: number): Date {
 /** Un día de descanso no rompe la racha. */
 export function isRestDay(d: Date, activeDays: number[]): boolean {
   return !activeDays.includes(d.getDay());
+}
+
+/** "08:15" si se marcó el mismo día; "22 oct 23:40" si se marcó otro día. Vacío si no hay hora. */
+export function doneAtLabel(value: boolean | string | undefined, dayKey: string): string {
+  if (typeof value !== 'string') return '';
+  const t = new Date(value);
+  if (isNaN(t.getTime())) return '';
+  const hm = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+  return dateKey(t) === dayKey ? hm : `${t.getDate()} ${MN[t.getMonth()]} ${hm}`;
 }
 
 export function countDone(days: Days, k: string, habitKeys: string[]): number {

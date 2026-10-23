@@ -4,7 +4,7 @@ import { AuthService } from '../auth.service';
 import { ConfigService } from '../config.service';
 import { Habits, SupabaseService } from '../supabase.service';
 import { DN, MN, XP_LEVEL, XP_PER } from './habits.config';
-import { Days, addDays, computeStreaks, countDone, dateKey, isRestDay, parseKey } from './streaks';
+import { Days, addDays, computeStreaks, countDone, dateKey, doneAtLabel, isRestDay, parseKey } from './streaks';
 
 @Component({
   selector: 'app-habits-page',
@@ -96,6 +96,10 @@ export class HabitsPage implements OnInit {
     if (document.visibilityState === 'visible') this.today.set(new Date());
   }
 
+  protected doneAt(hk: string): string {
+    return doneAtLabel(this.selHabits()[hk], this.sel());
+  }
+
   protected select(k: string) {
     this.sel.set(k);
   }
@@ -104,7 +108,9 @@ export class HabitsPage implements OnInit {
     const k = this.sel();
     const before = this.done(k);
     const h = { ...(this.days()[k] ?? {}) };
-    h[hk] = !h[hk];
+    // Marcar guarda la hora exacta del check; desmarcar la borra.
+    if (h[hk]) delete h[hk];
+    else h[hk] = new Date().toISOString();
     this.days.update((d) => ({ ...d, [k]: h }));
     if (before < this.config.goal() && this.done(k) >= this.config.goal()) {
       this.showToast(k === this.todayKey() ? '¡Racha asegurada por hoy! 🔥' : 'Día completado ✓');

@@ -1,5 +1,5 @@
 import { DEFAULT_ACTIVE_DAYS, DEFAULT_FREEZE_MIN, DEFAULT_GOAL, DEFAULT_HABITS } from './habits.config';
-import { addDays, computeStreaks, dateKey, Days, isRestDay, RachaConfig } from './streaks';
+import { addDays, computeStreaks, dateKey, Days, doneAtLabel, isRestDay, RachaConfig } from './streaks';
 
 const KEYS = DEFAULT_HABITS.map((h) => h.k);
 const CFG: RachaConfig = {
@@ -32,6 +32,20 @@ describe('computeStreaks', () => {
     const { cur, best } = computeStreaks(days, new Date(2026, 9, 19), CFG);
     expect(cur).toBe(0);
     expect(best).toBe(3);
+  });
+
+  it('las marcas con hora cuentan igual que las antiguas con true', () => {
+    const hora = new Date(2026, 9, 15, 8, 15).toISOString();
+    const days: Days = { '2026-10-15': Object.fromEntries(KEYS.slice(0, CFG.goal).map((k) => [k, hora])) };
+    expect(computeStreaks(days, new Date(2026, 9, 15), CFG).cur).toBe(1);
+  });
+
+  it('doneAtLabel muestra la hora, y la fecha si se marcó otro día', () => {
+    const t = new Date(2026, 9, 15, 8, 5).toISOString();
+    expect(doneAtLabel(t, '2026-10-15')).toBe('08:05');
+    expect(doneAtLabel(t, '2026-10-14')).toBe('15 oct 08:05');
+    expect(doneAtLabel(true, '2026-10-15')).toBe('');
+    expect(doneAtLabel(undefined, '2026-10-15')).toBe('');
   });
 
   it('ignora marcas de claves que no están en la lista de misiones', () => {

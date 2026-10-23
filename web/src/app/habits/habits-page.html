@@ -70,6 +70,9 @@
           <span class="name">{{ h.name }}</span>
           <span class="when">{{ h.when }}</span>
         </span>
+        @if (doneAt(h.k); as at) {
+          <span class="at" title="Hora en que se completó">✓ {{ at }}</span>
+        }
         <span class="xp">+{{ xpPer }} XP</span>
       </button>
     }
