@@ -1,8 +1,19 @@
 import { Habits } from '../supabase.service';
-import { GOAL, HABITS } from './habits.config';
+import { FREEZE_MIN, GOAL, HABITS } from './habits.config';
 
 /** "YYYY-MM-DD" -> misiones marcadas ese día */
 export type Days = Record<string, Habits>;
+
+export interface StreakInfo {
+  cur: number;
+  best: number;
+  /** Días entre semana que no se cumplieron pero fueron congelados. */
+  frozen: Set<string>;
+  /** El último día se congeló y falta cumplir para recuperar la racha. */
+  recovering: boolean;
+  /** Hay una congelación ganada por si un día no se cumple. */
+  freezeReady: boolean;
+}
 
 export function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -29,34 +40,44 @@ export function countDone(days: Days, k: string): number {
   return HABITS.filter((x) => h[x.k]).length;
 }
 
-/** Racha actual y mejor racha. Sábado y domingo no la rompen. */
-export function computeStreaks(days: Days, today: Date): { cur: number; best: number } {
-  let cur = 0;
-  let d = new Date(today);
-  // Si hoy aún no llega a la meta, la racha se cuenta desde ayer.
-  if (countDone(days, dateKey(d)) < GOAL) d = addDays(d, -1);
-  for (let i = 0; i < 2000; i++) {
-    if (countDone(days, dateKey(d)) >= GOAL) cur++;
-    else if (!isWeekend(d)) break;
-    d = addDays(d, -1);
-  }
+/**
+ * Recorre los días en orden. Sábado y domingo no rompen la racha, y hoy aún no cuenta como fallado.
+ * Un día entre semana sin cumplir se congela si hubo al menos FREEZE_MIN días cumplidos desde el
+ * último quiebre o congelación; si no, la racha se rompe.
+ */
+export function computeStreaks(days: Days, today: Date): StreakInfo {
+  const frozen = new Set<string>();
+  let run = 0;
+  let best = 0;
+  let sinceFreeze = 0;
+  let recovering = false;
 
-  let best = cur;
   const keys = Object.keys(days)
     .filter((k) => countDone(days, k) > 0)
     .sort();
   if (keys.length) {
-    let run = 0;
-    d = parseKey(keys[0]);
+    const todayKey = dateKey(today);
+    let d = parseKey(keys[0]);
     while (d <= today) {
-      if (countDone(days, dateKey(d)) >= GOAL) {
+      const k = dateKey(d);
+      if (countDone(days, k) >= GOAL) {
         run++;
+        sinceFreeze++;
+        recovering = false;
         best = Math.max(best, run);
-      } else if (!isWeekend(d) && dateKey(d) !== dateKey(today)) {
-        run = 0;
+      } else if (!isWeekend(d) && k !== todayKey) {
+        if (sinceFreeze >= FREEZE_MIN) {
+          frozen.add(k);
+          sinceFreeze = 0;
+          recovering = true;
+        } else {
+          run = 0;
+          sinceFreeze = 0;
+          recovering = false;
+        }
       }
       d = addDays(d, 1);
     }
   }
-  return { cur, best };
+  return { cur: run, best, frozen, recovering, freezeReady: !recovering && sinceFreeze >= FREEZE_MIN };
 }

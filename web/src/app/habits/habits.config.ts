@@ -17,6 +17,8 @@ export const HABITS: HabitDef[] = [
 ];
 
 export const GOAL = 6;
+/** Días cumplidos seguidos (desde el último quiebre o congelación) para ganar una congelación. */
+export const FREEZE_MIN = 15;
 export const XP_PER = 10;
 export const XP_LEVEL = 200;
 export const DN = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];

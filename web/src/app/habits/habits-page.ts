@@ -35,6 +35,7 @@ export class HabitsPage implements OnInit {
   );
   protected readonly level = computed(() => Math.floor(this.xp() / XP_LEVEL) + 1);
   protected readonly cold = computed(() => countDone(this.days(), this.todayKey()) < GOAL);
+  protected readonly iced = computed(() => this.cold() && this.streaks().recovering);
 
   protected readonly week = computed(() => {
     const days = this.days();
@@ -42,14 +43,15 @@ export class HabitsPage implements OnInit {
       const d = addDays(this.today(), -i);
       const k = dateKey(d);
       const c = countDone(days, k);
-      const state = c >= GOAL ? 'ok' : c > 0 ? 'part' : isWeekend(d) ? 'rest' : '';
+      const frozen = c < GOAL && this.streaks().frozen.has(k);
+      const state = c >= GOAL ? 'ok' : frozen ? 'frozen' : c > 0 ? 'part' : isWeekend(d) ? 'rest' : '';
       return {
         k,
         c,
         state,
         label: i === 0 ? 'hoy' : DN[d.getDay()],
-        aria: `${DN[d.getDay()]} ${d.getDate()}: ${c} misiones`,
-        text: c >= GOAL ? '✓' : String(d.getDate()),
+        aria: `${DN[d.getDay()]} ${d.getDate()}: ${c} misiones${frozen ? ', día congelado' : ''}`,
+        text: c >= GOAL ? '✓' : frozen ? '❄' : String(d.getDate()),
       };
     });
   });

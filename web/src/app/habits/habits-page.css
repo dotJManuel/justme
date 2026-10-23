@@ -17,6 +17,9 @@ h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
 .dot{width:26px;height:26px;border-radius:50%;background:var(--off);display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .dot.ok{background:linear-gradient(160deg,var(--flame-2),var(--flame));color:#fff}
 .dot.part{background:var(--done-soft);color:var(--done)}
+.dot.frozen{background:var(--ice);color:var(--ice-ink)}
+.flame.iced path:first-of-type{fill:var(--ice-ink)}
+.freeze{margin-top:6px;font-size:.85rem;font-weight:600;color:var(--ice-ink)}
 .dot.rest{background:transparent;border:2px dashed var(--line)}
 .dayb.sel{border-color:var(--flame)}
 .dayb:focus-visible,.habit:focus-visible,button:focus-visible{outline:3px solid var(--flame);outline-offset:2px}

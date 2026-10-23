@@ -9,7 +9,7 @@
   </div>
 
   <section class="hero" aria-live="polite">
-    <svg class="flame" [class.cold]="cold()" viewBox="0 0 84 96" aria-hidden="true">
+    <svg class="flame" [class.cold]="cold()" [class.iced]="iced()" viewBox="0 0 84 96" aria-hidden="true">
       <defs>
         <linearGradient id="fg" x1="0" y1="1" x2="0" y2="0">
           <stop offset="0" style="stop-color: var(--flame)" />
@@ -23,6 +23,11 @@
       <div class="big">{{ streaks().cur }}</div>
       <div class="sub">{{ streaks().cur === 1 ? 'día de racha' : 'días de racha' }}</div>
       <div class="best">Mejor racha: {{ streaks().best }} {{ streaks().best === 1 ? 'día' : 'días' }}</div>
+      @if (streaks().recovering) {
+        <div class="freeze">❄ Racha congelada: cumple {{ goal }} misiones para recuperarla</div>
+      } @else if (streaks().freezeReady) {
+        <div class="freeze">❄ Tienes una congelación lista por si falla un día</div>
+      }
     </div>
   </section>
 

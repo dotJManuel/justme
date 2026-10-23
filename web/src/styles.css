@@ -2,6 +2,7 @@
 :root {
   --bg: #f3f4fa; --surface: #ffffff; --ink: #1e2240; --muted: #6a6f92; --line: #e1e3f0;
   --flame: #ff7a1a; --flame-2: #ffc233; --done: #2bb673; --done-soft: #ddf5e9; --off: #ecedf5;
+  --ice: #dff2ff; --ice-ink: #2a8ac4;
   --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
@@ -9,6 +10,7 @@
   :root {
     --bg: #12142a; --surface: #1c1f3a; --ink: #eef0ff; --muted: #9da2c8; --line: #2c3058;
     --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #262a4a;
+    --ice: #1b3347; --ice-ink: #6cc0f5;
     color-scheme: dark;
   }
 }
