@@ -1,10 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Session } from '@supabase/supabase-js';
+import { ConfigService } from './config.service';
 import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly auth = inject(SupabaseService).client.auth;
+  private readonly config = inject(ConfigService);
 
   readonly session = signal<Session | null>(null);
   readonly user = computed(() => this.session()?.user ?? null);
@@ -14,7 +16,11 @@ export class AuthService {
 
   constructor() {
     this.ready = this.auth.getSession().then(({ data }) => this.session.set(data.session));
-    this.auth.onAuthStateChange((_event, session) => this.session.set(session));
+    this.auth.onAuthStateChange((event, session) => {
+      // Los ajustes son de cada usuario: no deben quedar en memoria al cambiar de cuenta.
+      if (event === 'SIGNED_OUT') this.config.reset();
+      this.session.set(session);
+    });
   }
 
   /** Devuelve un mensaje de error en español, o null si todo salió bien. */

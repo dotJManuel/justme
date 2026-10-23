@@ -1,13 +1,21 @@
 import { Habits } from '../supabase.service';
-import { FREEZE_MIN, GOAL, HABITS } from './habits.config';
 
 /** "YYYY-MM-DD" -> misiones marcadas ese día */
 export type Days = Record<string, Habits>;
 
+export interface RachaConfig {
+  /** Todas las misiones que existen (activas o no): las marcas pasadas siguen contando. */
+  habitKeys: string[];
+  goal: number;
+  freezeMin: number;
+  /** Días obligatorios, 0 = domingo ... 6 = sábado. */
+  activeDays: number[];
+}
+
 export interface StreakInfo {
   cur: number;
   best: number;
-  /** Días entre semana que no se cumplieron pero fueron congelados. */
+  /** Días obligatorios que no se cumplieron pero fueron congelados. */
   frozen: Set<string>;
   /** El último día se congeló y falta cumplir para recuperar la racha. */
   recovering: boolean;
@@ -30,22 +38,23 @@ export function addDays(d: Date, n: number): Date {
   return x;
 }
 
-export function isWeekend(d: Date): boolean {
-  const w = d.getDay();
-  return w === 0 || w === 6;
+/** Un día de descanso no rompe la racha. */
+export function isRestDay(d: Date, activeDays: number[]): boolean {
+  return !activeDays.includes(d.getDay());
 }
 
-export function countDone(days: Days, k: string): number {
+export function countDone(days: Days, k: string, habitKeys: string[]): number {
   const h = days[k] ?? {};
-  return HABITS.filter((x) => h[x.k]).length;
+  return habitKeys.filter((x) => h[x]).length;
 }
 
 /**
- * Recorre los días en orden. Sábado y domingo no rompen la racha, y hoy aún no cuenta como fallado.
- * Un día entre semana sin cumplir se congela si hubo al menos FREEZE_MIN días cumplidos desde el
- * último quiebre o congelación; si no, la racha se rompe.
+ * Recorre los días en orden. Los días de descanso no rompen la racha, y hoy aún no cuenta como
+ * fallado. Un día obligatorio sin cumplir se congela si hubo al menos freezeMin días cumplidos
+ * desde el último quiebre o congelación; si no, la racha se rompe.
  */
-export function computeStreaks(days: Days, today: Date): StreakInfo {
+export function computeStreaks(days: Days, today: Date, cfg: RachaConfig): StreakInfo {
+  const done = (k: string) => countDone(days, k, cfg.habitKeys);
   const frozen = new Set<string>();
   let run = 0;
   let best = 0;
@@ -53,20 +62,20 @@ export function computeStreaks(days: Days, today: Date): StreakInfo {
   let recovering = false;
 
   const keys = Object.keys(days)
-    .filter((k) => countDone(days, k) > 0)
+    .filter((k) => done(k) > 0)
     .sort();
   if (keys.length) {
     const todayKey = dateKey(today);
     let d = parseKey(keys[0]);
     while (d <= today) {
       const k = dateKey(d);
-      if (countDone(days, k) >= GOAL) {
+      if (done(k) >= cfg.goal) {
         run++;
         sinceFreeze++;
         recovering = false;
         best = Math.max(best, run);
-      } else if (!isWeekend(d) && k !== todayKey) {
-        if (sinceFreeze >= FREEZE_MIN) {
+      } else if (!isRestDay(d, cfg.activeDays) && k !== todayKey) {
+        if (sinceFreeze >= cfg.freezeMin) {
           frozen.add(k);
           sinceFreeze = 0;
           recovering = true;
@@ -79,5 +88,5 @@ export function computeStreaks(days: Days, today: Date): StreakInfo {
       d = addDays(d, 1);
     }
   }
-  return { cur: run, best, frozen, recovering, freezeReady: !recovering && sinceFreeze >= FREEZE_MIN };
+  return { cur: run, best, frozen, recovering, freezeReady: !recovering && sinceFreeze >= cfg.freezeMin };
 }

@@ -4,7 +4,8 @@ export interface HabitDef {
   when: string;
 }
 
-export const HABITS: HabitDef[] = [
+/** Misiones iniciales; se copian a la base de datos la primera vez que entra cada usuario. */
+export const DEFAULT_HABITS: HabitDef[] = [
   { k: 'celular', name: 'Celular lejos al despertar', when: '7:00' },
   { k: 'leetcode', name: 'LeetCode', when: '7:40 – 8:40' },
   { k: 'grabacion', name: 'Grabarme explicando', when: '8:40 · 1 a 3 min' },
@@ -16,9 +17,13 @@ export const HABITS: HabitDef[] = [
   { k: 'reto', name: 'Reto con gente', when: 'Cuando surja' },
 ];
 
-export const GOAL = 6;
+/** Misiones por día para sumar a la racha. */
+export const DEFAULT_GOAL = 6;
 /** Días cumplidos seguidos (desde el último quiebre o congelación) para ganar una congelación. */
-export const FREEZE_MIN = 15;
+export const DEFAULT_FREEZE_MIN = 15;
+/** Días obligatorios (0 = domingo ... 6 = sábado). Los demás no rompen la racha. */
+export const DEFAULT_ACTIVE_DAYS = [1, 2, 3, 4, 5];
+
 export const XP_PER = 10;
 export const XP_LEVEL = 200;
 export const DN = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];

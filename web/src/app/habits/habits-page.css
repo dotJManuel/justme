@@ -4,7 +4,7 @@ h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
 .top h1{font-size:1.25rem;font-weight:800}
 .stats{display:flex;gap:10px;font-weight:700;font-variant-numeric:tabular-nums}
 .stat{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;font-size:.9rem}
-.out{font:inherit;font-size:.9rem;color:var(--muted);cursor:pointer}
+.out{font:inherit;font-size:.9rem;color:var(--muted);cursor:pointer;text-decoration:none}
 .hero{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px 18px;display:flex;align-items:center;gap:18px}
 .flame{width:84px;height:96px;flex:none}
 .flame.cold path{fill:var(--off)}

@@ -1,0 +1,84 @@
+<div class="wrap">
+  <div class="top">
+    <h1>Modo administrador</h1>
+    <a routerLink="/" class="back">← Volver</a>
+  </div>
+
+  @if (error()) {
+    <p class="msg error" role="alert">{{ error() }}</p>
+  }
+  @if (info()) {
+    <p class="msg info" role="status">{{ info() }}</p>
+  }
+
+  @if (loaded()) {
+    <section class="card">
+      <h2>Racha</h2>
+      <label>
+        Misiones por día para mantener la racha
+        <input type="number" min="1" max="50" step="1" [ngModel]="goal()" (ngModelChange)="goal.set($event)" />
+      </label>
+      @if (tooHigh()) {
+        <p class="msg warn">Tienes menos misiones activas ({{ config.activeHabits().length }}) que esta meta: no podrás cumplirla.</p>
+      }
+      <label>
+        Días cumplidos para ganar una congelación
+        <input type="number" min="1" max="365" step="1" [ngModel]="freezeMin()" (ngModelChange)="freezeMin.set($event)" />
+      </label>
+
+      <fieldset>
+        <legend>Días obligatorios</legend>
+        <div class="chips">
+          @for (d of weekdays; track d.n) {
+            <button
+              type="button"
+              class="chip"
+              [class.on]="days().includes(d.n)"
+              [attr.aria-pressed]="days().includes(d.n)"
+              (click)="toggleDay(d.n)"
+            >
+              {{ d.label }}
+            </button>
+          }
+        </div>
+        <p class="hint">Los días no marcados son de descanso: no rompen la racha.</p>
+      </fieldset>
+
+      <p class="hint">Los cambios se aplican también a tu historial, así que tu racha puede variar.</p>
+      <button type="button" class="primary" [disabled]="!dirty() || !valid() || busy()" (click)="saveSettings()">
+        Guardar ajustes
+      </button>
+    </section>
+
+    <section class="card">
+      <h2>Misiones</h2>
+      <ul class="habits">
+        @for (h of config.habits(); track h.k; let first = $first; let last = $last) {
+          <li [class.off]="!h.active">
+            <div class="fields">
+              <input #n aria-label="Nombre" [value]="h.name" maxlength="80" (change)="rename(h.k, n, h.name)" />
+              <input #w aria-label="Horario o nota" placeholder="Horario o nota" [value]="h.when" maxlength="80" (change)="setWhen(h.k, w)" />
+            </div>
+            <div class="actions">
+              <button type="button" class="icon" aria-label="Subir" [disabled]="first || busy()" (click)="move(h.k, -1)">▲</button>
+              <button type="button" class="icon" aria-label="Bajar" [disabled]="last || busy()" (click)="move(h.k, 1)">▼</button>
+              <label class="switch">
+                <input type="checkbox" [checked]="h.active" (change)="setActive(h.k, !h.active)" />
+                {{ h.active ? 'Activa' : 'Inactiva' }}
+              </label>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <form class="add" (ngSubmit)="addHabit()">
+        <input name="newName" placeholder="Nueva misión" maxlength="80" [ngModel]="newName()" (ngModelChange)="newName.set($event)" />
+        <input name="newWhen" placeholder="Horario o nota (opcional)" maxlength="80" [ngModel]="newWhen()" (ngModelChange)="newWhen.set($event)" />
+        <button type="submit" class="primary" [disabled]="!newName().trim() || busy()">Agregar misión</button>
+      </form>
+      <p class="hint">Desactivar una misión la oculta, pero sus marcas pasadas siguen contando en tu historial.</p>
+    </section>
+  } @else if (!error()) {
+    <p class="hint">Cargando…</p>
+  }
+</div>
