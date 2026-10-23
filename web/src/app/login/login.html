@@ -1,0 +1,37 @@
+<main class="login">
+  <h1>JustMe</h1>
+  <p class="sub">{{ registering() ? 'Crea tu cuenta' : 'Inicia sesión para ver tus días' }}</p>
+
+  <form (ngSubmit)="submit()">
+    <label>
+      Correo
+      <input type="email" name="email" autocomplete="email" required [(ngModel)]="email" />
+    </label>
+    <label>
+      Contraseña
+      <input
+        type="password"
+        name="password"
+        minlength="6"
+        required
+        [autocomplete]="registering() ? 'new-password' : 'current-password'"
+        [(ngModel)]="password"
+      />
+    </label>
+
+    @if (error()) {
+      <p class="msg error" role="alert">{{ error() }}</p>
+    }
+    @if (info()) {
+      <p class="msg info" role="status">{{ info() }}</p>
+    }
+
+    <button type="submit" class="primary" [disabled]="busy()">
+      {{ busy() ? 'Un momento…' : registering() ? 'Crear cuenta' : 'Entrar' }}
+    </button>
+  </form>
+
+  <button type="button" class="link" (click)="toggleMode()">
+    {{ registering() ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
+  </button>
+</main>

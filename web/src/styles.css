@@ -1,1 +1,22 @@
-/* You can add global styles to this file, and also import other style files */
+/* Paleta y tipografía tomadas de racha.html */
+:root {
+  --bg: #f3f4fa; --surface: #ffffff; --ink: #1e2240; --muted: #6a6f92; --line: #e1e3f0;
+  --flame: #ff7a1a; --flame-2: #ffc233; --done: #2bb673; --done-soft: #ddf5e9; --off: #ecedf5;
+  --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12142a; --surface: #1c1f3a; --ink: #eef0ff; --muted: #9da2c8; --line: #2c3058;
+    --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #262a4a;
+    color-scheme: dark;
+  }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+}
