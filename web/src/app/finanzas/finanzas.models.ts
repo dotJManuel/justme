@@ -12,12 +12,17 @@ export interface Expense {
   total: number | null;
   /** Lo que toca pagar este mes (en gastos fijos, el monto mensual). */
   amount: number;
+  /** Fecha y hora de la compra (ISO); solo en tarjetas. */
+  purchasedAt: string | null;
 }
 
 export interface Cut {
   id: string;
   card: Card;
+  /** Texto del corte, por ejemplo "13 oct a 12 nov". */
   period: string;
+  /** AAAA-MM-DD del día de corte; null en los cortes importados del Excel. */
+  periodEnd: string | null;
   amount: number;
   paid: number;
 }

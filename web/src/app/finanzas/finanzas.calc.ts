@@ -1,5 +1,6 @@
-import { parseKey } from '../habits/streaks';
-import { Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { MN } from '../habits/habits.config';
+import { dateKey, parseKey } from '../habits/streaks';
+import { Card, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
 
 // Cálculos del módulo de finanzas, sin Angular ni Supabase: son los mismos que hacía el Excel.
 
@@ -62,7 +63,43 @@ export function monthSummary(expenses: Expense[], income: number): MonthSummary 
   return { santander, bbva, tarjetas: round2(santander + bbva), fijos, gran, income, balance: round2(income - gran) };
 }
 
-export const cutPending = (c: Cut): number => round2(c.amount - c.paid);
+export const cutPending = (c: Pick<Cut, 'amount' | 'paid'>): number => round2(c.amount - c.paid);
+
+/** Día del mes en que corta cada tarjeta. */
+export const CUT_DAY: Record<Card, number> = { santander: 12, bbva: 24 };
+
+export interface CutPeriod {
+  start: string;
+  /** AAAA-MM-DD del día de corte */
+  end: string;
+  label: string;
+}
+
+/** Corte en curso: desde el día siguiente al corte anterior hasta el próximo día de corte. */
+export function currentCutPeriod(card: Card, today: Date): CutPeriod {
+  const day = CUT_DAY[card];
+  const end = new Date(today.getFullYear(), today.getDate() <= day ? today.getMonth() : today.getMonth() + 1, day);
+  const start = new Date(end.getFullYear(), end.getMonth() - 1, day + 1);
+  const part = (d: Date) => `${d.getDate()} ${MN[d.getMonth()]}`;
+  return { start: dateKey(start), end: dateKey(end), label: `${part(start)} a ${part(end)}` };
+}
+
+// ── Fecha y hora en campos <input type="datetime-local"> (hora local) ──
+
+const pad = (n: number): string => String(n).padStart(2, '0');
+
+export function toLocalInput(d: Date): string {
+  return `${dateKey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export const nowLocalInput = (): string => toLocalInput(new Date());
+
+export const isoToLocalInput = (iso: string | null): string => (iso ? toLocalInput(new Date(iso)) : '');
+
+export function localInputToIso(value: string): string | null {
+  const d = new Date(value);
+  return value && !Number.isNaN(d.getTime()) ? d.toISOString() : null;
+}
 
 // ── Dinero que me deben ─────────────────────────────────────────────────
 

@@ -1,13 +1,14 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { cutPending, fmtMoney, parseMoney } from '../finanzas.calc';
-import { Card, Cut } from '../finanzas.models';
+import { Component, computed, inject, input } from '@angular/core';
+import { currentCutPeriod, cutPending, fmtMoney, parseMoney } from '../finanzas.calc';
+import { Card } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
-/** Cortes de una tarjeta: periodo, monto del corte, lo pagado y lo que queda pendiente. */
+/**
+ * Corte en curso de una tarjeta. El periodo se calcula solo (Santander corta el 12 y BBVA el 24 de
+ * cada mes); el registro se crea la primera vez que se captura el monto del corte o lo pagado.
+ */
 @Component({
   selector: 'app-cut-list',
-  imports: [FormsModule],
   templateUrl: './cut-list.html',
   styleUrl: '../finanzas.shared.css',
 })
@@ -18,62 +19,51 @@ export class CutList {
   readonly title = input.required<string>();
 
   protected readonly money = fmtMoney;
-  protected readonly pending = cutPending;
-  protected readonly cols = 'minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 5.5rem';
+  protected readonly cols = 'minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)';
 
-  protected readonly rows = computed(() => this.fin.cuts().filter((c) => c.card === this.card()));
-
-  protected readonly period = signal('');
-  protected readonly amount = signal('');
-  protected readonly paid = signal('');
-
-  private readonly draftAmount = computed(() => (this.amount().trim() === '' ? 0 : parseMoney(this.amount())));
-  private readonly draftPaid = computed(() => (this.paid().trim() === '' ? 0 : parseMoney(this.paid())));
-  protected readonly canAdd = computed(
-    () => this.period().trim() !== '' && this.draftAmount() !== null && this.draftPaid() !== null,
+  private readonly today = new Date();
+  protected readonly period = computed(() => currentCutPeriod(this.card(), this.today));
+  private readonly saved = computed(() =>
+    this.fin.cuts().find((c) => c.card === this.card() && c.periodEnd === this.period().end),
   );
+  protected readonly amount = computed(() => this.saved()?.amount ?? 0);
+  protected readonly paid = computed(() => this.saved()?.paid ?? 0);
+  protected readonly pending = computed(() => cutPending({ amount: this.amount(), paid: this.paid() }));
 
-  protected setPeriod(c: Cut, el: HTMLInputElement) {
-    const period = el.value.trim();
-    if (!period) return void (el.value = c.period);
-    if (period !== c.period) this.save(c, el, { period }, c.period);
+  /** Los cambios se guardan de uno en uno: así dos ediciones seguidas no crean el registro dos veces. */
+  private queue: Promise<unknown> = Promise.resolve();
+
+  protected setAmount(el: HTMLInputElement) {
+    this.setMoney(el, 'amount');
   }
 
-  protected setAmount(c: Cut, el: HTMLInputElement) {
-    this.setMoney(c, el, 'amount');
+  protected setPaid(el: HTMLInputElement) {
+    this.setMoney(el, 'paid');
   }
 
-  protected setPaid(c: Cut, el: HTMLInputElement) {
-    this.setMoney(c, el, 'paid');
-  }
-
-  protected async remove(c: Cut) {
-    if (confirm(`¿Eliminar el corte «${c.period}»?`)) await this.fin.removeCut(c.id);
-  }
-
-  protected async add() {
-    const amount = this.draftAmount();
-    const paid = this.draftPaid();
-    if (!this.canAdd() || amount === null || paid === null) return;
-    const ok = await this.fin.addCut({ card: this.card(), period: this.period().trim(), amount, paid });
-    if (ok) {
-      this.period.set('');
-      this.amount.set('');
-      this.paid.set('');
-    }
-  }
-
-  private setMoney(c: Cut, el: HTMLInputElement, field: 'amount' | 'paid') {
+  private setMoney(el: HTMLInputElement, field: 'amount' | 'paid') {
     const n = el.value.trim() === '' ? 0 : parseMoney(el.value);
+    const current = this[field]();
     if (n === null) {
-      el.value = String(c[field]);
+      el.value = String(current);
       this.fin.error.set('Escribe un monto válido (solo números).');
-      return;
+    } else if (n !== current) {
+      this.queue = this.queue.then(async () => {
+        if (!(await this.save(field, n))) el.value = String(current);
+      });
     }
-    if (n !== c[field]) this.save(c, el, { [field]: n }, String(c[field]));
   }
 
-  private async save(c: Cut, el: HTMLInputElement, patch: Partial<Cut>, back: string) {
-    if (!(await this.fin.updateCut(c.id, patch))) el.value = back;
+  private save(field: 'amount' | 'paid', n: number): Promise<boolean> {
+    const row = this.saved();
+    if (row) return this.fin.updateCut(row.id, field === 'amount' ? { amount: n } : { paid: n });
+    const { label, end } = this.period();
+    return this.fin.addCut({
+      card: this.card(),
+      period: label,
+      periodEnd: end,
+      amount: field === 'amount' ? n : 0,
+      paid: field === 'paid' ? n : 0,
+    });
   }
 }

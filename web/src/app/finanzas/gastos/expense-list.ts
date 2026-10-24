@@ -1,6 +1,14 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { expenseTotals, fmtMoney, parseMoney, perQuincena } from '../finanzas.calc';
+import {
+  expenseTotals,
+  fmtMoney,
+  isoToLocalInput,
+  localInputToIso,
+  nowLocalInput,
+  parseMoney,
+  perQuincena,
+} from '../finanzas.calc';
 import { Expense, Section } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
@@ -19,21 +27,26 @@ export class ExpenseList {
 
   protected readonly money = fmtMoney;
   protected readonly half = perQuincena;
+  protected readonly dateValue = (r: Expense) => isoToLocalInput(r.purchasedAt);
 
   /** Las tarjetas llevan "a meses" y monto total; los gastos fijos solo un monto mensual. */
   protected readonly cards = computed(() => this.section() !== 'fijos');
   protected readonly cols = computed(() =>
     this.cards()
-      ? 'minmax(0,2.2fr) 5rem minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem'
+      ? 'minmax(0,2fr) 11.5rem 5rem minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem'
       : 'minmax(0,2.2fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem',
   );
   protected readonly rows = computed(() => this.fin.expenses().filter((e) => e.section === this.section()));
   protected readonly totals = computed(() => expenseTotals(this.rows()));
 
   protected readonly concept = signal('');
+  protected readonly purchased = signal(nowLocalInput());
   protected readonly installment = signal('');
   protected readonly total = signal('');
   protected readonly amount = signal('');
+
+  /** Si no la tocas, la fecha y hora se actualizan al empezar a escribir el concepto. */
+  private purchasedTouched = false;
 
   /** Monto escrito en el formulario: vacío cuenta como 0; null si no es un monto válido. */
   private readonly draftAmount = computed(() => (this.amount().trim() === '' ? 0 : parseMoney(this.amount())));
@@ -49,6 +62,20 @@ export class ExpenseList {
     const concept = el.value.trim();
     if (!concept) return void (el.value = r.concept);
     if (concept !== r.concept) this.save(r, el, { concept }, r.concept);
+  }
+
+  protected onConcept(value: string) {
+    if (!this.concept() && value && !this.purchasedTouched) this.purchased.set(nowLocalInput());
+    this.concept.set(value);
+  }
+
+  protected onPurchased(value: string) {
+    this.purchasedTouched = true;
+    this.purchased.set(value);
+  }
+
+  protected setPurchased(r: Expense, el: HTMLInputElement) {
+    if (el.value !== this.dateValue(r)) this.save(r, el, { purchasedAt: localInputToIso(el.value) }, this.dateValue(r));
   }
 
   protected setInstallment(r: Expense, el: HTMLInputElement) {
@@ -82,8 +109,11 @@ export class ExpenseList {
       // Una compra sin monto total es un pago único: el total es lo que se paga.
       total: this.cards() ? (this.draftTotal() ?? amount) : null,
       amount,
+      purchasedAt: this.cards() ? localInputToIso(this.purchased()) : null,
     });
     if (ok) {
+      this.purchasedTouched = false;
+      this.purchased.set(nowLocalInput());
       this.concept.set('');
       this.installment.set('');
       this.total.set('');

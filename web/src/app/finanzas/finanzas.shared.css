@@ -30,3 +30,4 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
   .x{grid-column:1/-1}
   .ro{text-align:left;padding-inline:0}
 }
+.ro.period{text-align:left;color:var(--ink);font-weight:700;padding-inline:0}

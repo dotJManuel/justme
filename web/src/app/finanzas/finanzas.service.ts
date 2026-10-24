@@ -10,11 +10,13 @@ interface ExpenseRow {
   installment: string;
   total: number | null;
   amount: number;
+  purchased_at: string | null;
 }
 interface CutRow {
   id: string;
   card: Card;
   period: string;
+  period_end: string | null;
   amount: number;
   paid: number;
 }
@@ -35,13 +37,37 @@ interface FamilyRow {
   amount: number;
 }
 
-const EXPENSE_COLS = 'id, section, concept, installment, total, amount';
-const CUT_COLS = 'id, card, period, amount, paid';
+const EXPENSE_COLS = 'id, section, concept, installment, total, amount, purchased_at';
+const CUT_COLS = 'id, card, period, period_end, amount, paid';
 const DEBT_COLS = 'id, person, kind, concept, amount, date, applies_to';
 const FAMILY_COLS = 'id, direction, name, date, amount';
 
-const toExpense = (r: ExpenseRow): Expense => ({ ...r });
-const toCut = (r: CutRow): Cut => ({ ...r });
+const toExpense = (r: ExpenseRow): Expense => ({
+  id: r.id,
+  section: r.section,
+  concept: r.concept,
+  installment: r.installment,
+  total: r.total,
+  amount: r.amount,
+  purchasedAt: r.purchased_at,
+});
+const toCut = (r: CutRow): Cut => ({
+  id: r.id,
+  card: r.card,
+  period: r.period,
+  periodEnd: r.period_end,
+  amount: r.amount,
+  paid: r.paid,
+});
+
+const expenseRow = (e: Partial<Omit<Expense, 'id'>>) => ({
+  ...(e.section !== undefined && { section: e.section }),
+  ...(e.concept !== undefined && { concept: e.concept }),
+  ...(e.installment !== undefined && { installment: e.installment }),
+  ...(e.total !== undefined && { total: e.total }),
+  ...(e.amount !== undefined && { amount: e.amount }),
+  ...(e.purchasedAt !== undefined && { purchased_at: e.purchasedAt }),
+});
 const toDebt = (r: DebtRow): Debt => ({
   id: r.id,
   person: r.person,
@@ -114,14 +140,14 @@ export class FinanzasService {
 
   addExpense(e: Omit<Expense, 'id'>): Promise<boolean> {
     return this.write(async () => {
-      const row = await this.single<ExpenseRow>(this.client.from('fin_expenses').insert(e).select(EXPENSE_COLS).single());
+      const row = await this.single<ExpenseRow>(this.client.from('fin_expenses').insert(expenseRow(e)).select(EXPENSE_COLS).single());
       this.expenses.update((l) => [...l, toExpense(row)]);
     });
   }
 
   updateExpense(id: string, patch: Partial<Omit<Expense, 'id' | 'section'>>): Promise<boolean> {
     return this.write(async () => {
-      const { error } = await this.client.from('fin_expenses').update(patch).eq('id', id);
+      const { error } = await this.client.from('fin_expenses').update(expenseRow(patch)).eq('id', id);
       if (error) throw error;
       this.expenses.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
     });
@@ -137,24 +163,19 @@ export class FinanzasService {
 
   addCut(c: Omit<Cut, 'id'>): Promise<boolean> {
     return this.write(async () => {
-      const row = await this.single<CutRow>(this.client.from('fin_cuts').insert(c).select(CUT_COLS).single());
+      const row = await this.single<CutRow>(this.client
+          .from('fin_cuts')
+          .insert({ card: c.card, period: c.period, period_end: c.periodEnd, amount: c.amount, paid: c.paid })
+          .select(CUT_COLS).single());
       this.cuts.update((l) => [...l, toCut(row)]);
     });
   }
 
-  updateCut(id: string, patch: Partial<Omit<Cut, 'id' | 'card'>>): Promise<boolean> {
+  updateCut(id: string, patch: Pick<Cut, 'amount'> | Pick<Cut, 'paid'>): Promise<boolean> {
     return this.write(async () => {
       const { error } = await this.client.from('fin_cuts').update(patch).eq('id', id);
       if (error) throw error;
       this.cuts.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-    });
-  }
-
-  removeCut(id: string): Promise<boolean> {
-    return this.write(async () => {
-      const { error } = await this.client.from('fin_cuts').delete().eq('id', id);
-      if (error) throw error;
-      this.cuts.update((l) => l.filter((x) => x.id !== id));
     });
   }
 

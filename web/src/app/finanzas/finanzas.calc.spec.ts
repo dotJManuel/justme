@@ -1,9 +1,12 @@
 import {
   ageDays,
+  currentCutPeriod,
   cutPending,
   debtRows,
   expenseTotals,
   familyTotals,
+  isoToLocalInput,
+  localInputToIso,
   monthSummary,
   parseMoney,
   personSummaries,
@@ -17,6 +20,7 @@ const exp = (section: Expense['section'], amount: number, total: number | null =
   installment: '',
   total,
   amount,
+  purchasedAt: null,
 });
 
 const debt = (id: string, person: string, kind: Debt['kind'], amount: number, appliesTo: string | null = null): Debt => ({
@@ -52,8 +56,37 @@ describe('resumen del mes', () => {
 
 describe('cortes', () => {
   it('lo pendiente es el monto menos lo pagado', () => {
-    const c: Cut = { id: '1', card: 'santander', period: '13 ago a 12 sep', amount: 12714.37, paid: 6850 };
+    const c: Cut = { id: '1', card: 'santander', period: '13 ago a 12 sep', periodEnd: null, amount: 12714.37, paid: 6850 };
     expect(cutPending(c)).toBe(5864.37);
+  });
+});
+
+describe('corte en curso', () => {
+  it('Santander corta el 12: pasado el 12, el corte termina el 12 del mes siguiente', () => {
+    expect(currentCutPeriod('santander', new Date(2026, 9, 23))).toEqual({ start: '2026-10-13', end: '2026-11-12', label: '13 oct a 12 nov' });
+  });
+
+  it('el mismo día de corte todavía cuenta como el corte que termina', () => {
+    expect(currentCutPeriod('santander', new Date(2026, 9, 12)).label).toBe('13 sep a 12 oct');
+  });
+
+  it('BBVA corta el 24', () => {
+    expect(currentCutPeriod('bbva', new Date(2026, 9, 23))).toEqual({ start: '2026-09-25', end: '2026-10-24', label: '25 sep a 24 oct' });
+    expect(currentCutPeriod('bbva', new Date(2026, 9, 25)).label).toBe('25 oct a 24 nov');
+  });
+
+  it('cruza el fin de año', () => {
+    expect(currentCutPeriod('santander', new Date(2026, 11, 20)).end).toBe('2027-01-12');
+  });
+});
+
+describe('fecha y hora de captura', () => {
+  it('ida y vuelta con el campo datetime-local', () => {
+    const iso = localInputToIso('2026-10-23T14:05');
+    expect(iso).not.toBeNull();
+    expect(isoToLocalInput(iso)).toBe('2026-10-23T14:05');
+    expect(localInputToIso('')).toBeNull();
+    expect(isoToLocalInput(null)).toBe('');
   });
 });
 

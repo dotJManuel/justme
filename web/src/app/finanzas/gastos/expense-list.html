@@ -4,6 +4,7 @@
   <div class="grid head" aria-hidden="true">
     <span>Concepto</span>
     @if (cards()) {
+      <span>Fecha y hora</span>
       <span>A meses</span>
       <span class="num">Monto total</span>
     }
@@ -18,6 +19,9 @@
         <input #cn aria-label="Concepto" maxlength="120" [value]="r.concept" (change)="setConcept(r, cn)" />
       </div>
       @if (cards()) {
+        <div class="c" data-l="Fecha y hora">
+          <input #dt type="datetime-local" aria-label="Fecha y hora" [value]="dateValue(r)" (change)="setPurchased(r, dt)" />
+        </div>
         <div class="c" data-l="A meses">
           <input #ins aria-label="A meses" maxlength="20" placeholder="05/09" [value]="r.installment" (change)="setInstallment(r, ins)" />
         </div>
@@ -39,6 +43,7 @@
     <span>Total</span>
     @if (cards()) {
       <span></span>
+      <span></span>
       <div class="c" data-l="Monto total"><div class="ro">{{ money(totals().total) }}</div></div>
     }
     <div class="c" [attr.data-l]="cards() ? 'Por pagar' : 'Monto mensual'"><div class="ro">{{ money(totals().amount) }}</div></div>
@@ -48,9 +53,12 @@
 
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Concepto">
-      <input name="concept" aria-label="Nuevo concepto" placeholder="Nuevo concepto" maxlength="120" [ngModel]="concept()" (ngModelChange)="concept.set($event)" />
+      <input name="concept" aria-label="Nuevo concepto" placeholder="Nuevo concepto" maxlength="120" [ngModel]="concept()" (ngModelChange)="onConcept($event)" />
     </div>
     @if (cards()) {
+      <div class="c" data-l="Fecha y hora">
+        <input name="purchased" type="datetime-local" aria-label="Fecha y hora" [ngModel]="purchased()" (ngModelChange)="onPurchased($event)" />
+      </div>
       <div class="c" data-l="A meses">
         <input name="installment" aria-label="A meses" placeholder="05/09" maxlength="20" [ngModel]="installment()" (ngModelChange)="installment.set($event)" />
       </div>
@@ -65,6 +73,6 @@
     <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
   </form>
   @if (cards()) {
-    <p class="hint">Si dejas el monto total vacío, se usa lo que se paga este mes.</p>
+    <p class="hint">La fecha y hora se ponen solas al capturar el concepto; puedes cambiarlas. Si dejas el monto total vacío, se usa lo que se paga este mes.</p>
   }
 </section>
