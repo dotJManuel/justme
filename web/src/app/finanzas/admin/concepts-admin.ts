@@ -23,17 +23,20 @@ export class ConceptsAdmin {
   protected readonly concepts = computed(() => this.fin.concepts().filter((c) => c.scope === this.scope()));
   /** Tope de caracteres: los conceptos de movimientos eran texto más largo. */
   protected readonly maxLength = computed(() => (this.scope() === 'movimiento' ? 200 : 120));
-  private readonly unit = computed(() => (this.scope() === 'movimiento' ? 'movimiento' : 'gasto'));
+  private readonly unit = computed(() => (this.scope() === 'gasto' ? 'gasto' : 'movimiento'));
 
   protected readonly name = signal('');
 
   /** Cuántos registros usan cada opción (gastos o movimientos, según el catálogo). */
   protected readonly usage = computed(() => {
     const counts = new Map<string, number>();
+    const scope = this.scope();
     const ids =
-      this.scope() === 'movimiento'
+      scope === 'movimiento'
         ? this.fin.debts().map((d) => d.conceptId)
-        : this.fin.expenses().map((e) => e.conceptId);
+        : scope === 'familia'
+          ? this.fin.family().map((m) => m.conceptId)
+          : this.fin.expenses().map((e) => e.conceptId);
     for (const id of ids) if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
     return counts;
   });

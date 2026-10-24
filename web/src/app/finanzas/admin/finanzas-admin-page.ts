@@ -31,6 +31,18 @@ import { PeopleAdmin } from './people-admin';
       title="Conceptos de movimientos"
       help="Son las opciones del campo Concepto al capturar un cargo o abono en Pendiente. Desactivar un concepto deja de ofrecerlo en movimientos nuevos, pero los que ya lo usan se conservan. Eliminarlo borra también los movimientos que lo usan."
     />
+    <app-people-admin
+      data-section
+      scope="familia"
+      title="Personas (familia)"
+      help="Son las opciones de De quién (Recibido) y Para quién (Dado). Una persona desactivada no se ofrece en registros nuevos, pero sus registros se conservan. Eliminarla borra a la persona y todos sus registros de Recibido y Dado."
+    />
+    <app-concepts-admin
+      data-section
+      scope="familia"
+      title="Conceptos de familia"
+      help="Son las opciones del campo Concepto en Recibido y Dado. Desactivar un concepto deja de ofrecerlo en registros nuevos, pero los que ya lo usan se conservan. Eliminarlo borra también los registros que lo usan."
+    />
     <p class="hint">El tipo de movimiento (cargo o abono) es fijo: de él dependen las cuentas.</p>
   `,
   styles: `

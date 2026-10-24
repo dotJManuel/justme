@@ -27,7 +27,9 @@ export class PeopleAdmin {
   /** Cuántos movimientos tiene cada persona. */
   protected readonly usage = computed(() => {
     const counts = new Map<string, number>();
-    for (const d of this.fin.debts()) counts.set(d.personId, (counts.get(d.personId) ?? 0) + 1);
+    const ids =
+      this.scope() === 'familia' ? this.fin.family().map((m) => m.personId) : this.fin.debts().map((d) => d.personId);
+    for (const id of ids) if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
     return counts;
   });
 
@@ -47,10 +49,13 @@ export class PeopleAdmin {
   }
 
   protected async remove(p: Person) {
-    const n = debtsWithDependents(this.fin.debts(), (d) => d.personId === p.id).length;
+    const n =
+      this.scope() === 'familia'
+        ? (this.usage().get(p.id) ?? 0)
+        : debtsWithDependents(this.fin.debts(), (d) => d.personId === p.id).length;
     const detail =
       n > 0
-        ? `\n\nTambién se ${n === 1 ? 'eliminará 1 movimiento suyo' : `eliminarán ${n} movimientos suyos`} (cargos y abonos). Si solo quieres dejar de usarla, desactívala.`
+        ? `\n\nTambién se ${n === 1 ? 'eliminará 1 movimiento suyo' : `eliminarán ${n} movimientos suyos`}${this.scope() === 'familia' ? '' : ' (cargos y abonos)'}. Si solo quieres dejar de usarla, desactívala.`
         : '';
     if (confirm(`¿Eliminar a «${p.name}» por completo?${detail}`)) await this.fin.removePerson(p.id);
   }

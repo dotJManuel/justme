@@ -217,8 +217,8 @@ describe('dinero con familia', () => {
     const m = (direction: FamilyMove['direction'], amount: number): FamilyMove => ({
       id: `${direction}${amount}`,
       direction,
-      name: 'x',
-      person: '',
+      conceptId: null,
+      personId: null,
       date: null,
       amount,
     });

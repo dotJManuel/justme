@@ -1,11 +1,9 @@
-<section class="card" [style.--cols]="cols()">
+<section class="card" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
 
   <div class="grid head" aria-hidden="true">
-    <span>{{ nameLabel() }}</span>
-    @if (received()) {
-      <span>De quién</span>
-    }
+    <span>Concepto</span>
+    <span>{{ personLabel() }}</span>
     <span>Fecha</span>
     <span class="num">Monto</span>
     <span></span>
@@ -13,21 +11,33 @@
 
   @for (m of rows(); track m.id) {
     <div class="grid row">
-      <div class="c" [attr.data-l]="nameLabel()">
-        <input #n [attr.aria-label]="nameLabel()" maxlength="80" [value]="m.name" (change)="setName(m, n)" />
+      <div class="c" data-l="Concepto">
+        <select #cs aria-label="Concepto" (change)="setConcept(m, cs)">
+          @if (!received()) {
+            <option value="" [selected]="!m.conceptId">—</option>
+          }
+          @for (o of conceptsFor(m); track o.id) {
+            <option [value]="o.id" [selected]="o.id === m.conceptId">{{ o.name }}{{ o.active ? '' : ' (inactivo)' }}</option>
+          }
+        </select>
       </div>
-      @if (received()) {
-        <div class="c" data-l="De quién">
-          <input #p aria-label="De quién" maxlength="80" [value]="m.person" (change)="setPerson(m, p)" />
-        </div>
-      }
+      <div class="c" [attr.data-l]="personLabel()">
+        <select #ps [attr.aria-label]="personLabel()" (change)="setPerson(m, ps)">
+          @if (received()) {
+            <option value="" [selected]="!m.personId">—</option>
+          }
+          @for (o of peopleFor(m); track o.id) {
+            <option [value]="o.id" [selected]="o.id === m.personId">{{ o.name }}{{ o.active ? '' : ' (inactiva)' }}</option>
+          }
+        </select>
+      </div>
       <div class="c" data-l="Fecha">
         <input #d type="date" aria-label="Fecha" [value]="m.date ?? ''" (change)="setDate(m, d)" />
       </div>
       <div class="c" data-l="Monto">
         <input #a class="num" inputmode="decimal" aria-label="Monto" [value]="m.amount" (change)="setAmount(m, a)" />
       </div>
-      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + m.name" (click)="remove(m)">✕</button>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + label(m)" (click)="remove(m)">✕</button>
     </div>
   } @empty {
     <p class="hint">Todavía no hay registros.</p>
@@ -35,23 +45,29 @@
 
   <div class="grid total">
     <span>Total</span>
-    @if (received()) {
-      <span></span>
-    }
+    <span></span>
     <span></span>
     <div class="c" data-l="Monto"><div class="ro">{{ money(total()) }}</div></div>
     <span></span>
   </div>
 
   <form class="grid row add" (ngSubmit)="add()">
-    <div class="c" [attr.data-l]="nameLabel()">
-      <input name="name" [attr.aria-label]="'Nuevo: ' + nameLabel()" [placeholder]="nameLabel()" maxlength="80" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    <div class="c" data-l="Concepto">
+      <select name="concept" aria-label="Concepto" [ngModel]="concept()" (ngModelChange)="concept.set($event)">
+        <option value="">{{ received() ? 'Elige un concepto…' : 'Sin concepto' }}</option>
+        @for (o of activeConcepts(); track o.id) {
+          <option [value]="o.id">{{ o.name }}</option>
+        }
+      </select>
     </div>
-    @if (received()) {
-      <div class="c" data-l="De quién">
-        <input name="person" aria-label="Nuevo: De quién" placeholder="De quién" maxlength="80" [ngModel]="person()" (ngModelChange)="person.set($event)" />
-      </div>
-    }
+    <div class="c" [attr.data-l]="personLabel()">
+      <select name="person" [attr.aria-label]="personLabel()" [ngModel]="person()" (ngModelChange)="person.set($event)">
+        <option value="">{{ received() ? 'Sin indicar' : 'Elige una persona…' }}</option>
+        @for (o of activePeople(); track o.id) {
+          <option [value]="o.id">{{ o.name }}</option>
+        }
+      </select>
+    </div>
     <div class="c" data-l="Fecha">
       <input name="date" type="date" aria-label="Fecha" [ngModel]="date()" (ngModelChange)="date.set($event)" />
     </div>
@@ -60,4 +76,7 @@
     </div>
     <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
   </form>
+  @if (!activeConcepts().length || !activePeople().length) {
+    <p class="hint">Da de alta conceptos y personas de familia en la pestaña Administrar.</p>
+  }
 </section>

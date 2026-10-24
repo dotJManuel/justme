@@ -52,8 +52,8 @@ interface DebtRow {
 interface FamilyRow {
   id: string;
   direction: FamilyMove['direction'];
-  name: string;
-  person: string;
+  concept_id: string | null;
+  person_id: string | null;
   date: string | null;
   amount: number;
 }
@@ -64,7 +64,7 @@ const CARD_COLS = 'id, name, cut_day, active';
 const EXPENSE_COLS = 'id, card_id, section, concept_id, installment, total, amount, purchased_at';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
 const DEBT_COLS = 'id, person_id, kind, concept_id, amount, date, applies_to';
-const FAMILY_COLS = 'id, direction, name, person, date, amount';
+const FAMILY_COLS = 'id, direction, concept_id, person_id, date, amount';
 
 const toPerson = (r: PersonRow): Person => ({ ...r });
 const toConcept = (r: ConceptRow): Concept => ({ ...r });
@@ -106,7 +106,22 @@ const toDebt = (r: DebtRow): Debt => ({
   date: r.date,
   appliesTo: r.applies_to,
 });
-const toFamily = (r: FamilyRow): FamilyMove => ({ ...r });
+const toFamily = (r: FamilyRow): FamilyMove => ({
+  id: r.id,
+  direction: r.direction,
+  conceptId: r.concept_id,
+  personId: r.person_id,
+  date: r.date,
+  amount: r.amount,
+});
+
+const familyRow = (m: Partial<Omit<FamilyMove, 'id'>>) => ({
+  ...(m.direction !== undefined && { direction: m.direction }),
+  ...(m.conceptId !== undefined && { concept_id: m.conceptId }),
+  ...(m.personId !== undefined && { person_id: m.personId }),
+  ...(m.date !== undefined && { date: m.date }),
+  ...(m.amount !== undefined && { amount: m.amount }),
+});
 
 const debtPatchRow = (p: Partial<Omit<Debt, 'id'>>) => ({
   ...(p.personId !== undefined && { person_id: p.personId }),
@@ -190,13 +205,14 @@ export class FinanzasService {
     });
   }
 
-  /** Borrar una persona borra también sus movimientos (lo hace la base de datos; aquí se refleja igual). */
+  /** Borrar una persona borra también sus movimientos y registros de familia (lo hace la base de datos; aquí se refleja igual). */
   removePerson(id: string): Promise<boolean> {
     return this.write(async () => {
       const { error } = await this.client.from('fin_people').delete().eq('id', id);
       if (error) throw error;
       this.people.update((l) => l.filter((x) => x.id !== id));
       this.dropDebts((d) => d.personId === id);
+      this.family.update((l) => l.filter((x) => x.personId !== id));
     });
   }
 
@@ -217,7 +233,7 @@ export class FinanzasService {
     });
   }
 
-  /** Borrar un concepto borra también los gastos y movimientos que lo usan (lo hace la base de datos; aquí se refleja igual). */
+  /** Borrar un concepto borra también los gastos, movimientos y registros de familia que lo usan (lo hace la base de datos; aquí se refleja igual). */
   removeConcept(id: string): Promise<boolean> {
     return this.write(async () => {
       const { error } = await this.client.from('fin_concepts').delete().eq('id', id);
@@ -225,6 +241,7 @@ export class FinanzasService {
       this.concepts.update((l) => l.filter((x) => x.id !== id));
       this.expenses.update((l) => l.filter((x) => x.conceptId !== id));
       this.dropDebts((d) => d.conceptId === id);
+      this.family.update((l) => l.filter((x) => x.conceptId !== id));
     });
   }
 
@@ -335,14 +352,14 @@ export class FinanzasService {
 
   addFamily(m: Omit<FamilyMove, 'id'>): Promise<boolean> {
     return this.write(async () => {
-      const row = await this.single<FamilyRow>(this.client.from('fin_family').insert(m).select(FAMILY_COLS).single());
+      const row = await this.single<FamilyRow>(this.client.from('fin_family').insert(familyRow(m)).select(FAMILY_COLS).single());
       this.family.update((l) => [...l, toFamily(row)]);
     });
   }
 
   updateFamily(id: string, patch: Partial<Omit<FamilyMove, 'id' | 'direction'>>): Promise<boolean> {
     return this.write(async () => {
-      const { error } = await this.client.from('fin_family').update(patch).eq('id', id);
+      const { error } = await this.client.from('fin_family').update(familyRow(patch)).eq('id', id);
       if (error) throw error;
       this.family.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
     });
