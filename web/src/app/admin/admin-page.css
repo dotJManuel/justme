@@ -21,12 +21,13 @@ legend{font-weight:700;font-size:.9rem;padding:0;margin-bottom:8px}
 .primary{font:inherit;font-weight:700;padding:12px 14px;border:0;border-bottom:4px solid #d95f00;border-radius:14px;background:var(--flame);color:#fff;cursor:pointer}
 .primary:disabled{opacity:.5;cursor:default}
 .habits{list-style:none;margin:0;padding:2px 4px 2px 2px;display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;overscroll-behavior:contain}
-.habits li{display:flex;flex-direction:column;gap:8px;padding:12px;border:2px solid var(--line);border-radius:16px}
+.habits{gap:6px}
+.habits li{display:flex;flex-direction:column;gap:4px;padding:6px 8px;border:2px solid var(--line);border-radius:12px}
 .habits li.off{opacity:.6}
-.fields{display:flex;flex-direction:column;gap:6px}
-.fields input:first-child{font-weight:700}
-.actions{display:flex;align-items:center;gap:8px}
-.icon{font:inherit;width:36px;height:36px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);cursor:pointer}
+.line{display:flex;align-items:center;gap:6px}
+.line .name{flex:1;font-weight:700;padding:5px 8px}
+.habits .when{font-size:.8rem;padding:3px 8px;color:var(--muted)}
+.icon{font:inherit;font-size:.75rem;width:28px;height:28px;flex:none;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
 .icon:disabled{opacity:.35;cursor:default}
-.switch{flex-direction:row;align-items:center;gap:8px;margin-left:auto;font-weight:600}
+.toggle{width:18px;height:18px;flex:none;margin:0 2px;accent-color:var(--done);cursor:pointer}
 .add{display:flex;flex-direction:column;gap:8px}

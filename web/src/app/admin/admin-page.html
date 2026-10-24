@@ -55,18 +55,20 @@
       <ul class="habits">
         @for (h of config.habits(); track h.k; let first = $first; let last = $last) {
           <li [class.off]="!h.active">
-            <div class="fields">
-              <input #n aria-label="Nombre" [value]="h.name" maxlength="80" (change)="rename(h.k, n, h.name)" />
-              <input #w aria-label="Horario o nota" placeholder="Horario o nota" [value]="h.when" maxlength="80" (change)="setWhen(h.k, w)" />
-            </div>
-            <div class="actions">
+            <div class="line">
+              <input #n class="name" aria-label="Nombre" [value]="h.name" maxlength="80" (change)="rename(h.k, n, h.name)" />
               <button type="button" class="icon" aria-label="Subir" [disabled]="first || busy()" (click)="move(h.k, -1)">▲</button>
               <button type="button" class="icon" aria-label="Bajar" [disabled]="last || busy()" (click)="move(h.k, 1)">▼</button>
-              <label class="switch">
-                <input type="checkbox" [checked]="h.active" (change)="setActive(h.k, !h.active)" />
-                {{ h.active ? 'Activa' : 'Inactiva' }}
-              </label>
+              <input
+                type="checkbox"
+                class="toggle"
+                [attr.aria-label]="h.active ? 'Activa (desactivar)' : 'Inactiva (activar)'"
+                [title]="h.active ? 'Activa' : 'Inactiva'"
+                [checked]="h.active"
+                (change)="setActive(h.k, !h.active)"
+              />
             </div>
+            <input #w class="when" aria-label="Horario o nota" placeholder="Horario o nota" [value]="h.when" maxlength="80" (change)="setWhen(h.k, w)" />
           </li>
         }
       </ul>

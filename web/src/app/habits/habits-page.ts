@@ -61,6 +61,9 @@ export class HabitsPage implements OnInit {
     });
   });
 
+  /** Solo se puede marcar o desmarcar el día de hoy; los anteriores se consultan. */
+  protected readonly canEdit = computed(() => this.sel() === this.todayKey());
+
   protected readonly selCount = computed(() => this.done(this.sel()));
   protected readonly progress = computed(() => Math.min(100, (this.selCount() / this.config.goal()) * 100));
   protected readonly selHabits = computed<Habits>(() => this.days()[this.sel()] ?? {});
@@ -105,6 +108,7 @@ export class HabitsPage implements OnInit {
   }
 
   protected toggle(hk: string) {
+    if (!this.canEdit()) return;
     const k = this.sel();
     const before = this.done(k);
     const h = { ...(this.days()[k] ?? {}) };

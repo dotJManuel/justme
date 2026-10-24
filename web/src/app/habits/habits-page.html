@@ -56,11 +56,16 @@
     <div class="bar"><i [style.width.%]="progress()"></i></div>
   </section>
 
+  @if (!canEdit()) {
+    <p class="readonly">Día anterior: solo lectura. Únicamente se puede marcar el día de hoy.</p>
+  }
+
   <div class="list">
     @for (h of config.activeHabits(); track h.k) {
       <button
         type="button"
         class="habit"
+        [disabled]="!canEdit()"
         [class.on]="selHabits()[h.k]"
         [attr.aria-pressed]="!!selHabits()[h.k]"
         (click)="toggle(h.k)"

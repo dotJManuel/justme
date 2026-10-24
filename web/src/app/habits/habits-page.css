@@ -32,6 +32,9 @@ h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
 .list{display:flex;flex-direction:column;gap:8px}
 .habit{display:flex;align-items:center;gap:12px;width:100%;text-align:left;appearance:none;background:var(--surface);border:2px solid var(--line);border-bottom-width:4px;border-radius:16px;padding:12px 14px;color:var(--ink);font:inherit;cursor:pointer;transition:transform .08s}
 .habit:active{transform:translateY(2px)}
+.habit:disabled{cursor:default;color:var(--ink)}
+.habit:disabled:active{transform:none}
+.readonly{margin:0;font-size:.85rem;color:var(--muted);text-align:center}
 .habit .chk{width:28px;height:28px;border-radius:9px;border:2px solid var(--line);flex:none;display:grid;place-items:center}
 .habit .txt{flex:1;min-width:0}
 .habit .name{display:block;font-weight:700}
