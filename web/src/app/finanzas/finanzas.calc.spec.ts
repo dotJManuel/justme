@@ -3,6 +3,7 @@ import {
   currentCutPeriod,
   cutPending,
   debtRows,
+  debtsWithDependents,
   expenseTotals,
   familyTotals,
   isoToLocalInput,
@@ -12,7 +13,7 @@ import {
   personSummaries,
   sortDebtRows,
 } from './finanzas.calc';
-import { CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove, Person } from './finanzas.models';
 
 const SANTANDER: CreditCard = { id: 'sa', name: 'Santander', cutDay: 12, active: true };
 const BBVA: CreditCard = { id: 'bb', name: 'BBVA', cutDay: 24, active: true };
@@ -29,15 +30,21 @@ const exp = (cardId: string | null, amount: number, total: number | null = null)
   purchasedAt: null,
 });
 
-const debt = (id: string, person: string, kind: Debt['kind'], amount: number, appliesTo: string | null = null): Debt => ({
-  id,
-  person,
-  kind,
-  concept: '',
-  amount,
-  date: null,
-  appliesTo,
-});
+const PEOPLE: Person[] = [
+  { id: 'p-isma', scope: 'deudor', name: 'Isma', active: true },
+  { id: 'p-ange', scope: 'deudor', name: 'Ange', active: true },
+  { id: 'p-yo', scope: 'deudor', name: 'YO', active: false },
+];
+const CONCEPTS: Concept[] = [{ id: 'k-pago', scope: 'movimiento', name: 'Pago', active: true }];
+
+const debt = (
+  id: string,
+  personId: string,
+  kind: Debt['kind'],
+  amount: number,
+  appliesTo: string | null = null,
+  conceptId: string | null = null,
+): Debt => ({ id, personId, kind, conceptId, amount, date: null, appliesTo });
 
 describe('resumen del mes', () => {
   // Valores del Excel: Santander 6305.18, BBVA 2427, fijos 4155, ingreso 15000
@@ -111,23 +118,30 @@ describe('fecha y hora de captura', () => {
 
 describe('dinero que me deben', () => {
   const debts = [
-    debt('c1', 'Isma', 'cargo', 7000),
-    debt('c2', 'Isma', 'cargo', 2599),
-    debt('a1', 'Isma', 'abono', 1000, 'c1'),
-    debt('a2', 'Isma', 'abono', 500, 'c1'),
-    debt('a3', 'isma', 'abono', 800, 'c2'),
-    debt('c3', 'Ange', 'cargo', 428),
+    debt('c1', 'p-isma', 'cargo', 7000),
+    debt('c2', 'p-isma', 'cargo', 2599),
+    debt('a1', 'p-isma', 'abono', 1000, 'c1', 'k-pago'),
+    debt('a2', 'p-isma', 'abono', 500, 'c1'),
+    debt('a3', 'p-isma', 'abono', 800, 'c2'),
+    debt('c3', 'p-ange', 'cargo', 428),
   ];
+  const today = new Date(2026, 9, 23);
 
   it('el saldo de cada cargo descuenta solo los abonos aplicados a él', () => {
-    const rows = debtRows(debts, new Date(2026, 9, 23));
+    const rows = debtRows(debts, today, PEOPLE, CONCEPTS);
     expect(rows.find((r) => r.id === 'c1')?.balance).toBe(5500);
     expect(rows.find((r) => r.id === 'c2')?.balance).toBe(1799);
     expect(rows.find((r) => r.id === 'a1')?.balance).toBeNull();
   });
 
-  it('agrupa por persona sin distinguir mayúsculas y ordena alfabéticamente', () => {
-    const { people, total } = personSummaries(debts);
+  it('resuelve el nombre de la persona y del concepto (vacío si no tiene)', () => {
+    const rows = debtRows(debts, today, PEOPLE, CONCEPTS);
+    expect(rows.find((r) => r.id === 'a1')).toMatchObject({ personName: 'Isma', conceptName: 'Pago' });
+    expect(rows.find((r) => r.id === 'c1')?.conceptName).toBe('');
+  });
+
+  it('agrupa por persona y ordena alfabéticamente', () => {
+    const { people, total } = personSummaries(debts, PEOPLE);
     expect(people.map((p) => p.person)).toEqual(['Ange', 'Isma']);
     const isma = people[1];
     expect(isma.lent).toBe(9599);
@@ -137,21 +151,46 @@ describe('dinero que me deben', () => {
     expect(total.pending).toBe(7727);
   });
 
+  it('una persona desactivada sigue en el resumen, marcada como inactiva', () => {
+    const { people, total } = personSummaries([debt('x', 'p-yo', 'cargo', 100)], PEOPLE);
+    expect(people[0]).toMatchObject({ person: 'YO', active: false, pending: 100 });
+    expect(total.pending).toBe(100);
+  });
+
   it('sin préstamos el porcentaje pagado es 0, no NaN', () => {
-    expect(personSummaries([debt('a', 'X', 'abono', 100)]).people[0].ratio).toBe(0);
+    expect(personSummaries([debt('a', 'p-isma', 'abono', 100)], PEOPLE).people[0].ratio).toBe(0);
   });
 
   it('cuenta la antigüedad en días', () => {
     expect(ageDays('2026-10-13', new Date(2026, 9, 23, 18, 30))).toBe(10);
     expect(ageDays('2026-10-23', new Date(2026, 9, 23, 0, 5))).toBe(0);
   });
+
+  it('borrar un cargo arrastra los abonos aplicados a él', () => {
+    expect(debtsWithDependents(debts, (d) => d.id === 'c1').map((d) => d.id)).toEqual(['c1', 'a1', 'a2']);
+  });
+
+  it('borrar un concepto arrastra los abonos de los cargos que desaparecen', () => {
+    const withConcept = [debt('c9', 'p-ange', 'cargo', 50, null, 'k-pago'), debt('a9', 'p-ange', 'abono', 20, 'c9')];
+    expect(debtsWithDependents(withConcept, (d) => d.conceptId === 'k-pago').map((d) => d.id)).toEqual(['c9', 'a9']);
+  });
 });
 
 describe('orden de movimientos', () => {
-  const at = (id: string, person: string, kind: Debt['kind'], amount: number, date: string | null): Debt => ({ ...debt(id, person, kind, amount), date });
+  const at = (id: string, personId: string, kind: Debt['kind'], amount: number, date: string | null): Debt => ({
+    ...debt(id, personId, kind, amount),
+    date,
+  });
   const rows = debtRows(
-    [at('1', 'Isma', 'cargo', 300, '2026-10-01'), at('2', 'Ange', 'abono', 100, '2026-10-05'), at('3', 'Ange', 'cargo', 200, null), at('4', 'Ange', 'cargo', 500, '2026-09-01')],
+    [
+      at('1', 'p-isma', 'cargo', 300, '2026-10-01'),
+      at('2', 'p-ange', 'abono', 100, '2026-10-05'),
+      at('3', 'p-ange', 'cargo', 200, null),
+      at('4', 'p-ange', 'cargo', 500, '2026-09-01'),
+    ],
     new Date(2026, 9, 23),
+    PEOPLE,
+    CONCEPTS,
   );
   const ids = (s: Parameters<typeof sortDebtRows>[1]) => sortDebtRows(rows, s).map((r) => r.id).join('');
 

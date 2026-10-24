@@ -1,9 +1,6 @@
 <section class="card" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
-  <p class="hint">
-    Son las opciones del campo Concepto al capturar un gasto. Desactivar un concepto deja de ofrecerlo en
-    gastos nuevos, pero los que ya lo usan se conservan. Eliminarlo lo borra por completo.
-  </p>
+  <p class="hint">{{ help() }}</p>
 
   <div class="grid head" aria-hidden="true">
     <span>Nombre</span>
@@ -14,7 +11,7 @@
   @for (c of concepts(); track c.id) {
     <div class="grid row" [class.off]="!c.active">
       <div class="c" data-l="Nombre">
-        <input #n aria-label="Nombre del concepto" maxlength="120" [value]="c.name" (change)="setName(c, n)" />
+        <input #n aria-label="Nombre del concepto" [attr.maxlength]="maxLength()" [value]="c.name" (change)="setName(c, n)" />
       </div>
       <div class="c" data-l="Activo">
         <label class="switch">
@@ -30,7 +27,7 @@
 
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Nombre">
-      <input name="name" aria-label="Nuevo concepto" placeholder="Nuevo concepto" maxlength="120" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+      <input name="name" aria-label="Nuevo concepto" placeholder="Nuevo concepto" [attr.maxlength]="maxLength()" [ngModel]="name()" (ngModelChange)="name.set($event)" />
     </div>
     <span></span>
     <button type="submit" class="primary x" [disabled]="!name().trim()">Agregar</button>

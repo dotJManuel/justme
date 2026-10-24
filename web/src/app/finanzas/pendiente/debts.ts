@@ -9,11 +9,10 @@ import {
   fmtDate,
   fmtMoney,
   parseMoney,
-  personKey,
   personSummaries,
   sortDebtRows,
 } from '../finanzas.calc';
-import { Debt } from '../finanzas.models';
+import { Concept, Debt, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
@@ -33,14 +32,15 @@ export class Debts {
   protected readonly movCols =
     'minmax(0,.9fr) 4.5rem minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 4rem minmax(0,1.3fr) 5.5rem';
 
-  protected readonly rows = computed(() => debtRows(this.fin.debts(), new Date()));
-  protected readonly summary = computed(() => personSummaries(this.fin.debts()));
-  protected readonly people = computed(() => this.summary().people.map((p) => p.person));
+  protected readonly rows = computed(() =>
+    debtRows(this.fin.debts(), new Date(), this.fin.people(), this.fin.concepts()),
+  );
+  protected readonly summary = computed(() => personSummaries(this.fin.debts(), this.fin.people()));
 
-  /** Persona por la que se filtran los movimientos (vacío = todas). */
+  /** Persona por la que se filtran los movimientos (id; vacío = todas). */
   private readonly filter = signal('');
   protected readonly activeFilter = computed(() =>
-    this.summary().people.some((p) => personKey(p.person) === this.filter()) ? this.filter() : '',
+    this.summary().people.some((p) => p.personId === this.filter()) ? this.filter() : '',
   );
   protected readonly sorts = signal<SortSpec[]>([]);
   protected readonly sortKeys: { key: SortKey; label: string }[] = [
@@ -54,38 +54,49 @@ export class Debts {
   protected readonly visible = computed(() => {
     const f = this.activeFilter();
     return sortDebtRows(
-      this.rows().filter((r) => !f || personKey(r.person) === f),
+      this.rows().filter((r) => !f || r.personId === f),
       this.sorts(),
     );
   });
-  private readonly cargoNames = computed(() => new Map(this.rows().map((r) => [r.id, r.concept || 'Sin concepto'])));
+  private readonly cargoNames = computed(() => new Map(this.rows().map((r) => [r.id, r.conceptName || 'Sin concepto'])));
 
   // Formulario de alta / edición
   protected readonly editId = signal<string | null>(null);
+  /** Id de la persona elegida (vacío = ninguna). */
   protected readonly person = signal('');
   protected readonly kind = signal<Debt['kind']>('cargo');
+  /** Id del concepto elegido (vacío = sin concepto). */
   protected readonly concept = signal('');
   protected readonly amount = signal('');
   protected readonly date = signal(dateKey(new Date()));
   protected readonly appliesTo = signal('');
 
+  /** Personas que se pueden elegir: las activas y, al editar, la que ya tiene el movimiento. */
+  protected readonly personOptions = computed<Person[]>(() =>
+    this.fin.people().filter((p) => p.scope === 'deudor' && (p.active || p.id === this.person())),
+  );
+  protected readonly conceptOptions = computed<Concept[]>(() =>
+    this.fin.concepts().filter((c) => c.scope === 'movimiento' && (c.active || c.id === this.concept())),
+  );
+  protected readonly hasActivePeople = computed(() => this.fin.people().some((p) => p.scope === 'deudor' && p.active));
+
   /** Cargos de esa persona a los que se puede aplicar un abono (con saldo, o el ya elegido). */
   protected readonly appliesOptions = computed(() => {
-    const p = personKey(this.person());
+    const p = this.person();
     if (this.kind() !== 'abono' || !p) return [];
     return this.rows().filter(
-      (r) => r.kind === 'cargo' && personKey(r.person) === p && ((r.balance ?? 0) > 0 || r.id === this.appliesTo()),
+      (r) => r.kind === 'cargo' && r.personId === p && ((r.balance ?? 0) > 0 || r.id === this.appliesTo()),
     );
   });
   protected readonly appliesValue = computed(() =>
     this.appliesOptions().some((o) => o.id === this.appliesTo()) ? this.appliesTo() : '',
   );
-  /** Una persona con abonos aplicados a sus cargos no se puede cambiar de nombre en el cargo. */
+  /** Un cargo con abonos aplicados no puede cambiar de persona. */
   protected readonly personLocked = computed(() => {
     const id = this.editId();
     return !!id && this.rows().some((r) => r.appliesTo === id);
   });
-  protected readonly canSave = computed(() => this.person().trim() !== '' && (parseMoney(this.amount()) ?? 0) > 0);
+  protected readonly canSave = computed(() => this.person() !== '' && (parseMoney(this.amount()) ?? 0) > 0);
 
   protected pct(ratio: number): string {
     return `${Math.round(ratio * 100)}%`;
@@ -106,17 +117,12 @@ export class Debts {
     return i < 0 ? null : { n: i + 1, arrow: this.sorts()[i].dir === 1 ? '▲' : '▼' };
   }
 
-  protected toggleFilter(person: string) {
-    const k = personKey(person);
-    this.filter.set(this.activeFilter() === k ? '' : k);
-  }
-
-  protected isFiltered(person: string): boolean {
-    return this.activeFilter() === personKey(person);
+  protected toggleFilter(personId: string) {
+    this.filter.set(this.activeFilter() === personId ? '' : personId);
   }
 
   protected appliesLabel(r: DebtRow): string {
-    return `${r.concept || 'Sin concepto'} · ${fmtMoney(r.balance ?? 0)} pendiente`;
+    return `${r.conceptName || 'Sin concepto'} · ${fmtMoney(r.balance ?? 0)} pendiente`;
   }
 
   protected target(r: DebtRow): string {
@@ -125,9 +131,9 @@ export class Debts {
 
   protected startEdit(r: DebtRow) {
     this.editId.set(r.id);
-    this.person.set(r.person);
+    this.person.set(r.personId);
     this.kind.set(r.kind);
-    this.concept.set(r.concept);
+    this.concept.set(r.conceptId ?? '');
     this.amount.set(String(r.amount));
     this.date.set(r.date ?? '');
     this.appliesTo.set(r.appliesTo ?? '');
@@ -147,8 +153,8 @@ export class Debts {
     const amount = parseMoney(this.amount());
     if (!this.canSave() || !amount) return;
     const data = {
-      person: this.person().trim(),
-      concept: this.concept().trim(),
+      personId: this.person(),
+      conceptId: this.concept() || null,
       amount,
       date: this.date() || null,
       appliesTo: this.kind() === 'abono' ? this.appliesValue() || null : null,
@@ -162,7 +168,7 @@ export class Debts {
     const abonos = r.kind === 'cargo' ? this.rows().filter((x) => x.appliesTo === r.id).length : 0;
     const msg = abonos
       ? `Este cargo tiene ${abonos} abono${abonos === 1 ? '' : 's'} aplicado${abonos === 1 ? '' : 's'}; también se ${abonos === 1 ? 'eliminará' : 'eliminarán'}. ¿Continuar?`
-      : `¿Eliminar este ${r.kind} de ${r.person}?`;
+      : `¿Eliminar este ${r.kind} de ${r.personName}?`;
     if (!confirm(msg)) return;
     if (await this.fin.removeDebt(r.id)) {
       const id = this.editId();

@@ -1,9 +1,10 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { debtsWithDependents } from '../finanzas.calc';
 import { Concept } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
-/** Catálogo de opciones de un select: agregar, renombrar, desactivar y eliminar. */
+/** Catálogo de opciones de un select de conceptos: agregar, renombrar, desactivar y eliminar. */
 @Component({
   selector: 'app-concepts-admin',
   imports: [FormsModule],
@@ -15,23 +16,32 @@ export class ConceptsAdmin {
 
   readonly scope = input.required<Concept['scope']>();
   readonly title = input.required<string>();
+  readonly help = input.required<string>();
 
   protected readonly cols = 'minmax(0,2fr) 9rem 5.5rem';
 
   protected readonly concepts = computed(() => this.fin.concepts().filter((c) => c.scope === this.scope()));
+  /** Tope de caracteres: los conceptos de movimientos eran texto más largo. */
+  protected readonly maxLength = computed(() => (this.scope() === 'movimiento' ? 200 : 120));
+  private readonly unit = computed(() => (this.scope() === 'movimiento' ? 'movimiento' : 'gasto'));
 
   protected readonly name = signal('');
 
-  /** Cuántos registros usan cada opción (los gastos, en el catálogo de gastos). */
+  /** Cuántos registros usan cada opción (gastos o movimientos, según el catálogo). */
   protected readonly usage = computed(() => {
     const counts = new Map<string, number>();
-    for (const e of this.fin.expenses()) counts.set(e.conceptId, (counts.get(e.conceptId) ?? 0) + 1);
+    const ids =
+      this.scope() === 'movimiento'
+        ? this.fin.debts().map((d) => d.conceptId)
+        : this.fin.expenses().map((e) => e.conceptId);
+    for (const id of ids) if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
     return counts;
   });
 
   protected usageText(c: Concept): string {
     const n = this.usage().get(c.id) ?? 0;
-    return n === 0 ? 'Sin gastos' : n === 1 ? '1 gasto' : `${n} gastos`;
+    const unit = this.unit();
+    return n === 0 ? `Sin ${unit}s` : n === 1 ? `1 ${unit}` : `${n} ${unit}s`;
   }
 
   protected setName(c: Concept, el: HTMLInputElement) {
@@ -45,10 +55,15 @@ export class ConceptsAdmin {
   }
 
   protected async remove(c: Concept) {
-    const n = this.usage().get(c.id) ?? 0;
+    // Los movimientos arrastran además los abonos aplicados a los cargos que se borran.
+    const n =
+      this.scope() === 'movimiento'
+        ? debtsWithDependents(this.fin.debts(), (d) => d.conceptId === c.id).length
+        : (this.usage().get(c.id) ?? 0);
+    const unit = this.unit();
     const detail =
       n > 0
-        ? `\n\nTambién se ${n === 1 ? 'eliminará 1 gasto que lo usa' : `eliminarán ${n} gastos que lo usan`}. Si solo quieres dejar de usarlo, desactívalo.`
+        ? `\n\nTambién se ${n === 1 ? `eliminará 1 ${unit} que lo usa` : `eliminarán ${n} ${unit}s que lo usan`}. Si solo quieres dejar de usarlo, desactívalo.`
         : '';
     if (confirm(`¿Eliminar «${c.name}» por completo?${detail}`)) await this.fin.removeConcept(c.id);
   }

@@ -1,0 +1,35 @@
+<section class="card" [style.--cols]="cols">
+  <h2>{{ title() }}</h2>
+  <p class="hint">{{ help() }}</p>
+
+  <div class="grid head" aria-hidden="true">
+    <span>Nombre</span>
+    <span>Activa</span>
+    <span></span>
+  </div>
+
+  @for (p of people(); track p.id) {
+    <div class="grid row" [class.off]="!p.active">
+      <div class="c" data-l="Nombre">
+        <input #n aria-label="Nombre de la persona" maxlength="60" [value]="p.name" (change)="setName(p, n)" />
+      </div>
+      <div class="c" data-l="Activa">
+        <label class="switch">
+          <input type="checkbox" [checked]="p.active" (change)="toggle(p)" [attr.aria-label]="(p.active ? 'Desactivar ' : 'Activar ') + p.name" />
+          <span class="muted">{{ usageText(p) }}</span>
+        </label>
+      </div>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + p.name" (click)="remove(p)">✕</button>
+    </div>
+  } @empty {
+    <p class="hint">Todavía no hay personas. Agrega la primera abajo.</p>
+  }
+
+  <form class="grid row add" (ngSubmit)="add()">
+    <div class="c" data-l="Nombre">
+      <input name="name" aria-label="Nueva persona" placeholder="Nueva persona" maxlength="60" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    </div>
+    <span></span>
+    <button type="submit" class="primary x" [disabled]="!name().trim()">Agregar</button>
+  </form>
+</section>

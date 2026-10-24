@@ -1,10 +1,20 @@
 /** Opción de un catálogo (select) dada de alta en el panel de administración. */
 export interface Concept {
   id: string;
-  /** Para qué lista sirve: hoy solo los gastos. */
-  scope: 'gasto';
+  /** Para qué lista sirve: los gastos o los movimientos de dinero que me deben. */
+  scope: 'gasto' | 'movimiento';
   name: string;
   /** Desactivado: ya no se ofrece al capturar, pero conserva sus registros. */
+  active: boolean;
+}
+
+/** Persona dada de alta en el panel de administración. */
+export interface Person {
+  id: string;
+  /** Para qué lista sirve: hoy solo quien me debe. */
+  scope: 'deudor';
+  name: string;
+  /** Desactivada: ya no se ofrece al capturar, pero conserva sus movimientos. */
   active: boolean;
 }
 
@@ -52,9 +62,10 @@ export interface Cut {
 /** Cargo = dinero que presté; abono = dinero que me pagaron. */
 export interface Debt {
   id: string;
-  person: string;
+  personId: string;
   kind: 'cargo' | 'abono';
-  concept: string;
+  /** Opcional: un movimiento puede no tener concepto. */
+  conceptId: string | null;
   amount: number;
   /** AAAA-MM-DD */
   date: string | null;

@@ -9,10 +9,10 @@
     <span class="pl">% pagado</span>
   </div>
 
-  @for (p of summary().people; track p.person) {
-    <div class="grid row">
-      <button type="button" class="who" [class.on]="isFiltered(p.person)" [attr.aria-pressed]="isFiltered(p.person)" title="Ver solo sus movimientos" (click)="toggleFilter(p.person)">
-        {{ p.person }}
+  @for (p of summary().people; track p.personId) {
+    <div class="grid row" [class.off]="!p.active">
+      <button type="button" class="who" [class.on]="activeFilter() === p.personId" [attr.aria-pressed]="activeFilter() === p.personId" title="Ver solo sus movimientos" (click)="toggleFilter(p.personId)">
+        {{ p.person }}{{ p.active ? '' : ' (inactiva)' }}
       </button>
       <div class="c" data-l="Prestado"><div class="ro">{{ money(p.lent) }}</div></div>
       <div class="c" data-l="Pagado"><div class="ro">{{ money(p.paid) }}</div></div>
@@ -47,12 +47,12 @@
   <form class="form" (ngSubmit)="submit()">
     <label>
       Persona
-      <input name="person" list="people" maxlength="60" autocomplete="off" [disabled]="personLocked()" [ngModel]="person()" (ngModelChange)="person.set($event)" />
-      <datalist id="people">
-        @for (n of people(); track n) {
-          <option [value]="n"></option>
+      <select name="person" [disabled]="personLocked()" [ngModel]="person()" (ngModelChange)="person.set($event)">
+        <option value="">Elige una persona…</option>
+        @for (p of personOptions(); track p.id) {
+          <option [value]="p.id">{{ p.name }}{{ p.active ? '' : ' (inactiva)' }}</option>
         }
-      </datalist>
+      </select>
     </label>
     <label>
       Tipo
@@ -63,7 +63,12 @@
     </label>
     <label>
       Concepto
-      <input name="concept" maxlength="200" [ngModel]="concept()" (ngModelChange)="concept.set($event)" />
+      <select name="concept" [ngModel]="concept()" (ngModelChange)="concept.set($event)">
+        <option value="">Sin concepto</option>
+        @for (c of conceptOptions(); track c.id) {
+          <option [value]="c.id">{{ c.name }}{{ c.active ? '' : ' (inactivo)' }}</option>
+        }
+      </select>
     </label>
     <label>
       Monto
@@ -94,6 +99,9 @@
   @if (personLocked()) {
     <p class="hint">Este cargo ya tiene abonos, así que no se puede cambiar la persona.</p>
   }
+  @if (!hasActivePeople()) {
+    <p class="hint">Primero da de alta personas en la pestaña Administrar.</p>
+  }
 </section>
 
 <section data-section class="card" [style.--cols]="movCols">
@@ -102,8 +110,8 @@
   @if (summary().people.length > 1) {
     <div class="chips" role="group" aria-label="Filtrar por persona">
       <button type="button" class="chip" [class.on]="!activeFilter()" [attr.aria-pressed]="!activeFilter()" (click)="toggleFilter('')">Todos</button>
-      @for (n of people(); track n) {
-        <button type="button" class="chip" [class.on]="isFiltered(n)" [attr.aria-pressed]="isFiltered(n)" (click)="toggleFilter(n)">{{ n }}</button>
+      @for (p of summary().people; track p.personId) {
+        <button type="button" class="chip" [class.on]="activeFilter() === p.personId" [attr.aria-pressed]="activeFilter() === p.personId" (click)="toggleFilter(p.personId)">{{ p.person }}</button>
       }
     </div>
   }
@@ -135,9 +143,9 @@
 
   @for (r of visible(); track r.id) {
     <div class="grid row">
-      <div class="c" data-l="Persona"><div class="t strong">{{ r.person }}</div></div>
+      <div class="c" data-l="Persona"><div class="t strong">{{ r.personName }}</div></div>
       <div class="c" data-l="Tipo"><span class="badge" [class.cargo]="r.kind === 'cargo'">{{ r.kind === 'cargo' ? 'Cargo' : 'Abono' }}</span></div>
-      <div class="c wide" data-l="Concepto"><div class="t">{{ r.concept || '—' }}</div></div>
+      <div class="c wide" data-l="Concepto"><div class="t">{{ r.conceptName || '—' }}</div></div>
       <div class="c" data-l="Monto"><div class="t num">{{ money(r.amount) }}</div></div>
       <div class="c" data-l="Fecha"><div class="t">{{ r.date ? fmtDate(r.date) : '—' }}</div></div>
       <div class="c" data-l="Días"><div class="t num">{{ r.age === null ? '—' : r.age }}</div></div>
@@ -149,8 +157,8 @@
         }
       </div>
       <div class="x acts">
-        <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.person" (click)="startEdit(r)">✎</button>
-        <button type="button" class="icon" [attr.aria-label]="'Eliminar movimiento de ' + r.person" (click)="remove(r)">✕</button>
+        <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.personName" (click)="startEdit(r)">✎</button>
+        <button type="button" class="icon" [attr.aria-label]="'Eliminar movimiento de ' + r.personName" (click)="remove(r)">✕</button>
       </div>
     </div>
   } @empty {

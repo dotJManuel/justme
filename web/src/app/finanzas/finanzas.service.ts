@@ -1,8 +1,15 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PostgrestError } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase.service';
-import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { debtsWithDependents } from './finanzas.calc';
+import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove, Person } from './finanzas.models';
 
+interface PersonRow {
+  id: string;
+  scope: Person['scope'];
+  name: string;
+  active: boolean;
+}
 interface ConceptRow {
   id: string;
   scope: Concept['scope'];
@@ -35,9 +42,9 @@ interface CutRow {
 }
 interface DebtRow {
   id: string;
-  person: string;
+  person_id: string;
   kind: Debt['kind'];
-  concept: string;
+  concept_id: string | null;
   amount: number;
   date: string | null;
   applies_to: string | null;
@@ -51,13 +58,15 @@ interface FamilyRow {
   amount: number;
 }
 
+const PERSON_COLS = 'id, scope, name, active';
 const CONCEPT_COLS = 'id, scope, name, active';
 const CARD_COLS = 'id, name, cut_day, active';
 const EXPENSE_COLS = 'id, card_id, section, concept_id, installment, total, amount, purchased_at';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
-const DEBT_COLS = 'id, person, kind, concept, amount, date, applies_to';
+const DEBT_COLS = 'id, person_id, kind, concept_id, amount, date, applies_to';
 const FAMILY_COLS = 'id, direction, name, person, date, amount';
 
+const toPerson = (r: PersonRow): Person => ({ ...r });
 const toConcept = (r: ConceptRow): Concept => ({ ...r });
 const toCard = (r: CardRow): CreditCard => ({ id: r.id, name: r.name, cutDay: r.cut_day, active: r.active });
 const toExpense = (r: ExpenseRow): Expense => ({
@@ -90,9 +99,9 @@ const expenseRow = (e: Partial<Omit<Expense, 'id'>>) => ({
 });
 const toDebt = (r: DebtRow): Debt => ({
   id: r.id,
-  person: r.person,
+  personId: r.person_id,
   kind: r.kind,
-  concept: r.concept,
+  conceptId: r.concept_id,
   amount: r.amount,
   date: r.date,
   appliesTo: r.applies_to,
@@ -100,8 +109,8 @@ const toDebt = (r: DebtRow): Debt => ({
 const toFamily = (r: FamilyRow): FamilyMove => ({ ...r });
 
 const debtPatchRow = (p: Partial<Omit<Debt, 'id'>>) => ({
-  ...(p.person !== undefined && { person: p.person }),
-  ...(p.concept !== undefined && { concept: p.concept }),
+  ...(p.personId !== undefined && { person_id: p.personId }),
+  ...(p.conceptId !== undefined && { concept_id: p.conceptId }),
   ...(p.amount !== undefined && { amount: p.amount }),
   ...(p.date !== undefined && { date: p.date }),
   ...(p.appliesTo !== undefined && { applies_to: p.appliesTo }),
@@ -112,6 +121,7 @@ const debtPatchRow = (p: Partial<Omit<Debt, 'id'>>) => ({
 export class FinanzasService {
   private readonly client = inject(SupabaseService).client;
 
+  readonly people = signal<Person[]>([]);
   readonly concepts = signal<Concept[]>([]);
   readonly cards = signal<CreditCard[]>([]);
   readonly expenses = signal<Expense[]>([]);
@@ -141,6 +151,7 @@ export class FinanzasService {
     this.loading = undefined;
     this.loaded.set(false);
     this.error.set('');
+    this.people.set([]);
     this.concepts.set([]);
     this.cards.set([]);
     this.expenses.set([]);
@@ -162,6 +173,33 @@ export class FinanzasService {
     });
   }
 
+  addPerson(scope: Person['scope'], name: string): Promise<boolean> {
+    return this.write(async () => {
+      const row = await this.single<PersonRow>(
+        this.client.from('fin_people').insert({ scope, name }).select(PERSON_COLS).single(),
+      );
+      this.people.update((l) => [...l, toPerson(row)]);
+    });
+  }
+
+  updatePerson(id: string, patch: Partial<Pick<Person, 'name' | 'active'>>): Promise<boolean> {
+    return this.write(async () => {
+      const { error } = await this.client.from('fin_people').update(patch).eq('id', id);
+      if (error) throw error;
+      this.people.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    });
+  }
+
+  /** Borrar una persona borra también sus movimientos (lo hace la base de datos; aquí se refleja igual). */
+  removePerson(id: string): Promise<boolean> {
+    return this.write(async () => {
+      const { error } = await this.client.from('fin_people').delete().eq('id', id);
+      if (error) throw error;
+      this.people.update((l) => l.filter((x) => x.id !== id));
+      this.dropDebts((d) => d.personId === id);
+    });
+  }
+
   addConcept(scope: Concept['scope'], name: string): Promise<boolean> {
     return this.write(async () => {
       const row = await this.single<ConceptRow>(
@@ -179,13 +217,14 @@ export class FinanzasService {
     });
   }
 
-  /** Borrar un concepto borra también los gastos que lo usan (lo hace la base de datos; aquí se refleja igual). */
+  /** Borrar un concepto borra también los gastos y movimientos que lo usan (lo hace la base de datos; aquí se refleja igual). */
   removeConcept(id: string): Promise<boolean> {
     return this.write(async () => {
       const { error } = await this.client.from('fin_concepts').delete().eq('id', id);
       if (error) throw error;
       this.concepts.update((l) => l.filter((x) => x.id !== id));
       this.expenses.update((l) => l.filter((x) => x.conceptId !== id));
+      this.dropDebts((d) => d.conceptId === id);
     });
   }
 
@@ -268,7 +307,7 @@ export class FinanzasService {
       const row = await this.single<DebtRow>(
         this.client
           .from('fin_debts')
-          .insert({ person: d.person, kind: d.kind, concept: d.concept, amount: d.amount, date: d.date, applies_to: d.appliesTo })
+          .insert({ person_id: d.personId, kind: d.kind, concept_id: d.conceptId, amount: d.amount, date: d.date, applies_to: d.appliesTo })
           .select(DEBT_COLS)
           .single(),
       );
@@ -317,10 +356,17 @@ export class FinanzasService {
     });
   }
 
+  /** Quita de la memoria los movimientos que cumplen `match` y los abonos de los cargos quitados. */
+  private dropDebts(match: (d: Debt) => boolean) {
+    const gone = new Set(debtsWithDependents(this.debts(), match).map((d) => d.id));
+    this.debts.update((l) => l.filter((x) => !gone.has(x.id)));
+  }
+
   private async fetch(): Promise<void> {
     const c = this.client;
-    const [settings, concepts, cards, expenses, cuts, debts, family] = await Promise.all([
+    const [settings, people, concepts, cards, expenses, cuts, debts, family] = await Promise.all([
       c.from('fin_settings').select('monthly_income').maybeSingle(),
+      c.from('fin_people').select(PERSON_COLS).order('created_at'),
       c.from('fin_concepts').select(CONCEPT_COLS).order('created_at'),
       c.from('fin_cards').select(CARD_COLS).order('created_at'),
       c.from('fin_expenses').select(EXPENSE_COLS).order('created_at'),
@@ -328,8 +374,9 @@ export class FinanzasService {
       c.from('fin_debts').select(DEBT_COLS).order('created_at'),
       c.from('fin_family').select(FAMILY_COLS).order('created_at'),
     ]);
-    for (const r of [settings, concepts, cards, expenses, cuts, debts, family]) if (r.error) throw r.error;
+    for (const r of [settings, people, concepts, cards, expenses, cuts, debts, family]) if (r.error) throw r.error;
     this.income.set(settings.data?.monthly_income ?? 0);
+    this.people.set((people.data as PersonRow[]).map(toPerson));
     this.concepts.set((concepts.data as ConceptRow[]).map(toConcept));
     this.cards.set((cards.data as CardRow[]).map(toCard));
     this.expenses.set((expenses.data as ExpenseRow[]).map(toExpense));

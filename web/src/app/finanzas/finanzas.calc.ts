@@ -1,6 +1,6 @@
 import { MN } from '../habits/habits.config';
 import { dateKey, parseKey } from '../habits/streaks';
-import { CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove, Person } from './finanzas.models';
 
 // Cálculos del módulo de finanzas, sin Angular ni Supabase: son los mismos que hacía el Excel.
 
@@ -109,6 +109,9 @@ export function localInputToIso(value: string): string | null {
 // ── Dinero que me deben ─────────────────────────────────────────────────
 
 export interface DebtRow extends Debt {
+  personName: string;
+  /** Vacío si el movimiento no tiene concepto. */
+  conceptName: string;
   /** Cargos: lo que falta por pagar de ese cargo. Abonos: null. */
   balance: number | null;
   /** Días desde la fecha del movimiento; null si no tiene fecha. */
@@ -122,20 +125,43 @@ export function ageDays(key: string, today: Date): number {
   return Math.round((to.getTime() - from.getTime()) / DAY_MS);
 }
 
-export function debtRows(debts: Debt[], today: Date): DebtRow[] {
+export function debtRows(debts: Debt[], today: Date, people: Person[], concepts: Concept[]): DebtRow[] {
+  const personNames = new Map(people.map((p) => [p.id, p.name]));
+  const conceptNames = new Map(concepts.map((c) => [c.id, c.name]));
   const paidTo = new Map<string, number>();
   for (const d of debts) {
     if (d.kind === 'abono' && d.appliesTo) paidTo.set(d.appliesTo, (paidTo.get(d.appliesTo) ?? 0) + d.amount);
   }
   return debts.map((d) => ({
     ...d,
+    personName: personNames.get(d.personId) ?? '',
+    conceptName: (d.conceptId && conceptNames.get(d.conceptId)) || '',
     balance: d.kind === 'cargo' ? round2(d.amount - (paidTo.get(d.id) ?? 0)) : null,
     age: d.date ? ageDays(d.date, today) : null,
   }));
 }
 
+/** Los movimientos que cumplen `match` y, en cascada, los abonos aplicados a los cargos que desaparecen con ellos. */
+export function debtsWithDependents(debts: Debt[], match: (d: Debt) => boolean): Debt[] {
+  const gone = new Set(debts.filter(match).map((d) => d.id));
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const d of debts) {
+      if (!gone.has(d.id) && d.appliesTo && gone.has(d.appliesTo)) {
+        gone.add(d.id);
+        grew = true;
+      }
+    }
+  }
+  return debts.filter((d) => gone.has(d.id));
+}
+
 export interface PersonSummary {
+  personId: string;
   person: string;
+  /** Una persona desactivada sigue en el resumen: lo que te debe es dinero real. */
+  active: boolean;
   lent: number;
   paid: number;
   pending: number;
@@ -143,25 +169,21 @@ export interface PersonSummary {
   ratio: number;
 }
 
-export const personKey = (p: string): string => p.trim().toLowerCase();
-
-function summarize(person: string, rows: Debt[]): PersonSummary {
+function summarize(personId: string, person: string, active: boolean, rows: Debt[]): PersonSummary {
   const lent = sum(rows.filter((d) => d.kind === 'cargo').map((d) => d.amount));
   const paid = sum(rows.filter((d) => d.kind === 'abono').map((d) => d.amount));
-  return { person, lent, paid, pending: round2(lent - paid), ratio: lent === 0 ? 0 : paid / lent };
+  return { personId, person, active, lent, paid, pending: round2(lent - paid), ratio: lent === 0 ? 0 : paid / lent };
 }
 
-/** Una fila por persona (sin distinguir mayúsculas), en orden alfabético, y el total general. */
-export function personSummaries(debts: Debt[]): { people: PersonSummary[]; total: PersonSummary } {
+/** Una fila por persona con movimientos, en orden alfabético, y el total general. */
+export function personSummaries(debts: Debt[], people: Person[]): { people: PersonSummary[]; total: PersonSummary } {
+  const byId = new Map(people.map((p) => [p.id, p]));
   const groups = new Map<string, Debt[]>();
-  for (const d of debts) {
-    const k = personKey(d.person);
-    groups.set(k, [...(groups.get(k) ?? []), d]);
-  }
-  const people = [...groups.values()]
-    .map((rows) => summarize(rows[0].person.trim(), rows))
+  for (const d of debts) groups.set(d.personId, [...(groups.get(d.personId) ?? []), d]);
+  const list = [...groups]
+    .map(([id, rows]) => summarize(id, byId.get(id)?.name ?? '', byId.get(id)?.active ?? true, rows))
     .sort((a, b) => a.person.localeCompare(b.person, 'es', { sensitivity: 'base' }));
-  return { people, total: summarize('Total', debts) };
+  return { people: list, total: summarize('', 'Total', true, debts) };
 }
 
 // ── Dinero con familia ──────────────────────────────────────────────────
@@ -185,9 +207,20 @@ export interface SortSpec {
 export function sortDebtRows(rows: DebtRow[], sorts: SortSpec[]): DebtRow[] {
   const specs: SortSpec[] = sorts.length ? sorts : [{ key: 'date', dir: -1 }];
   const value = (r: DebtRow, key: SortKey): string | number | null => {
-    if (key === 'date') return r.date;
-    if (key === 'balance') return r.balance;
-    return r[key];
+    switch (key) {
+      case 'person':
+        return r.personName;
+      case 'concept':
+        return r.conceptName;
+      case 'date':
+        return r.date;
+      case 'balance':
+        return r.balance;
+      case 'kind':
+        return r.kind;
+      case 'amount':
+        return r.amount;
+    }
   };
   return [...rows].sort((a, b) => {
     for (const { key, dir } of specs) {
