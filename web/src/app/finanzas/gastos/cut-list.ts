@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { currentCutPeriod, cutPending, fmtMoney, parseMoney } from '../finanzas.calc';
-import { Card } from '../finanzas.models';
+import { CreditCard } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
 /**
- * Corte en curso de una tarjeta. El periodo se calcula solo (Santander corta el 12 y BBVA el 24 de
- * cada mes); el registro se crea la primera vez que se captura el monto del corte o lo pagado.
+ * Corte en curso de una tarjeta. El periodo se calcula solo a partir del día de corte de la tarjeta
+ * (se define en Administrar); el registro se crea la primera vez que se captura el monto del corte o lo pagado.
  */
 @Component({
   selector: 'app-cut-list',
@@ -15,16 +15,16 @@ import { FinanzasService } from '../finanzas.service';
 export class CutList {
   private readonly fin = inject(FinanzasService);
 
-  readonly card = input.required<Card>();
+  readonly card = input.required<CreditCard>();
   readonly title = input.required<string>();
 
   protected readonly money = fmtMoney;
   protected readonly cols = 'minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)';
 
   private readonly today = new Date();
-  protected readonly period = computed(() => currentCutPeriod(this.card(), this.today));
+  protected readonly period = computed(() => currentCutPeriod(this.card().cutDay, this.today));
   private readonly saved = computed(() =>
-    this.fin.cuts().find((c) => c.card === this.card() && c.periodEnd === this.period().end),
+    this.fin.cuts().find((c) => c.cardId === this.card().id && c.periodEnd === this.period().end),
   );
   protected readonly amount = computed(() => this.saved()?.amount ?? 0);
   protected readonly paid = computed(() => this.saved()?.paid ?? 0);
@@ -59,7 +59,7 @@ export class CutList {
     if (row) return this.fin.updateCut(row.id, field === 'amount' ? { amount: n } : { paid: n });
     const { label, end } = this.period();
     return this.fin.addCut({
-      card: this.card(),
+      cardId: this.card().id,
       period: label,
       periodEnd: end,
       amount: field === 'amount' ? n : 0,

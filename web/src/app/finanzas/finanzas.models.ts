@@ -1,10 +1,22 @@
-export type Section = 'santander' | 'bbva' | 'fijos';
-export type Card = 'santander' | 'bbva';
+/** Gasto de una tarjeta de crédito o gasto fijo mensual. */
+export type Section = 'tarjeta' | 'fijos';
+
+/** Tarjeta de crédito dada de alta en el panel de administración. */
+export interface CreditCard {
+  id: string;
+  name: string;
+  /** Día del mes en que corta (1 a 31; en meses más cortos, el último día). */
+  cutDay: number;
+  /** Desactivada: se oculta y no suma en el resumen, pero conserva su historial. */
+  active: boolean;
+}
 
 /** Una fila de tarjeta (compra) o de gastos fijos. */
 export interface Expense {
   id: string;
   section: Section;
+  /** Tarjeta del gasto; null en gastos fijos. */
+  cardId: string | null;
   concept: string;
   /** "A meses", por ejemplo "05/09". Vacío si es un pago único. */
   installment: string;
@@ -18,7 +30,7 @@ export interface Expense {
 
 export interface Cut {
   id: string;
-  card: Card;
+  cardId: string;
   /** Texto del corte, por ejemplo "13 oct a 12 nov". */
   period: string;
   /** AAAA-MM-DD del día de corte; null en los cortes importados del Excel. */
@@ -45,6 +57,8 @@ export interface FamilyMove {
   direction: 'recibido' | 'dado';
   /** Concepto (recibido) o para quién (dado). */
   name: string;
+  /** De quién se recibió el dinero; solo en "recibido" (vacío si no se indicó). */
+  person: string;
   date: string | null;
   amount: number;
 }

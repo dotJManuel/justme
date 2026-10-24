@@ -18,15 +18,18 @@ export class FamilyList {
   readonly direction = input.required<FamilyMove['direction']>();
 
   protected readonly money = fmtMoney;
-  protected readonly cols = 'minmax(0,2fr) 9.5rem minmax(0,1fr) 5.5rem';
-
   protected readonly received = computed(() => this.direction() === 'recibido');
+  /** Recibido lleva una columna más: de quién se recibió. */
+  protected readonly cols = computed(() =>
+    this.received() ? 'minmax(0,2fr) minmax(0,1.4fr) 9.5rem minmax(0,1fr) 5.5rem' : 'minmax(0,2fr) 9.5rem minmax(0,1fr) 5.5rem',
+  );
   protected readonly title = computed(() => (this.received() ? 'Recibido' : 'Dado'));
   protected readonly nameLabel = computed(() => (this.received() ? 'Concepto' : 'Para quién'));
   protected readonly rows = computed(() => this.fin.family().filter((m) => m.direction === this.direction()));
   protected readonly total = computed(() => sum(this.rows().map((m) => m.amount)));
 
   protected readonly name = signal('');
+  protected readonly person = signal('');
   protected readonly date = signal(dateKey(new Date()));
   protected readonly amount = signal('');
 
@@ -36,6 +39,11 @@ export class FamilyList {
     const name = el.value.trim();
     if (!name) return void (el.value = m.name);
     if (name !== m.name) this.save(m, el, { name }, m.name);
+  }
+
+  protected setPerson(m: FamilyMove, el: HTMLInputElement) {
+    const person = el.value.trim();
+    if (person !== m.person) this.save(m, el, { person }, m.person);
   }
 
   protected setDate(m: FamilyMove, el: HTMLInputElement) {
@@ -63,11 +71,13 @@ export class FamilyList {
     const ok = await this.fin.addFamily({
       direction: this.direction(),
       name: this.name().trim(),
+      person: this.received() ? this.person().trim() : '',
       date: this.date() || null,
       amount,
     });
     if (ok) {
       this.name.set('');
+      this.person.set('');
       this.date.set(dateKey(new Date()));
       this.amount.set('');
     }

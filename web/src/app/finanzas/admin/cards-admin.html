@@ -1,0 +1,45 @@
+<section class="card" [style.--cols]="cols">
+  <h2>Tarjetas de crédito</h2>
+  <p class="hint">
+    Cada tarjeta activa aparece en Gastos con su tabla y su corte. Desactivar una tarjeta la oculta y deja de
+    sumar en el resumen, pero conserva su historial. Eliminarla la borra por completo.
+  </p>
+
+  <div class="grid head" aria-hidden="true">
+    <span>Nombre</span>
+    <span class="num">Día de corte</span>
+    <span class="num">Activa</span>
+    <span></span>
+  </div>
+
+  @for (c of cards(); track c.id) {
+    <div class="grid row" [class.off]="!c.active">
+      <div class="c" data-l="Nombre">
+        <input #n aria-label="Nombre de la tarjeta" maxlength="40" [value]="c.name" (change)="setName(c, n)" />
+      </div>
+      <div class="c" data-l="Día de corte">
+        <input #d class="num" type="number" min="1" max="31" step="1" aria-label="Día de corte" [value]="c.cutDay" (change)="setCutDay(c, d)" />
+      </div>
+      <div class="c" data-l="Activa">
+        <label class="switch">
+          <input type="checkbox" [checked]="c.active" (change)="toggle(c)" [attr.aria-label]="(c.active ? 'Desactivar ' : 'Activar ') + c.name" />
+          <span class="muted">{{ usage(c) }}</span>
+        </label>
+      </div>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + c.name" (click)="remove(c)">✕</button>
+    </div>
+  } @empty {
+    <p class="hint">Todavía no hay tarjetas. Agrega la primera abajo.</p>
+  }
+
+  <form class="grid row add" (ngSubmit)="add()">
+    <div class="c" data-l="Nombre">
+      <input name="name" aria-label="Nueva tarjeta" placeholder="Nueva tarjeta" maxlength="40" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    </div>
+    <div class="c" data-l="Día de corte">
+      <input name="cutDay" class="num" type="number" min="1" max="31" step="1" aria-label="Día de corte" placeholder="1 a 31" [ngModel]="cutDay()" (ngModelChange)="cutDay.set($event)" />
+    </div>
+    <span></span>
+    <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
+  </form>
+</section>

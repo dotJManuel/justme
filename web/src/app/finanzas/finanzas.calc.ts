@@ -1,6 +1,6 @@
 import { MN } from '../habits/habits.config';
 import { dateKey, parseKey } from '../habits/streaks';
-import { Card, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
 
 // Cálculos del módulo de finanzas, sin Angular ni Supabase: son los mismos que hacía el Excel.
 
@@ -43,8 +43,8 @@ export function expenseTotals(rows: Expense[]): ExpenseTotals {
 }
 
 export interface MonthSummary {
-  santander: number;
-  bbva: number;
+  /** Lo que toca pagar este mes en cada tarjeta activa */
+  cards: { card: CreditCard; amount: number }[];
   tarjetas: number;
   fijos: number;
   /** Tarjetas + gastos fijos */
@@ -54,19 +54,18 @@ export interface MonthSummary {
   balance: number;
 }
 
-export function monthSummary(expenses: Expense[], income: number): MonthSummary {
-  const of = (s: Expense['section']) => sum(expenses.filter((e) => e.section === s).map((e) => e.amount));
-  const santander = of('santander');
-  const bbva = of('bbva');
-  const fijos = of('fijos');
-  const gran = round2(santander + bbva + fijos);
-  return { santander, bbva, tarjetas: round2(santander + bbva), fijos, gran, income, balance: round2(income - gran) };
+/** Las tarjetas desactivadas no entran en el resumen. */
+export function monthSummary(expenses: Expense[], income: number, cards: CreditCard[]): MonthSummary {
+  const perCard = cards
+    .filter((c) => c.active)
+    .map((card) => ({ card, amount: sum(expenses.filter((e) => e.cardId === card.id).map((e) => e.amount)) }));
+  const tarjetas = sum(perCard.map((c) => c.amount));
+  const fijos = sum(expenses.filter((e) => e.section === 'fijos').map((e) => e.amount));
+  const gran = round2(tarjetas + fijos);
+  return { cards: perCard, tarjetas, fijos, gran, income, balance: round2(income - gran) };
 }
 
 export const cutPending = (c: Pick<Cut, 'amount' | 'paid'>): number => round2(c.amount - c.paid);
-
-/** Día del mes en que corta cada tarjeta. */
-export const CUT_DAY: Record<Card, number> = { santander: 12, bbva: 24 };
 
 export interface CutPeriod {
   start: string;
@@ -75,11 +74,17 @@ export interface CutPeriod {
   label: string;
 }
 
+/** Día `day` de un mes; si el mes es más corto (por ejemplo 31 en febrero), su último día. */
+function cutDate(year: number, month: number, day: number): Date {
+  return new Date(year, month, Math.min(day, new Date(year, month + 1, 0).getDate()));
+}
+
 /** Corte en curso: desde el día siguiente al corte anterior hasta el próximo día de corte. */
-export function currentCutPeriod(card: Card, today: Date): CutPeriod {
-  const day = CUT_DAY[card];
-  const end = new Date(today.getFullYear(), today.getDate() <= day ? today.getMonth() : today.getMonth() + 1, day);
-  const start = new Date(end.getFullYear(), end.getMonth() - 1, day + 1);
+export function currentCutPeriod(cutDay: number, today: Date): CutPeriod {
+  const thisMonth = cutDate(today.getFullYear(), today.getMonth(), cutDay);
+  const end = today.getDate() <= thisMonth.getDate() ? thisMonth : cutDate(today.getFullYear(), today.getMonth() + 1, cutDay);
+  const prevEnd = cutDate(end.getFullYear(), end.getMonth() - 1, cutDay);
+  const start = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), prevEnd.getDate() + 1);
   const part = (d: Date) => `${d.getDate()} ${MN[d.getMonth()]}`;
   return { start: dateKey(start), end: dateKey(end), label: `${part(start)} a ${part(end)}` };
 }

@@ -1,10 +1,17 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PostgrestError } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase.service';
-import { Card, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
 
+interface CardRow {
+  id: string;
+  name: string;
+  cut_day: number;
+  active: boolean;
+}
 interface ExpenseRow {
   id: string;
+  card_id: string | null;
   section: Expense['section'];
   concept: string;
   installment: string;
@@ -14,7 +21,7 @@ interface ExpenseRow {
 }
 interface CutRow {
   id: string;
-  card: Card;
+  card_id: string;
   period: string;
   period_end: string | null;
   amount: number;
@@ -33,17 +40,21 @@ interface FamilyRow {
   id: string;
   direction: FamilyMove['direction'];
   name: string;
+  person: string;
   date: string | null;
   amount: number;
 }
 
-const EXPENSE_COLS = 'id, section, concept, installment, total, amount, purchased_at';
-const CUT_COLS = 'id, card, period, period_end, amount, paid';
+const CARD_COLS = 'id, name, cut_day, active';
+const EXPENSE_COLS = 'id, card_id, section, concept, installment, total, amount, purchased_at';
+const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
 const DEBT_COLS = 'id, person, kind, concept, amount, date, applies_to';
-const FAMILY_COLS = 'id, direction, name, date, amount';
+const FAMILY_COLS = 'id, direction, name, person, date, amount';
 
+const toCard = (r: CardRow): CreditCard => ({ id: r.id, name: r.name, cutDay: r.cut_day, active: r.active });
 const toExpense = (r: ExpenseRow): Expense => ({
   id: r.id,
+  cardId: r.card_id,
   section: r.section,
   concept: r.concept,
   installment: r.installment,
@@ -53,7 +64,7 @@ const toExpense = (r: ExpenseRow): Expense => ({
 });
 const toCut = (r: CutRow): Cut => ({
   id: r.id,
-  card: r.card,
+  cardId: r.card_id,
   period: r.period,
   periodEnd: r.period_end,
   amount: r.amount,
@@ -62,6 +73,7 @@ const toCut = (r: CutRow): Cut => ({
 
 const expenseRow = (e: Partial<Omit<Expense, 'id'>>) => ({
   ...(e.section !== undefined && { section: e.section }),
+  ...(e.cardId !== undefined && { card_id: e.cardId }),
   ...(e.concept !== undefined && { concept: e.concept }),
   ...(e.installment !== undefined && { installment: e.installment }),
   ...(e.total !== undefined && { total: e.total }),
@@ -92,6 +104,7 @@ const debtPatchRow = (p: Partial<Omit<Debt, 'id'>>) => ({
 export class FinanzasService {
   private readonly client = inject(SupabaseService).client;
 
+  readonly cards = signal<CreditCard[]>([]);
   readonly expenses = signal<Expense[]>([]);
   readonly cuts = signal<Cut[]>([]);
   readonly debts = signal<Debt[]>([]);
@@ -119,6 +132,7 @@ export class FinanzasService {
     this.loading = undefined;
     this.loaded.set(false);
     this.error.set('');
+    this.cards.set([]);
     this.expenses.set([]);
     this.cuts.set([]);
     this.debts.set([]);
@@ -135,6 +149,39 @@ export class FinanzasService {
         .upsert({ monthly_income: amount, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
       if (error) throw error;
       this.income.set(amount);
+    });
+  }
+
+  addCard(name: string, cutDay: number): Promise<boolean> {
+    return this.write(async () => {
+      const row = await this.single<CardRow>(
+        this.client.from('fin_cards').insert({ name, cut_day: cutDay }).select(CARD_COLS).single(),
+      );
+      this.cards.update((l) => [...l, toCard(row)]);
+    });
+  }
+
+  updateCard(id: string, patch: Partial<Omit<CreditCard, 'id'>>): Promise<boolean> {
+    return this.write(async () => {
+      const row = {
+        ...(patch.name !== undefined && { name: patch.name }),
+        ...(patch.cutDay !== undefined && { cut_day: patch.cutDay }),
+        ...(patch.active !== undefined && { active: patch.active }),
+      };
+      const { error } = await this.client.from('fin_cards').update(row).eq('id', id);
+      if (error) throw error;
+      this.cards.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    });
+  }
+
+  /** Borrar una tarjeta borra también sus gastos y cortes (lo hace la base de datos; aquí se refleja igual). */
+  removeCard(id: string): Promise<boolean> {
+    return this.write(async () => {
+      const { error } = await this.client.from('fin_cards').delete().eq('id', id);
+      if (error) throw error;
+      this.cards.update((l) => l.filter((x) => x.id !== id));
+      this.expenses.update((l) => l.filter((x) => x.cardId !== id));
+      this.cuts.update((l) => l.filter((x) => x.cardId !== id));
     });
   }
 
@@ -165,7 +212,7 @@ export class FinanzasService {
     return this.write(async () => {
       const row = await this.single<CutRow>(this.client
           .from('fin_cuts')
-          .insert({ card: c.card, period: c.period, period_end: c.periodEnd, amount: c.amount, paid: c.paid })
+          .insert({ card_id: c.cardId, period: c.period, period_end: c.periodEnd, amount: c.amount, paid: c.paid })
           .select(CUT_COLS).single());
       this.cuts.update((l) => [...l, toCut(row)]);
     });
@@ -235,15 +282,17 @@ export class FinanzasService {
 
   private async fetch(): Promise<void> {
     const c = this.client;
-    const [settings, expenses, cuts, debts, family] = await Promise.all([
+    const [settings, cards, expenses, cuts, debts, family] = await Promise.all([
       c.from('fin_settings').select('monthly_income').maybeSingle(),
+      c.from('fin_cards').select(CARD_COLS).order('created_at'),
       c.from('fin_expenses').select(EXPENSE_COLS).order('created_at'),
       c.from('fin_cuts').select(CUT_COLS).order('created_at'),
       c.from('fin_debts').select(DEBT_COLS).order('created_at'),
       c.from('fin_family').select(FAMILY_COLS).order('created_at'),
     ]);
-    for (const r of [settings, expenses, cuts, debts, family]) if (r.error) throw r.error;
+    for (const r of [settings, cards, expenses, cuts, debts, family]) if (r.error) throw r.error;
     this.income.set(settings.data?.monthly_income ?? 0);
+    this.cards.set((cards.data as CardRow[]).map(toCard));
     this.expenses.set((expenses.data as ExpenseRow[]).map(toExpense));
     this.cuts.set((cuts.data as CutRow[]).map(toCut));
     this.debts.set((debts.data as DebtRow[]).map(toDebt));
@@ -262,8 +311,13 @@ export class FinanzasService {
     try {
       await action();
       return true;
-    } catch {
-      this.error.set('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    } catch (e) {
+      // 23505 = valor repetido (por ejemplo, dos tarjetas con el mismo nombre)
+      this.error.set(
+        (e as PostgrestError | undefined)?.code === '23505'
+          ? 'Ese nombre ya existe. Usa otro.'
+          : 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.',
+      );
       return false;
     }
   }

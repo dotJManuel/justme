@@ -16,3 +16,4 @@ h2{font-family:var(--font-display);margin:0;font-size:1.1rem}
 .row{display:flex;flex-wrap:wrap;gap:6px 28px}
 .row b{display:block;color:var(--ink);font-size:1.05rem;font-variant-numeric:tabular-nums}
 @media (max-width:899px){.tile{grid-column:span 6}.big{grid-column:span 12}}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}

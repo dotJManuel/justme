@@ -16,11 +16,16 @@ export class GastosPage {
 
   protected readonly money = fmtMoney;
 
-  protected readonly summary = computed(() => monthSummary(this.fin.expenses(), this.fin.income()));
-  /** Ambas tarjetas juntas (el "total general" del Excel). */
-  protected readonly cardsTotal = computed(() =>
-    expenseTotals(this.fin.expenses().filter((e) => e.section !== 'fijos')),
+  /** Tarjetas activas, en el orden en que se dieron de alta. */
+  protected readonly cards = computed(() => this.fin.cards().filter((c) => c.active));
+  protected readonly summary = computed(() =>
+    monthSummary(this.fin.expenses(), this.fin.income(), this.fin.cards()),
   );
+  /** Todas las tarjetas activas juntas (el "total general" del Excel). */
+  protected readonly cardsTotal = computed(() => {
+    const ids = new Set(this.cards().map((c) => c.id));
+    return expenseTotals(this.fin.expenses().filter((e) => e.cardId !== null && ids.has(e.cardId)));
+  });
   protected readonly income = this.fin.income;
 
   protected async setIncome(el: HTMLInputElement) {

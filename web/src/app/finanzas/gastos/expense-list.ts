@@ -9,7 +9,7 @@ import {
   parseMoney,
   perQuincena,
 } from '../finanzas.calc';
-import { Expense, Section } from '../finanzas.models';
+import { CreditCard, Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
 /** Tabla editable de una sección: tarjeta Santander, tarjeta BBVA o gastos fijos. */
@@ -22,7 +22,8 @@ import { FinanzasService } from '../finanzas.service';
 export class ExpenseList {
   private readonly fin = inject(FinanzasService);
 
-  readonly section = input.required<Section>();
+  /** Tarjeta que se muestra; sin tarjeta, son los gastos fijos. */
+  readonly card = input<CreditCard | null>(null);
   readonly title = input.required<string>();
 
   protected readonly money = fmtMoney;
@@ -30,13 +31,13 @@ export class ExpenseList {
   protected readonly dateValue = (r: Expense) => isoToLocalInput(r.purchasedAt);
 
   /** Las tarjetas llevan "a meses" y monto total; los gastos fijos solo un monto mensual. */
-  protected readonly cards = computed(() => this.section() !== 'fijos');
+  protected readonly cards = computed(() => this.card() !== null);
   protected readonly cols = computed(() =>
     this.cards()
       ? 'minmax(0,2fr) 11.5rem 5rem minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem'
       : 'minmax(0,2.2fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem',
   );
-  protected readonly rows = computed(() => this.fin.expenses().filter((e) => e.section === this.section()));
+  protected readonly rows = computed(() => this.fin.expenses().filter((e) => (this.card() ? e.cardId === this.card()?.id : e.section === 'fijos')));
   protected readonly totals = computed(() => expenseTotals(this.rows()));
 
   protected readonly concept = signal('');
@@ -103,7 +104,8 @@ export class ExpenseList {
     const amount = this.draftAmount();
     if (!this.canAdd() || amount === null) return;
     const ok = await this.fin.addExpense({
-      section: this.section(),
+      section: this.card() ? 'tarjeta' : 'fijos',
+      cardId: this.card()?.id ?? null,
       concept: this.concept().trim(),
       installment: this.cards() ? this.installment().trim() : '',
       // Una compra sin monto total es un pago único: el total es lo que se paga.

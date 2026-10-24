@@ -1,8 +1,11 @@
-<section class="card" [style.--cols]="cols">
+<section class="card" [style.--cols]="cols()">
   <h2>{{ title() }}</h2>
 
   <div class="grid head" aria-hidden="true">
     <span>{{ nameLabel() }}</span>
+    @if (received()) {
+      <span>De quién</span>
+    }
     <span>Fecha</span>
     <span class="num">Monto</span>
     <span></span>
@@ -13,6 +16,11 @@
       <div class="c" [attr.data-l]="nameLabel()">
         <input #n [attr.aria-label]="nameLabel()" maxlength="80" [value]="m.name" (change)="setName(m, n)" />
       </div>
+      @if (received()) {
+        <div class="c" data-l="De quién">
+          <input #p aria-label="De quién" maxlength="80" [value]="m.person" (change)="setPerson(m, p)" />
+        </div>
+      }
       <div class="c" data-l="Fecha">
         <input #d type="date" aria-label="Fecha" [value]="m.date ?? ''" (change)="setDate(m, d)" />
       </div>
@@ -27,6 +35,9 @@
 
   <div class="grid total">
     <span>Total</span>
+    @if (received()) {
+      <span></span>
+    }
     <span></span>
     <div class="c" data-l="Monto"><div class="ro">{{ money(total()) }}</div></div>
     <span></span>
@@ -36,6 +47,11 @@
     <div class="c" [attr.data-l]="nameLabel()">
       <input name="name" [attr.aria-label]="'Nuevo: ' + nameLabel()" [placeholder]="nameLabel()" maxlength="80" [ngModel]="name()" (ngModelChange)="name.set($event)" />
     </div>
+    @if (received()) {
+      <div class="c" data-l="De quién">
+        <input name="person" aria-label="Nuevo: De quién" placeholder="De quién" maxlength="80" [ngModel]="person()" (ngModelChange)="person.set($event)" />
+      </div>
+    }
     <div class="c" data-l="Fecha">
       <input name="date" type="date" aria-label="Fecha" [ngModel]="date()" (ngModelChange)="date.set($event)" />
     </div>

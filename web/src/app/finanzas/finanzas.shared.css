@@ -31,3 +31,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
   .ro{text-align:left;padding-inline:0}
 }
 .ro.period{text-align:left;color:var(--ink);font-weight:700;padding-inline:0}
+.switch{display:flex;align-items:center;gap:8px;font-size:.8rem;cursor:pointer}
+input[type=checkbox]{width:20px;height:20px;padding:0;flex:none;accent-color:var(--done);cursor:pointer}
+.muted{color:var(--muted)}
+.row.off input:not([type=checkbox]){opacity:.6}

@@ -12,11 +12,16 @@ import {
   personSummaries,
   sortDebtRows,
 } from './finanzas.calc';
-import { Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
 
-const exp = (section: Expense['section'], amount: number, total: number | null = null): Expense => ({
-  id: `${section}-${amount}`,
-  section,
+const SANTANDER: CreditCard = { id: 'sa', name: 'Santander', cutDay: 12, active: true };
+const BBVA: CreditCard = { id: 'bb', name: 'BBVA', cutDay: 24, active: true };
+
+/** cardId = tarjeta del gasto; null = gasto fijo */
+const exp = (cardId: string | null, amount: number, total: number | null = null): Expense => ({
+  id: `${cardId}-${amount}`,
+  section: cardId ? 'tarjeta' : 'fijos',
+  cardId,
   concept: 'x',
   installment: '',
   total,
@@ -36,48 +41,61 @@ const debt = (id: string, person: string, kind: Debt['kind'], amount: number, ap
 
 describe('resumen del mes', () => {
   // Valores del Excel: Santander 6305.18, BBVA 2427, fijos 4155, ingreso 15000
-  const rows = [exp('santander', 6305.18), exp('bbva', 2427), exp('fijos', 4155)];
+  const rows = [exp('sa', 6305.18), exp('bb', 2427), exp(null, 4155)];
+  const cards = [SANTANDER, BBVA];
 
   it('suma tarjetas y gastos fijos, y calcula el balance', () => {
-    const s = monthSummary(rows, 15000);
+    const s = monthSummary(rows, 15000, cards);
     expect(s.tarjetas).toBe(8732.18);
     expect(s.gran).toBe(12887.18);
     expect(s.balance).toBe(2112.82);
   });
 
+  it('una tarjeta desactivada no suma en el resumen', () => {
+    const s = monthSummary(rows, 15000, [SANTANDER, { ...BBVA, active: false }]);
+    expect(s.cards.map((c) => c.card.name)).toEqual(['Santander']);
+    expect(s.tarjetas).toBe(6305.18);
+    expect(s.gran).toBe(10460.18);
+  });
+
   it('el balance puede ser negativo', () => {
-    expect(monthSummary(rows, 10000).balance).toBe(-2887.18);
+    expect(monthSummary(rows, 10000, cards).balance).toBe(-2887.18);
   });
 
   it('los totales por sección incluyen la quincena y el monto total', () => {
-    const t = expenseTotals([exp('bbva', 74, 74), exp('bbva', 259, 259), exp('bbva', 100, 100)]);
+    const t = expenseTotals([exp('bb', 74, 74), exp('bb', 259, 259), exp('bb', 100, 100)]);
     expect(t).toEqual({ total: 433, amount: 433, quincena: 216.5 });
   });
 });
 
 describe('cortes', () => {
   it('lo pendiente es el monto menos lo pagado', () => {
-    const c: Cut = { id: '1', card: 'santander', period: '13 ago a 12 sep', periodEnd: null, amount: 12714.37, paid: 6850 };
+    const c: Cut = { id: '1', cardId: 'sa', period: '13 ago a 12 sep', periodEnd: null, amount: 12714.37, paid: 6850 };
     expect(cutPending(c)).toBe(5864.37);
   });
 });
 
 describe('corte en curso', () => {
   it('Santander corta el 12: pasado el 12, el corte termina el 12 del mes siguiente', () => {
-    expect(currentCutPeriod('santander', new Date(2026, 9, 23))).toEqual({ start: '2026-10-13', end: '2026-11-12', label: '13 oct a 12 nov' });
+    expect(currentCutPeriod(12, new Date(2026, 9, 23))).toEqual({ start: '2026-10-13', end: '2026-11-12', label: '13 oct a 12 nov' });
   });
 
   it('el mismo día de corte todavía cuenta como el corte que termina', () => {
-    expect(currentCutPeriod('santander', new Date(2026, 9, 12)).label).toBe('13 sep a 12 oct');
+    expect(currentCutPeriod(12, new Date(2026, 9, 12)).label).toBe('13 sep a 12 oct');
   });
 
   it('BBVA corta el 24', () => {
-    expect(currentCutPeriod('bbva', new Date(2026, 9, 23))).toEqual({ start: '2026-09-25', end: '2026-10-24', label: '25 sep a 24 oct' });
-    expect(currentCutPeriod('bbva', new Date(2026, 9, 25)).label).toBe('25 oct a 24 nov');
+    expect(currentCutPeriod(24, new Date(2026, 9, 23))).toEqual({ start: '2026-09-25', end: '2026-10-24', label: '25 sep a 24 oct' });
+    expect(currentCutPeriod(24, new Date(2026, 9, 25)).label).toBe('25 oct a 24 nov');
+  });
+
+  it('si el mes es más corto, el corte cae en su último día', () => {
+    expect(currentCutPeriod(31, new Date(2027, 1, 10)).label).toBe('1 feb a 28 feb');
+    expect(currentCutPeriod(31, new Date(2026, 3, 10)).label).toBe('1 abr a 30 abr');
   });
 
   it('cruza el fin de año', () => {
-    expect(currentCutPeriod('santander', new Date(2026, 11, 20)).end).toBe('2027-01-12');
+    expect(currentCutPeriod(12, new Date(2026, 11, 20)).end).toBe('2027-01-12');
   });
 });
 
@@ -161,6 +179,7 @@ describe('dinero con familia', () => {
       id: `${direction}${amount}`,
       direction,
       name: 'x',
+      person: '',
       date: null,
       amount,
     });

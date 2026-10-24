@@ -1,12 +1,10 @@
 <section data-section class="summary" aria-label="Resumen del mes">
-  <div class="tile">
-    <span class="lbl">Tarjeta Santander (a pagar)</span>
-    <b>{{ money(summary().santander) }}</b>
-  </div>
-  <div class="tile">
-    <span class="lbl">Tarjeta BBVA (a pagar)</span>
-    <b>{{ money(summary().bbva) }}</b>
-  </div>
+  @for (c of summary().cards; track c.card.id) {
+    <div class="tile">
+      <span class="lbl">Tarjeta {{ c.card.name }} (a pagar)</span>
+      <b>{{ money(c.amount) }}</b>
+    </div>
+  }
   <div class="tile">
     <span class="lbl">Total tarjetas (a pagar)</span>
     <b>{{ money(summary().tarjetas) }}</b>
@@ -30,19 +28,25 @@
   </div>
 </section>
 
-<app-expense-list data-section section="santander" title="Tarjeta de crédito — Santander" />
-<app-expense-list data-section section="bbva" title="Tarjeta de crédito — BBVA" />
+@for (c of cards(); track c.id) {
+  <app-expense-list data-section [card]="c" [title]="'Tarjeta de crédito — ' + c.name" />
+} @empty {
+  <p class="hint">No hay tarjetas activas. Da de alta o activa una en la pestaña Administrar.</p>
+}
 
-<section data-section class="card both">
-  <h2>Total general (ambas tarjetas)</h2>
-  <div class="row">
-    <span class="lbl">Monto total <b>{{ money(cardsTotal().total) }}</b></span>
-    <span class="lbl">Por pagar <b>{{ money(cardsTotal().amount) }}</b></span>
-    <span class="lbl">Por quincena <b>{{ money(cardsTotal().quincena) }}</b></span>
-  </div>
-</section>
+@if (cards().length) {
+  <section data-section class="card both">
+    <h2>Total general ({{ cards().length === 1 ? 'tarjeta' : 'todas las tarjetas' }})</h2>
+    <div class="row">
+      <span class="lbl">Monto total <b>{{ money(cardsTotal().total) }}</b></span>
+      <span class="lbl">Por pagar <b>{{ money(cardsTotal().amount) }}</b></span>
+      <span class="lbl">Por quincena <b>{{ money(cardsTotal().quincena) }}</b></span>
+    </div>
+  </section>
+}
 
-<app-cut-list data-section card="santander" title="Corte — Tarjeta Santander" />
-<app-cut-list data-section card="bbva" title="Corte — Tarjeta BBVA" />
+@for (c of cards(); track c.id) {
+  <app-cut-list data-section [card]="c" [title]="'Corte — Tarjeta ' + c.name" />
+}
 
-<app-expense-list data-section section="fijos" title="Gastos fijos mensuales" />
+<app-expense-list data-section title="Gastos fijos mensuales" />

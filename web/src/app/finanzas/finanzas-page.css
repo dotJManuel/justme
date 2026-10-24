@@ -23,3 +23,4 @@ h1{font-family:var(--font-display);font-size:1.25rem;font-weight:800;margin:0}
   .jump{right:calc(50% + 488px)}
   .wrap{padding-right:max(16px,env(safe-area-inset-right,0px))}
 }
+@media (max-width:480px){.tabs{max-width:100%;box-sizing:border-box}.tabs a{padding:6px 11px;font-size:.85rem}}

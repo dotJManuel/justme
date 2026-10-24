@@ -7,3 +7,4 @@ a.on{background:var(--flame);color:#fff}
 .quiet{padding:7px 10px}
 a:focus-visible,button:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
 @media (max-width:480px){.brand{display:none}a,button{padding:7px 10px}}
+@media (max-width:340px){nav{gap:2px}a,button{padding:7px 8px;font-size:.85rem}}
