@@ -1,16 +1,39 @@
 <input
   #el
-  [attr.list]="listId"
+  role="combobox"
+  aria-autocomplete="list"
+  [attr.aria-expanded]="open() && items().length > 0"
+  [attr.aria-controls]="listId"
+  [attr.aria-activedescendant]="active() >= 0 ? listId + '-' + active() : null"
   [attr.aria-label]="label()"
   [placeholder]="placeholder()"
   [attr.maxlength]="maxLength()"
   autocomplete="off"
+  enterkeyhint="done"
   [value]="shown()"
+  (focus)="onFocus()"
   (input)="onInput(el)"
+  (keydown)="onKey($event, el)"
+  (blur)="onBlur()"
   (change)="onChange(el)"
 />
-<datalist [id]="listId">
-  @for (o of suggestions(); track o.id) {
-    <option [value]="o.name"></option>
-  }
-</datalist>
+@if (open() && items().length) {
+  <ul
+    class="panel"
+    role="listbox"
+    [id]="listId"
+    [style.left.px]="pos().left"
+    [style.width.px]="pos().width"
+    [style.top.px]="pos().top"
+    [style.bottom.px]="pos().bottom"
+    [style.max-height.px]="pos().max"
+    (mousedown)="$event.preventDefault()"
+    (click)="$event.preventDefault()"
+  >
+    @for (o of items(); track o.id; let i = $index) {
+      <li role="option" [id]="listId + '-' + i" [class.on]="i === active()" [attr.aria-selected]="i === active()" (click)="pick(o, el)">
+        {{ o.name }}
+      </li>
+    }
+  </ul>
+}
