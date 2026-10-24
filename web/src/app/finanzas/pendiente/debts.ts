@@ -12,7 +12,7 @@ import {
   personSummaries,
   sortDebtRows,
 } from '../finanzas.calc';
-import { ConceptChange, ConceptField, ConceptValue } from '../concept-field/concept-field';
+import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { Concept, Debt, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
@@ -157,10 +157,12 @@ export class Debts {
   protected async submit() {
     const amount = parseMoney(this.amount());
     if (!this.canSave() || !amount) return;
+    const typed = this.concept();
+    const concept = typed.id !== null ? typed : resolveConcept(this.conceptOptions(), typed.text);
     const data = {
       personId: this.person(),
-      conceptId: this.concept().id,
-      conceptText: this.concept().text,
+      conceptId: concept.id,
+      conceptText: concept.text,
       amount,
       date: this.date() || null,
       appliesTo: this.kind() === 'abono' ? this.appliesValue() || null : null,

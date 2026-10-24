@@ -56,7 +56,7 @@
 
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Concepto">
-      <app-concept-field [options]="conceptOptions()" [value]="concept()" blank="Elige un concepto…" (valueChange)="onConcept($event)" />
+      <app-concept-field [options]="conceptOptions()" [value]="concept()" [live]="true" (valueChange)="onConcept($event)" />
     </div>
     @if (cards()) {
       <div class="c" data-l="Fecha y hora">
@@ -77,6 +77,6 @@
   </form>
   </div>
   @if (cards()) {
-    <p class="hint">La fecha y hora se ponen solas al capturar el concepto; puedes cambiarlas. Si el concepto no se repetirá, elige «Otro» y escríbelo. Si dejas el monto total vacío, se usa lo que se paga este mes.</p>
+    <p class="hint">La fecha y hora se ponen solas al capturar el concepto; puedes cambiarlas. En Concepto puedes elegir uno de la lista o escribir uno nuevo. Si dejas el monto total vacío, se usa lo que se paga este mes.</p>
   }
 </section>

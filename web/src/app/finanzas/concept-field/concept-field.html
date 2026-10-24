@@ -1,19 +1,16 @@
-<select #sel [attr.aria-label]="label()" (change)="onSelect(sel)">
-  @if (blank()) {
-    <option value="" [selected]="selectValue() === ''">{{ blank() }}</option>
+<input
+  #el
+  [attr.list]="listId"
+  [attr.aria-label]="label()"
+  [placeholder]="placeholder()"
+  [attr.maxlength]="maxLength()"
+  autocomplete="off"
+  [value]="shown()"
+  (input)="onInput(el)"
+  (change)="onChange(el)"
+/>
+<datalist [id]="listId">
+  @for (o of suggestions(); track o.id) {
+    <option [value]="o.name"></option>
   }
-  @for (o of shown(); track o.id) {
-    <option [value]="o.id" [selected]="selectValue() === o.id">{{ o.name }}{{ o.active ? '' : ' (inactivo)' }}</option>
-  }
-  <option [value]="OTHER" [selected]="selectValue() === OTHER">Otro (escribir)…</option>
-</select>
-@if (textMode()) {
-  <input
-    #txt
-    [attr.aria-label]="label() + ' (texto libre)'"
-    placeholder="Escribe el concepto"
-    [attr.maxlength]="maxLength()"
-    [value]="current().text"
-    (change)="onText(txt)"
-  />
-}
+</datalist>

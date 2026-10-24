@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { Concept } from '../finanzas.models';
 
 /** Concepto de un registro: uno del catálogo (id) o texto libre (text). Nunca los dos. */
@@ -16,85 +16,69 @@ export interface ConceptChange {
   done: (saved: boolean) => void;
 }
 
-const OTHER = '__otro__';
+/**
+ * Convierte lo que se escribió en un concepto: si coincide (sin importar mayúsculas) con uno activo del
+ * catálogo, se enlaza a él; si no, queda como texto libre. `keepId` es el concepto que ya tenía el registro:
+ * se puede conservar aunque esté desactivado.
+ */
+export function resolveConcept(options: Concept[], raw: string, keepId: string | null = null): ConceptValue {
+  const text = raw.trim();
+  if (!text) return { id: null, text: '' };
+  const hit = options.find((o) => (o.active || o.id === keepId) && o.name.trim().toLowerCase() === text.toLowerCase());
+  return hit ? { id: hit.id, text: '' } : { id: null, text };
+}
 
-/** Select de conceptos con la opción "Otro (escribir)…" para un concepto único que no entra al catálogo. */
+let nextId = 0;
+
+/**
+ * Campo de concepto: se escribe libremente y, mientras se escribe, aparecen como sugerencia los conceptos
+ * del catálogo que coinciden; al elegir una sugerencia se pone su texto.
+ */
 @Component({
   selector: 'app-concept-field',
   templateUrl: './concept-field.html',
-  styleUrls: ['../finanzas.shared.css', './concept-field.css'],
+  styleUrl: '../finanzas.shared.css',
 })
 export class ConceptField {
-  /** Todos los conceptos del catálogo que corresponden; aquí se ocultan los desactivados (salvo el actual). */
+  /** Todos los conceptos del catálogo que corresponden; solo se sugieren los activos. */
   readonly options = input.required<Concept[]>();
   readonly value = input.required<ConceptValue>();
-  /** Texto de la opción vacía; sin texto, no hay opción vacía (concepto obligatorio en una fila ya guardada). */
-  readonly blank = input('');
+  readonly placeholder = input('Elige o escribe un concepto');
   readonly label = input('Concepto');
   readonly maxLength = input(120);
+  /** En formularios de alta: avisa a cada tecla, para que el botón Agregar se active al escribir. */
+  readonly live = input(false);
 
   readonly valueChange = output<ConceptChange>();
 
-  private readonly sel = viewChild<ElementRef<HTMLSelectElement>>('sel');
-  private readonly txt = viewChild<ElementRef<HTMLInputElement>>('txt');
+  protected readonly listId = `concepto-${nextId++}`;
 
-  protected readonly OTHER = OTHER;
-
-  /** Lo que eligió la persona mientras se guarda; después manda el valor que llega de afuera. */
+  /** Lo último que se pidió guardar, mientras se guarda; después manda el valor que llega de afuera. */
   private readonly local = signal<ConceptValue | null>(null);
-  /** Eligió "Otro" y todavía no escribe nada: se muestra la caja de texto vacía. */
-  private readonly forceText = signal(false);
-
   protected readonly current = computed(() => this.local() ?? this.value());
-  protected readonly textMode = computed(() => this.forceText() || this.current().text !== '');
-  protected readonly selectValue = computed(() => (this.textMode() ? OTHER : (this.current().id ?? '')));
-  protected readonly shown = computed(() =>
-    this.options().filter((o) => o.active || o.id === this.current().id),
-  );
+  protected readonly shown = computed(() => this.display(this.current()));
+  protected readonly suggestions = computed(() => this.options().filter((o) => o.active));
 
-  constructor() {
-    // Si desde afuera vuelven el campo a "vacío" (por ejemplo, tras agregar un registro), se sale del modo texto.
-    effect(() => {
-      const v = this.value();
-      if (v.id === null && v.text === '') untracked(() => this.forceText.set(false));
-    });
+  private display(v: ConceptValue): string {
+    return v.text || this.options().find((o) => o.id === v.id)?.name || '';
   }
 
-  protected onSelect(el: HTMLSelectElement) {
-    if (el.value === OTHER) {
-      this.forceText.set(true);
-      setTimeout(() => this.txt()?.nativeElement.focus());
-      return;
-    }
-    this.forceText.set(false);
-    this.commit({ id: el.value || null, text: '' });
+  protected onInput(el: HTMLInputElement) {
+    if (this.live()) this.valueChange.emit({ value: { id: null, text: el.value }, done: () => undefined });
   }
 
-  protected onText(el: HTMLInputElement) {
-    this.commit({ id: null, text: el.value.trim() });
-  }
-
-  private commit(value: ConceptValue) {
+  protected onChange(el: HTMLInputElement) {
+    const resolved = resolveConcept(this.options(), el.value, this.value().id);
+    el.value = this.display(resolved);
     const now = this.value();
-    if (value.id === now.id && value.text === now.text) return this.sync();
-    this.local.set(value);
+    if (resolved.id === now.id && resolved.text === now.text) return;
+    this.local.set(resolved);
     this.valueChange.emit({
-      value,
+      value: resolved,
       done: (saved) => {
         this.local.set(null);
-        if (!saved) {
-          this.forceText.set(false);
-          this.sync();
-        }
+        if (!saved) el.value = this.shown();
       },
     });
-  }
-
-  /** Vuelve a poner en pantalla el valor vigente (cuando un cambio no se guardó). */
-  private sync() {
-    const sel = this.sel()?.nativeElement;
-    if (sel) sel.value = this.selectValue();
-    const txt = this.txt()?.nativeElement;
-    if (txt) txt.value = this.current().text;
   }
 }

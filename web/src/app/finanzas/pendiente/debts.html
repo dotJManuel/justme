@@ -67,7 +67,7 @@
     </label>
     <label>
       Concepto
-      <app-concept-field [options]="conceptOptions()" [value]="concept()" blank="Sin concepto" (valueChange)="onConcept($event)" />
+      <app-concept-field [options]="conceptOptions()" [value]="concept()" [live]="true" placeholder="Opcional: elige o escribe" (valueChange)="onConcept($event)" />
     </label>
     <label>
       Monto

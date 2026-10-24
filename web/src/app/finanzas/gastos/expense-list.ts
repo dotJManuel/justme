@@ -10,7 +10,7 @@ import {
   parseMoney,
   perQuincena,
 } from '../finanzas.calc';
-import { ConceptChange, ConceptField, ConceptValue } from '../concept-field/concept-field';
+import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { CreditCard, Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
@@ -60,7 +60,7 @@ export class ExpenseList {
   private readonly draftTotal = computed(() => (this.total().trim() === '' ? null : parseMoney(this.total())));
   protected readonly canAdd = computed(
     () =>
-      (this.concept().id !== null || this.concept().text !== '') &&
+      (this.concept().id !== null || this.concept().text.trim() !== '') &&
       this.draftAmount() !== null &&
       (this.total().trim() === '' || this.draftTotal() !== null),
   );
@@ -77,8 +77,8 @@ export class ExpenseList {
   }
 
   protected onConcept(e: ConceptChange) {
-    const had = this.concept().id !== null || this.concept().text !== '';
-    if (!had && (e.value.id !== null || e.value.text !== '') && !this.purchasedTouched) {
+    const had = this.concept().id !== null || this.concept().text.trim() !== '';
+    if (!had && (e.value.id !== null || e.value.text.trim() !== '') && !this.purchasedTouched) {
       this.purchased.set(nowLocalInput());
     }
     this.concept.set(e.value);
@@ -118,11 +118,13 @@ export class ExpenseList {
   protected async add() {
     const amount = this.draftAmount();
     if (!this.canAdd() || amount === null) return;
+    const typed = this.concept();
+    const concept = typed.id !== null ? typed : resolveConcept(this.conceptOptions(), typed.text);
     const ok = await this.fin.addExpense({
       section: this.card() ? 'tarjeta' : 'fijos',
       cardId: this.card()?.id ?? null,
-      conceptId: this.concept().id,
-      conceptText: this.concept().text,
+      conceptId: concept.id,
+      conceptText: concept.text,
       installment: this.cards() ? this.installment().trim() : '',
       // Una compra sin monto total es un pago único: el total es lo que se paga.
       total: this.cards() ? (this.draftTotal() ?? amount) : null,

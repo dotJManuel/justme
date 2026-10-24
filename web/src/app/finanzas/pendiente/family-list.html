@@ -13,7 +13,7 @@
   @for (m of rows(); track m.id) {
     <div class="grid row">
       <div class="c" data-l="Concepto">
-        <app-concept-field [options]="conceptOptions()" [value]="{ id: m.conceptId, text: m.conceptText }" [blank]="received() ? '' : '—'" (valueChange)="setConcept(m, $event)" />
+        <app-concept-field [options]="conceptOptions()" [value]="{ id: m.conceptId, text: m.conceptText }" [placeholder]="received() ? 'Elige o escribe un concepto' : 'Opcional'" (valueChange)="setConcept(m, $event)" />
       </div>
       <div class="c" [attr.data-l]="personLabel()">
         <select #ps [attr.aria-label]="personLabel()" (change)="setPerson(m, ps)">
@@ -49,7 +49,7 @@
 
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Concepto">
-      <app-concept-field [options]="conceptOptions()" [value]="concept()" [blank]="received() ? 'Elige un concepto…' : 'Sin concepto'" (valueChange)="onConcept($event)" />
+      <app-concept-field [options]="conceptOptions()" [value]="concept()" [live]="true" [placeholder]="received() ? 'Elige o escribe un concepto' : 'Opcional: elige o escribe'" (valueChange)="onConcept($event)" />
     </div>
     <div class="c" [attr.data-l]="personLabel()">
       <select name="person" [attr.aria-label]="personLabel()" [ngModel]="person()" (ngModelChange)="person.set($event)">

@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { dateKey } from '../../habits/streaks';
 import { conceptLabel, fmtMoney, parseMoney, sum } from '../finanzas.calc';
-import { ConceptChange, ConceptField, ConceptValue } from '../concept-field/concept-field';
+import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { FamilyMove, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
@@ -43,7 +43,7 @@ export class FamilyList {
   protected readonly canAdd = computed(
     () =>
       (parseMoney(this.amount()) ?? 0) > 0 &&
-      (this.received() ? this.concept().id !== null || this.concept().text !== '' : this.person() !== ''),
+      (this.received() ? this.concept().id !== null || this.concept().text.trim() !== '' : this.person() !== ''),
   );
 
   /** Opciones de una fila: las activas y, si ya está desactivada, la que tiene el registro. */
@@ -98,10 +98,12 @@ export class FamilyList {
   protected async add() {
     const amount = parseMoney(this.amount());
     if (!this.canAdd() || !amount) return;
+    const typed = this.concept();
+    const concept = typed.id !== null ? typed : resolveConcept(this.conceptOptions(), typed.text);
     const ok = await this.fin.addFamily({
       direction: this.direction(),
-      conceptId: this.concept().id,
-      conceptText: this.concept().text,
+      conceptId: concept.id,
+      conceptText: concept.text,
       personId: this.person() || null,
       date: this.date() || null,
       amount,
