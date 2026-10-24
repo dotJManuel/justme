@@ -9,6 +9,7 @@ import {
   fmtDate,
   fmtMoney,
   parseMoney,
+  filterDebtRows,
   personSummaries,
   sortDebtRows,
 } from '../finanzas.calc';
@@ -47,21 +48,57 @@ export class Debts {
   protected readonly activeFilter = computed(() =>
     this.summary().people.some((p) => p.personId === this.filter()) ? this.filter() : '',
   );
-  protected readonly sorts = signal<SortSpec[]>([]);
+
+  // ── Filtros y orden de los movimientos
+  /** El panel arranca abierto en pantalla grande y cerrado en celular, para no quitarle espacio a la lista. */
+  protected readonly panelOpen = signal(typeof matchMedia === 'function' && matchMedia('(min-width: 761px)').matches);
+  protected readonly kindFilter = signal<'' | 'cargo' | 'abono'>('');
+  protected readonly search = signal('');
+
   protected readonly sortKeys: { key: SortKey; label: string }[] = [
+    { key: 'date', label: 'Fecha' },
     { key: 'person', label: 'Persona' },
     { key: 'kind', label: 'Tipo' },
     { key: 'concept', label: 'Concepto' },
     { key: 'amount', label: 'Monto' },
-    { key: 'date', label: 'Fecha' },
     { key: 'balance', label: 'Saldo' },
   ];
-  protected readonly visible = computed(() => {
-    const f = this.activeFilter();
-    return sortDebtRows(
-      this.rows().filter((r) => !f || r.personId === f),
+  // Orden en dos niveles: "ordenar por" y, para desempatar, "luego por".
+  protected readonly sortA = signal<SortKey>('date');
+  protected readonly dirA = signal<1 | -1>(-1);
+  protected readonly sortB = signal<SortKey | ''>('');
+  protected readonly dirB = signal<1 | -1>(1);
+
+  protected readonly sorts = computed<SortSpec[]>(() => {
+    const b = this.sortB();
+    return [{ key: this.sortA(), dir: this.dirA() }, ...(b && b !== this.sortA() ? [{ key: b, dir: this.dirB() }] : [])];
+  });
+  protected readonly visible = computed(() =>
+    sortDebtRows(
+      filterDebtRows(this.rows(), { personId: this.activeFilter(), kind: this.kindFilter(), query: this.search() }),
       this.sorts(),
-    );
+    ),
+  );
+  /** El orden por defecto: lo más reciente primero. */
+  protected readonly sortChanged = computed(() => this.sortA() !== 'date' || this.dirA() !== -1 || !!this.sortB());
+  protected readonly hasFilters = computed(() => !!(this.activeFilter() || this.kindFilter() || this.search().trim()));
+
+  /** Lo que está activo, en pocas palabras (se ve aunque el panel esté cerrado). */
+  protected readonly tags = computed(() => {
+    const out: string[] = [];
+    const person = this.summary().people.find((p) => p.personId === this.activeFilter());
+    if (person) out.push(person.person);
+    if (this.kindFilter()) out.push(this.kindFilter() === 'cargo' ? 'Cargos' : 'Abonos');
+    if (this.search().trim()) out.push(`“${this.search().trim()}”`);
+    if (this.sortChanged()) {
+      const label = (k: SortKey) => this.sortKeys.find((s) => s.key === k)?.label ?? '';
+      const arrow = (d: 1 | -1) => (d === 1 ? '↑' : '↓');
+      const b = this.sortB();
+      out.push(
+        `Orden: ${label(this.sortA())} ${arrow(this.dirA())}${b && b !== this.sortA() ? ` y ${label(b)} ${arrow(this.dirB())}` : ''}`,
+      );
+    }
+    return out;
   });
   private readonly cargoNames = computed(() => new Map(this.rows().map((r) => [r.id, r.conceptName || 'Sin concepto'])));
 
@@ -120,19 +157,49 @@ export class Debts {
     return `${Math.round(ratio * 100)}%`;
   }
 
-  /** Cada toque en un criterio: lo agrega (ascendente), lo pasa a descendente y luego lo quita. */
-  protected toggleSort(key: SortKey) {
-    this.sorts.update((list) => {
-      const cur = list.find((s) => s.key === key);
-      if (!cur) return [...list, { key, dir: 1 }];
-      if (cur.dir === 1) return list.map((s) => (s.key === key ? { key, dir: -1 } : s));
-      return list.filter((s) => s.key !== key);
-    });
+  /** Texto y números empiezan de menor a mayor (A→Z); fechas, montos y saldos, de mayor a menor. */
+  private defaultDir(key: SortKey): 1 | -1 {
+    return key === 'person' || key === 'kind' || key === 'concept' ? 1 : -1;
   }
 
-  protected sortState(key: SortKey): { n: number; arrow: string } | null {
-    const i = this.sorts().findIndex((s) => s.key === key);
-    return i < 0 ? null : { n: i + 1, arrow: this.sorts()[i].dir === 1 ? '▲' : '▼' };
+  protected setSortA(key: SortKey) {
+    this.sortA.set(key);
+    this.dirA.set(this.defaultDir(key));
+    if (this.sortB() === key) this.sortB.set('');
+  }
+
+  protected setSortB(key: SortKey | '') {
+    this.sortB.set(key);
+    if (key) this.dirB.set(this.defaultDir(key));
+  }
+
+  protected flipA() {
+    this.dirA.update((d) => (d === 1 ? -1 : 1));
+  }
+
+  protected flipB() {
+    this.dirB.update((d) => (d === 1 ? -1 : 1));
+  }
+
+  /** Cómo se lee el sentido del orden según lo que se ordena. */
+  protected dirLabel(key: SortKey | '', dir: 1 | -1): string {
+    if (key === 'date') return dir === -1 ? 'Más reciente primero' : 'Más antiguo primero';
+    if (key === 'amount' || key === 'balance') return dir === -1 ? 'Mayor primero' : 'Menor primero';
+    return dir === 1 ? 'A → Z' : 'Z → A';
+  }
+
+  protected setPerson(personId: string) {
+    this.filter.set(personId);
+  }
+
+  protected resetAll() {
+    this.filter.set('');
+    this.kindFilter.set('');
+    this.search.set('');
+    this.sortA.set('date');
+    this.dirA.set(-1);
+    this.sortB.set('');
+    this.dirB.set(1);
   }
 
   protected toggleFilter(personId: string) {

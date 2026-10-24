@@ -242,3 +242,31 @@ export function sortDebtRows(rows: DebtRow[], sorts: SortSpec[]): DebtRow[] {
     return 0;
   });
 }
+
+// ── Filtro de los movimientos ───────────────────────────────────────────
+
+/** Minúsculas y sin acentos, para buscar ("cafe" encuentra "Café"). */
+export const plain = (s: string): string =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+export interface DebtFilter {
+  /** Id de la persona; vacío = todas. */
+  personId: string;
+  kind: '' | 'cargo' | 'abono';
+  /** Texto que debe aparecer en la persona o el concepto. */
+  query: string;
+}
+
+export function filterDebtRows(rows: DebtRow[], f: DebtFilter): DebtRow[] {
+  const q = plain(f.query);
+  return rows.filter(
+    (r) =>
+      (!f.personId || r.personId === f.personId) &&
+      (!f.kind || r.kind === f.kind) &&
+      (!q || plain(`${r.personName} ${r.conceptName}`).includes(q)),
+  );
+}

@@ -112,28 +112,85 @@
     <app-export-button (click)="exportMovements()" />
   </div>
 
-  @if (summary().people.length > 1) {
-    <div class="chips" role="group" aria-label="Filtrar por persona">
-      <button type="button" class="chip" [class.on]="!activeFilter()" [attr.aria-pressed]="!activeFilter()" (click)="toggleFilter('')">Todos</button>
-      @for (p of summary().people; track p.personId) {
-        <button type="button" class="chip" [class.on]="activeFilter() === p.personId" [attr.aria-pressed]="activeFilter() === p.personId" (click)="toggleFilter(p.personId)">{{ p.person }}</button>
-      }
+  <div class="tools">
+    <button type="button" class="tools-toggle" [attr.aria-expanded]="panelOpen()" aria-controls="mov-panel" (click)="panelOpen.set(!panelOpen())">
+      Filtros y orden <span aria-hidden="true">{{ panelOpen() ? '▴' : '▾' }}</span>
+    </button>
+    @for (t of tags(); track t) {
+      <span class="tag">{{ t }}</span>
+    }
+    @if (hasFilters() || sortChanged()) {
+      <button type="button" class="link" (click)="resetAll()">Limpiar</button>
+    }
+  </div>
+
+  @if (panelOpen()) {
+    <div class="panel" id="mov-panel">
+      <fieldset class="group">
+        <legend>Filtrar</legend>
+        <label class="f-person">
+          Persona
+          <select #pf (change)="setPerson(pf.value)">
+            <option value="" [selected]="!activeFilter()">Todas</option>
+            @for (p of summary().people; track p.personId) {
+              <option [value]="p.personId" [selected]="activeFilter() === p.personId">{{ p.person }}</option>
+            }
+          </select>
+        </label>
+        <div class="f-kind" role="group" aria-label="Tipo de movimiento">
+          <span class="lbl">Tipo</span>
+          <div class="seg">
+            <button type="button" [class.on]="!kindFilter()" [attr.aria-pressed]="!kindFilter()" (click)="kindFilter.set('')">Todos</button>
+            <button type="button" [class.on]="kindFilter() === 'cargo'" [attr.aria-pressed]="kindFilter() === 'cargo'" (click)="kindFilter.set('cargo')">Cargos</button>
+            <button type="button" [class.on]="kindFilter() === 'abono'" [attr.aria-pressed]="kindFilter() === 'abono'" (click)="kindFilter.set('abono')">Abonos</button>
+          </div>
+        </div>
+        <label class="f-search">
+          Buscar
+          <input #qs type="search" placeholder="Persona o concepto" [value]="search()" (input)="search.set(qs.value)" />
+        </label>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>Ordenar</legend>
+        <div class="f-sort">
+          <label>
+            Ordenar por
+            <select #sa (change)="setSortA($any(sa.value))">
+              @for (k of sortKeys; track k.key) {
+                <option [value]="k.key" [selected]="k.key === sortA()">{{ k.label }}</option>
+              }
+            </select>
+          </label>
+          <button type="button" class="dir" [attr.aria-label]="'Cambiar el sentido del orden. Ahora: ' + dirLabel(sortA(), dirA())" (click)="flipA()">
+            {{ dirLabel(sortA(), dirA()) }} <span aria-hidden="true">⇅</span>
+          </button>
+        </div>
+        <div class="f-sort">
+          <label>
+            Luego por
+            <select #sb (change)="setSortB($any(sb.value))">
+              <option value="" [selected]="!sortB()">—</option>
+              @for (k of sortKeys; track k.key) {
+                @if (k.key !== sortA()) {
+                  <option [value]="k.key" [selected]="k.key === sortB()">{{ k.label }}</option>
+                }
+              }
+            </select>
+          </label>
+          @if (sortB()) {
+            <button type="button" class="dir" [attr.aria-label]="'Cambiar el sentido del segundo orden. Ahora: ' + dirLabel(sortB(), dirB())" (click)="flipB()">
+              {{ dirLabel(sortB(), dirB()) }} <span aria-hidden="true">⇅</span>
+            </button>
+          }
+        </div>
+      </fieldset>
     </div>
   }
 
-  <div class="chips" role="group" aria-label="Ordenar movimientos">
-    <span class="hint">Ordenar por:</span>
-    @for (k of sortKeys; track k.key) {
-      @let st = sortState(k.key);
-      <button type="button" class="chip" [class.on]="st" [attr.aria-pressed]="!!st" (click)="toggleSort(k.key)">
-        {{ k.label }}@if (st) { {{ sorts().length > 1 ? st.n : '' }} {{ st.arrow }} }
-      </button>
-    }
-    @if (sorts().length) {
-      <button type="button" class="chip" (click)="sorts.set([])">Quitar orden</button>
-    }
-  </div>
-  <p class="hint sort-hint">Toca varios criterios para combinarlos: el primero manda. Un segundo toque invierte el orden y el tercero lo quita.</p>
+  <p class="count" aria-live="polite">
+    Mostrando {{ visible().length }} de {{ rows().length }} {{ rows().length === 1 ? 'movimiento' : 'movimientos' }}
+  </p>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">

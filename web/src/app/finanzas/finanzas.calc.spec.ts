@@ -7,6 +7,7 @@ import {
   debtsWithDependents,
   expenseTotals,
   familyTotals,
+  filterDebtRows,
   isoToLocalInput,
   localInputToIso,
   monthSummary,
@@ -183,6 +184,35 @@ describe('dinero que me deben', () => {
   it('borrar un concepto arrastra los abonos de los cargos que desaparecen', () => {
     const withConcept = [debt('c9', 'p-ange', 'cargo', 50, null, 'k-pago'), debt('a9', 'p-ange', 'abono', 20, 'c9')];
     expect(debtsWithDependents(withConcept, (d) => d.conceptId === 'k-pago').map((d) => d.id)).toEqual(['c9', 'a9']);
+  });
+});
+
+describe('filtro de movimientos', () => {
+  const mk = (id: string, personId: string, personName: string, kind: Debt['kind'], conceptName: string): ReturnType<typeof debtRows>[number] => ({
+    ...debt(id, personId, kind, 10),
+    personName,
+    conceptName,
+    balance: null,
+    age: null,
+  });
+  const rows = [mk('1', 'p-isma', 'Isma', 'cargo', 'Café'), mk('2', 'p-isma', 'Isma', 'abono', 'Pago'), mk('3', 'p-ange', 'Ange', 'cargo', 'Cena')];
+  const ids = (f: Parameters<typeof filterDebtRows>[1]) => filterDebtRows(rows, f).map((r) => r.id).join('');
+  const none = { personId: '', kind: '' as const, query: '' };
+
+  it('sin filtros deja todo', () => {
+    expect(ids(none)).toBe('123');
+  });
+
+  it('por persona y por tipo, juntos', () => {
+    expect(ids({ ...none, personId: 'p-isma' })).toBe('12');
+    expect(ids({ ...none, kind: 'cargo' })).toBe('13');
+    expect(ids({ ...none, personId: 'p-isma', kind: 'abono' })).toBe('2');
+  });
+
+  it('la búsqueda ignora mayúsculas y acentos y mira persona y concepto', () => {
+    expect(ids({ ...none, query: 'cafe' })).toBe('1');
+    expect(ids({ ...none, query: 'ANGE' })).toBe('3');
+    expect(ids({ ...none, query: 'zzz' })).toBe('');
   });
 });
 
