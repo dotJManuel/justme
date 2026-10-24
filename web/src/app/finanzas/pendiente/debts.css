@@ -28,3 +28,35 @@
   .pct{padding-left:0}
   .num{text-align:left}
 }
+/* Celular: cada movimiento en tres líneas compactas
+     persona · tipo · monto
+     concepto · acciones (a la derecha, bajo el monto)
+     fecha · días · saldo */
+@media (max-width:760px){
+  .scroll{gap:8px}
+  .row.mov{grid-template-columns:minmax(0,1fr) auto auto auto;grid-template-areas:"p p k m" "cc cc cc a" "f d s a";gap:2px 8px;padding:7px 10px;border-width:1px;border-left-width:4px;border-radius:12px;align-items:center}
+  .row.mov.is-cargo{border-left-color:var(--ice-ink)}
+  .row.mov.is-abono{border-left-color:var(--done)}
+  .row.mov .c::before{display:none}
+  .row.mov>.a-p{grid-area:p}
+  .row.mov>.a-k{grid-area:k}
+  .row.mov>.a-m{grid-area:m}
+  .row.mov>.a-cc{grid-area:cc}
+  .row.mov>.a-f{grid-area:f}
+  .row.mov>.a-d{grid-area:d}
+  .row.mov>.a-s{grid-area:s}
+  .row.mov>.acts{grid-area:a;justify-self:end;align-self:center;gap:4px}
+  .row.mov .t{padding:0;font-size:.8rem}
+  .row.mov .a-p .t{font-size:.92rem}
+  .row.mov .a-m .t{font-size:.92rem;font-weight:700;text-align:right}
+  .row.mov .a-cc .t{color:var(--muted)}
+  .row.mov .a-cc.empty{display:none}
+  .row.mov .a-f .t{white-space:nowrap}
+  .row.mov .a-d .t.has-age::after{content:" d"}
+  .row.mov .a-s .t{text-align:right;white-space:nowrap;max-width:5.5rem;overflow:hidden;text-overflow:ellipsis}
+  .row.mov .badge{font-size:.6rem;padding:2px 6px;margin:0}
+  .row.mov .icon{width:26px;height:26px;font-size:.7rem;border-radius:7px}
+  .chips{gap:5px}
+  .chip{padding:4px 10px;font-size:.78rem}
+  .sort-hint{display:none}
+}

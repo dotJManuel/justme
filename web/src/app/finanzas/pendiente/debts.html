@@ -127,7 +127,7 @@
       <button type="button" class="chip" (click)="sorts.set([])">Quitar orden</button>
     }
   </div>
-  <p class="hint">Toca varios criterios para combinarlos: el primero manda. Un segundo toque invierte el orden y el tercero lo quita.</p>
+  <p class="hint sort-hint">Toca varios criterios para combinarlos: el primero manda. Un segundo toque invierte el orden y el tercero lo quita.</p>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">
@@ -142,14 +142,14 @@
   </div>
 
   @for (r of visible(); track r.id) {
-    <div class="grid row">
-      <div class="c" data-l="Persona"><div class="t strong">{{ r.personName }}</div></div>
-      <div class="c" data-l="Tipo"><span class="badge" [class.cargo]="r.kind === 'cargo'">{{ r.kind === 'cargo' ? 'Cargo' : 'Abono' }}</span></div>
-      <div class="c wide" data-l="Concepto"><div class="t">{{ r.conceptName || '—' }}</div></div>
-      <div class="c" data-l="Monto"><div class="t num">{{ money(r.amount) }}</div></div>
-      <div class="c" data-l="Fecha"><div class="t">{{ r.date ? fmtDate(r.date) : '—' }}</div></div>
-      <div class="c" data-l="Días"><div class="t num">{{ r.age === null ? '—' : r.age }}</div></div>
-      <div class="c" [attr.data-l]="r.kind === 'cargo' ? 'Saldo' : 'Aplica a'">
+    <div class="grid row mov" [class.is-cargo]="r.kind === 'cargo'" [class.is-abono]="r.kind === 'abono'">
+      <div class="c a-p" data-l="Persona"><div class="t strong">{{ r.personName }}</div></div>
+      <div class="c a-k" data-l="Tipo"><span class="badge" [class.cargo]="r.kind === 'cargo'">{{ r.kind === 'cargo' ? 'Cargo' : 'Abono' }}</span></div>
+      <div class="c wide a-cc" [class.empty]="!r.conceptName" data-l="Concepto"><div class="t">{{ r.conceptName || '—' }}</div></div>
+      <div class="c a-m" data-l="Monto"><div class="t num">{{ money(r.amount) }}</div></div>
+      <div class="c a-f" data-l="Fecha"><div class="t">{{ r.date ? fmtDate(r.date) : '—' }}</div></div>
+      <div class="c a-d" data-l="Días"><div class="t num" [class.has-age]="r.age !== null">{{ r.age === null ? '—' : r.age }}</div></div>
+      <div class="c a-s" [attr.data-l]="r.kind === 'cargo' ? 'Saldo' : 'Aplica a'">
         @if (r.balance !== null) {
           <div class="t num strong" [class.pos]="r.balance <= 0">{{ r.balance <= 0 ? 'Pagado' : money(r.balance) }}</div>
         } @else {
