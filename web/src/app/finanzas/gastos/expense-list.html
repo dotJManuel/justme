@@ -1,0 +1,70 @@
+<section class="card" [style.--cols]="cols()">
+  <h2>{{ title() }}</h2>
+
+  <div class="grid head" aria-hidden="true">
+    <span>Concepto</span>
+    @if (cards()) {
+      <span>A meses</span>
+      <span class="num">Monto total</span>
+    }
+    <span class="num">{{ cards() ? 'Por pagar' : 'Monto mensual' }}</span>
+    <span class="num">Por quincena</span>
+    <span></span>
+  </div>
+
+  @for (r of rows(); track r.id) {
+    <div class="grid row">
+      <div class="c" data-l="Concepto">
+        <input #cn aria-label="Concepto" maxlength="120" [value]="r.concept" (change)="setConcept(r, cn)" />
+      </div>
+      @if (cards()) {
+        <div class="c" data-l="A meses">
+          <input #ins aria-label="A meses" maxlength="20" placeholder="05/09" [value]="r.installment" (change)="setInstallment(r, ins)" />
+        </div>
+        <div class="c" data-l="Monto total">
+          <input #tot class="num" inputmode="decimal" aria-label="Monto total" [value]="r.total ?? ''" (change)="setTotal(r, tot)" />
+        </div>
+      }
+      <div class="c" [attr.data-l]="cards() ? 'Por pagar' : 'Monto mensual'">
+        <input #am class="num" inputmode="decimal" [attr.aria-label]="cards() ? 'Por pagar' : 'Monto mensual'" [value]="r.amount" (change)="setAmount(r, am)" />
+      </div>
+      <div class="c" data-l="Por quincena"><div class="ro">{{ money(half(r.amount)) }}</div></div>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + r.concept" (click)="remove(r)">✕</button>
+    </div>
+  } @empty {
+    <p class="hint">Todavía no hay registros.</p>
+  }
+
+  <div class="grid total">
+    <span>Total</span>
+    @if (cards()) {
+      <span></span>
+      <div class="c" data-l="Monto total"><div class="ro">{{ money(totals().total) }}</div></div>
+    }
+    <div class="c" [attr.data-l]="cards() ? 'Por pagar' : 'Monto mensual'"><div class="ro">{{ money(totals().amount) }}</div></div>
+    <div class="c" data-l="Por quincena"><div class="ro">{{ money(totals().quincena) }}</div></div>
+    <span></span>
+  </div>
+
+  <form class="grid row add" (ngSubmit)="add()">
+    <div class="c" data-l="Concepto">
+      <input name="concept" aria-label="Nuevo concepto" placeholder="Nuevo concepto" maxlength="120" [ngModel]="concept()" (ngModelChange)="concept.set($event)" />
+    </div>
+    @if (cards()) {
+      <div class="c" data-l="A meses">
+        <input name="installment" aria-label="A meses" placeholder="05/09" maxlength="20" [ngModel]="installment()" (ngModelChange)="installment.set($event)" />
+      </div>
+      <div class="c" data-l="Monto total">
+        <input name="total" class="num" inputmode="decimal" aria-label="Monto total" placeholder="0.00" [ngModel]="total()" (ngModelChange)="total.set($event)" />
+      </div>
+    }
+    <div class="c" [attr.data-l]="cards() ? 'Por pagar' : 'Monto mensual'">
+      <input name="amount" class="num" inputmode="decimal" [attr.aria-label]="cards() ? 'Por pagar' : 'Monto mensual'" placeholder="0.00" [ngModel]="amount()" (ngModelChange)="amount.set($event)" />
+    </div>
+    <span></span>
+    <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
+  </form>
+  @if (cards()) {
+    <p class="hint">Si dejas el monto total vacío, se usa lo que se paga este mes.</p>
+  }
+</section>

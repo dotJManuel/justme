@@ -1,0 +1,19 @@
+<div class="wrap">
+  <div class="top">
+    <h1>Mis finanzas</h1>
+    <nav class="tabs" aria-label="Secciones de finanzas">
+      <a routerLink="gastos" routerLinkActive="on">Gastos</a>
+      <a routerLink="pendiente" routerLinkActive="on">Pendiente</a>
+    </nav>
+  </div>
+
+  @if (fin.error()) {
+    <p class="msg" role="alert">{{ fin.error() }}</p>
+  }
+
+  @if (fin.loaded()) {
+    <router-outlet />
+  } @else if (!fin.error()) {
+    <p class="hint">Cargando…</p>
+  }
+</div>

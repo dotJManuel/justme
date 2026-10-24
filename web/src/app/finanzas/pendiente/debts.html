@@ -1,0 +1,145 @@
+<section class="card" [style.--cols]="summaryCols">
+  <h2>Resumen por persona</h2>
+
+  <div class="grid head" aria-hidden="true">
+    <span>Persona</span>
+    <span class="num">Prestado</span>
+    <span class="num">Pagado</span>
+    <span class="num">Pendiente</span>
+    <span class="pl">% pagado</span>
+  </div>
+
+  @for (p of summary().people; track p.person) {
+    <div class="grid row">
+      <button type="button" class="who" [class.on]="isFiltered(p.person)" [attr.aria-pressed]="isFiltered(p.person)" title="Ver solo sus movimientos" (click)="toggleFilter(p.person)">
+        {{ p.person }}
+      </button>
+      <div class="c" data-l="Prestado"><div class="ro">{{ money(p.lent) }}</div></div>
+      <div class="c" data-l="Pagado"><div class="ro">{{ money(p.paid) }}</div></div>
+      <div class="c" data-l="Pendiente"><div class="ro strong" [class.pos]="p.pending <= 0">{{ money(p.pending) }}</div></div>
+      <div class="c" data-l="% pagado">
+        <div class="pct">
+          <div class="bar"><i [style.width.%]="p.ratio * 100"></i></div>
+          <span>{{ pct(p.ratio) }}</span>
+        </div>
+      </div>
+    </div>
+  } @empty {
+    <p class="hint">Todavía no hay movimientos. Agrega un cargo cuando prestes dinero.</p>
+  }
+
+  <div class="grid total">
+    <span>Total</span>
+    <div class="c" data-l="Prestado"><div class="ro">{{ money(summary().total.lent) }}</div></div>
+    <div class="c" data-l="Pagado"><div class="ro">{{ money(summary().total.paid) }}</div></div>
+    <div class="c" data-l="Pendiente"><div class="ro">{{ money(summary().total.pending) }}</div></div>
+    <div class="c" data-l="% pagado">
+      <div class="pct">
+        <div class="bar"><i [style.width.%]="summary().total.ratio * 100"></i></div>
+        <span>{{ pct(summary().total.ratio) }}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card" #form>
+  <h2>{{ editId() ? 'Editar movimiento' : 'Nuevo movimiento' }}</h2>
+  <form class="form" (ngSubmit)="submit()">
+    <label>
+      Persona
+      <input name="person" list="people" maxlength="60" autocomplete="off" [disabled]="personLocked()" [ngModel]="person()" (ngModelChange)="person.set($event)" />
+      <datalist id="people">
+        @for (n of people(); track n) {
+          <option [value]="n"></option>
+        }
+      </datalist>
+    </label>
+    <label>
+      Tipo
+      <select name="kind" [disabled]="!!editId()" [ngModel]="kind()" (ngModelChange)="kind.set($event)">
+        <option value="cargo">Cargo (le presté)</option>
+        <option value="abono">Abono (me pagó)</option>
+      </select>
+    </label>
+    <label>
+      Concepto
+      <input name="concept" maxlength="200" [ngModel]="concept()" (ngModelChange)="concept.set($event)" />
+    </label>
+    <label>
+      Monto
+      <input name="amount" class="num" inputmode="decimal" placeholder="0.00" [ngModel]="amount()" (ngModelChange)="amount.set($event)" />
+    </label>
+    <label>
+      Fecha
+      <input name="date" type="date" [ngModel]="date()" (ngModelChange)="date.set($event)" />
+    </label>
+    @if (kind() === 'abono') {
+      <label>
+        Aplica a
+        <select name="appliesTo" [ngModel]="appliesValue()" (ngModelChange)="appliesTo.set($event)">
+          <option value="">Sin asignar a un cargo</option>
+          @for (o of appliesOptions(); track o.id) {
+            <option [value]="o.id">{{ appliesLabel(o) }}</option>
+          }
+        </select>
+      </label>
+    }
+    <div class="btns">
+      <button type="submit" class="primary" [disabled]="!canSave()">{{ editId() ? 'Guardar cambios' : 'Agregar' }}</button>
+      @if (editId()) {
+        <button type="button" class="ghost" (click)="clear()">Cancelar</button>
+      }
+    </div>
+  </form>
+  @if (personLocked()) {
+    <p class="hint">Este cargo ya tiene abonos, así que no se puede cambiar la persona.</p>
+  }
+</section>
+
+<section class="card" [style.--cols]="movCols">
+  <h2>Movimientos (cargos y abonos)</h2>
+
+  @if (summary().people.length > 1) {
+    <div class="chips" role="group" aria-label="Filtrar por persona">
+      <button type="button" class="chip" [class.on]="!activeFilter()" [attr.aria-pressed]="!activeFilter()" (click)="toggleFilter('')">Todos</button>
+      @for (n of people(); track n) {
+        <button type="button" class="chip" [class.on]="isFiltered(n)" [attr.aria-pressed]="isFiltered(n)" (click)="toggleFilter(n)">{{ n }}</button>
+      }
+    </div>
+  }
+
+  <div class="grid head" aria-hidden="true">
+    <span>Persona</span>
+    <span>Tipo</span>
+    <span>Concepto</span>
+    <span class="num">Monto</span>
+    <span>Fecha</span>
+    <span class="num">Días</span>
+    <span class="num">Saldo / aplica a</span>
+    <span></span>
+  </div>
+
+  @for (r of visible(); track r.id) {
+    <div class="grid row">
+      <div class="c" data-l="Persona"><div class="t strong">{{ r.person }}</div></div>
+      <div class="c" data-l="Tipo"><span class="badge" [class.cargo]="r.kind === 'cargo'">{{ r.kind === 'cargo' ? 'Cargo' : 'Abono' }}</span></div>
+      <div class="c wide" data-l="Concepto"><div class="t">{{ r.concept || '—' }}</div></div>
+      <div class="c" data-l="Monto"><div class="t num">{{ money(r.amount) }}</div></div>
+      <div class="c" data-l="Fecha"><div class="t">{{ r.date ? fmtDate(r.date) : '—' }}</div></div>
+      <div class="c" data-l="Días"><div class="t num">{{ r.age === null ? '—' : r.age }}</div></div>
+      <div class="c" [attr.data-l]="r.kind === 'cargo' ? 'Saldo' : 'Aplica a'">
+        @if (r.balance !== null) {
+          <div class="t num strong" [class.pos]="r.balance <= 0">{{ r.balance <= 0 ? 'Pagado' : money(r.balance) }}</div>
+        } @else {
+          <div class="t num muted">{{ target(r) }}</div>
+        }
+      </div>
+      <div class="x acts">
+        <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.person" (click)="startEdit(r)">✎</button>
+        <button type="button" class="icon" [attr.aria-label]="'Eliminar movimiento de ' + r.person" (click)="remove(r)">✕</button>
+      </div>
+    </div>
+  } @empty {
+    <p class="hint">No hay movimientos.</p>
+  }
+</section>

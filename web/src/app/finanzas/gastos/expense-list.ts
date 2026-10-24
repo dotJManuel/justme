@@ -1,0 +1,102 @@
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { expenseTotals, fmtMoney, parseMoney, perQuincena } from '../finanzas.calc';
+import { Expense, Section } from '../finanzas.models';
+import { FinanzasService } from '../finanzas.service';
+
+/** Tabla editable de una sección: tarjeta Santander, tarjeta BBVA o gastos fijos. */
+@Component({
+  selector: 'app-expense-list',
+  imports: [FormsModule],
+  templateUrl: './expense-list.html',
+  styleUrl: '../finanzas.shared.css',
+})
+export class ExpenseList {
+  private readonly fin = inject(FinanzasService);
+
+  readonly section = input.required<Section>();
+  readonly title = input.required<string>();
+
+  protected readonly money = fmtMoney;
+  protected readonly half = perQuincena;
+
+  /** Las tarjetas llevan "a meses" y monto total; los gastos fijos solo un monto mensual. */
+  protected readonly cards = computed(() => this.section() !== 'fijos');
+  protected readonly cols = computed(() =>
+    this.cards()
+      ? 'minmax(0,2.2fr) 5rem minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem'
+      : 'minmax(0,2.2fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem',
+  );
+  protected readonly rows = computed(() => this.fin.expenses().filter((e) => e.section === this.section()));
+  protected readonly totals = computed(() => expenseTotals(this.rows()));
+
+  protected readonly concept = signal('');
+  protected readonly installment = signal('');
+  protected readonly total = signal('');
+  protected readonly amount = signal('');
+
+  /** Monto escrito en el formulario: vacío cuenta como 0; null si no es un monto válido. */
+  private readonly draftAmount = computed(() => (this.amount().trim() === '' ? 0 : parseMoney(this.amount())));
+  private readonly draftTotal = computed(() => (this.total().trim() === '' ? null : parseMoney(this.total())));
+  protected readonly canAdd = computed(
+    () =>
+      this.concept().trim() !== '' &&
+      this.draftAmount() !== null &&
+      (this.total().trim() === '' || this.draftTotal() !== null),
+  );
+
+  protected setConcept(r: Expense, el: HTMLInputElement) {
+    const concept = el.value.trim();
+    if (!concept) return void (el.value = r.concept);
+    if (concept !== r.concept) this.save(r, el, { concept }, r.concept);
+  }
+
+  protected setInstallment(r: Expense, el: HTMLInputElement) {
+    const installment = el.value.trim();
+    if (installment !== r.installment) this.save(r, el, { installment }, r.installment);
+  }
+
+  protected setAmount(r: Expense, el: HTMLInputElement) {
+    const amount = parseMoney(el.value);
+    if (amount === null) return this.invalid(el, String(r.amount));
+    if (amount !== r.amount) this.save(r, el, { amount }, String(r.amount));
+  }
+
+  protected setTotal(r: Expense, el: HTMLInputElement) {
+    const total = el.value.trim() === '' ? null : parseMoney(el.value);
+    if (el.value.trim() !== '' && total === null) return this.invalid(el, String(r.total ?? ''));
+    if (total !== r.total) this.save(r, el, { total }, String(r.total ?? ''));
+  }
+
+  protected async remove(r: Expense) {
+    if (confirm(`¿Eliminar «${r.concept}»?`)) await this.fin.removeExpense(r.id);
+  }
+
+  protected async add() {
+    const amount = this.draftAmount();
+    if (!this.canAdd() || amount === null) return;
+    const ok = await this.fin.addExpense({
+      section: this.section(),
+      concept: this.concept().trim(),
+      installment: this.cards() ? this.installment().trim() : '',
+      // Una compra sin monto total es un pago único: el total es lo que se paga.
+      total: this.cards() ? (this.draftTotal() ?? amount) : null,
+      amount,
+    });
+    if (ok) {
+      this.concept.set('');
+      this.installment.set('');
+      this.total.set('');
+      this.amount.set('');
+    }
+  }
+
+  private async save(r: Expense, el: HTMLInputElement, patch: Partial<Expense>, back: string) {
+    if (!(await this.fin.updateExpense(r.id, patch))) el.value = back;
+  }
+
+  private invalid(el: HTMLInputElement, back: string) {
+    el.value = back;
+    this.fin.error.set('Escribe un monto válido (solo números).');
+  }
+}

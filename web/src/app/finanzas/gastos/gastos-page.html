@@ -1,0 +1,48 @@
+<section class="summary" aria-label="Resumen del mes">
+  <div class="tile">
+    <span class="lbl">Tarjeta Santander (a pagar)</span>
+    <b>{{ money(summary().santander) }}</b>
+  </div>
+  <div class="tile">
+    <span class="lbl">Tarjeta BBVA (a pagar)</span>
+    <b>{{ money(summary().bbva) }}</b>
+  </div>
+  <div class="tile">
+    <span class="lbl">Total tarjetas (a pagar)</span>
+    <b>{{ money(summary().tarjetas) }}</b>
+  </div>
+  <div class="tile">
+    <span class="lbl">Gastos fijos</span>
+    <b>{{ money(summary().fijos) }}</b>
+  </div>
+
+  <div class="tile big">
+    <span class="lbl">Gran total del mes</span>
+    <b>{{ money(summary().gran) }}</b>
+  </div>
+  <label class="tile big">
+    <span class="lbl">Ingreso mensual</span>
+    <input #inc class="num" inputmode="decimal" [value]="income()" (change)="setIncome(inc)" />
+  </label>
+  <div class="tile big" [class.pos]="summary().balance >= 0" [class.neg]="summary().balance < 0">
+    <span class="lbl">Balance · {{ summary().balance >= 0 ? 'te sobra' : 'te falta' }}</span>
+    <b>{{ money(summary().balance) }}</b>
+  </div>
+</section>
+
+<app-expense-list section="santander" title="Tarjeta de crédito — Santander" />
+<app-expense-list section="bbva" title="Tarjeta de crédito — BBVA" />
+
+<section class="card both">
+  <h2>Total general (ambas tarjetas)</h2>
+  <div class="row">
+    <span class="lbl">Monto total <b>{{ money(cardsTotal().total) }}</b></span>
+    <span class="lbl">Por pagar <b>{{ money(cardsTotal().amount) }}</b></span>
+    <span class="lbl">Por quincena <b>{{ money(cardsTotal().quincena) }}</b></span>
+  </div>
+</section>
+
+<app-expense-list section="fijos" title="Gastos fijos mensuales" />
+
+<app-cut-list card="santander" title="Corte — Tarjeta Santander" />
+<app-cut-list card="bbva" title="Corte — Tarjeta BBVA" />

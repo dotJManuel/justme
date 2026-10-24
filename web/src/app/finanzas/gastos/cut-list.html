@@ -1,0 +1,45 @@
+<section class="card" [style.--cols]="cols">
+  <h2>{{ title() }}</h2>
+
+  <div class="grid head" aria-hidden="true">
+    <span>Periodo de corte</span>
+    <span class="num">Monto del corte</span>
+    <span class="num">Pagado</span>
+    <span class="num">Pendiente</span>
+    <span></span>
+  </div>
+
+  @for (c of rows(); track c.id) {
+    <div class="grid row">
+      <div class="c" data-l="Periodo de corte">
+        <input #p aria-label="Periodo de corte" maxlength="60" [value]="c.period" (change)="setPeriod(c, p)" />
+      </div>
+      <div class="c" data-l="Monto del corte">
+        <input #a class="num" inputmode="decimal" aria-label="Monto del corte" [value]="c.amount" (change)="setAmount(c, a)" />
+      </div>
+      <div class="c" data-l="Pagado">
+        <input #pd class="num" inputmode="decimal" aria-label="Pagado" [value]="c.paid" (change)="setPaid(c, pd)" />
+      </div>
+      <div class="c" data-l="Pendiente">
+        <div class="ro" [class.pos]="pending(c) <= 0" [class.neg]="pending(c) > 0">{{ money(pending(c)) }}</div>
+      </div>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar corte ' + c.period" (click)="remove(c)">✕</button>
+    </div>
+  } @empty {
+    <p class="hint">Todavía no hay cortes.</p>
+  }
+
+  <form class="grid row add" (ngSubmit)="add()">
+    <div class="c" data-l="Periodo de corte">
+      <input name="period" aria-label="Nuevo periodo de corte" placeholder="13 ago a 12 sep" maxlength="60" [ngModel]="period()" (ngModelChange)="period.set($event)" />
+    </div>
+    <div class="c" data-l="Monto del corte">
+      <input name="amount" class="num" inputmode="decimal" aria-label="Monto del corte" placeholder="0.00" [ngModel]="amount()" (ngModelChange)="amount.set($event)" />
+    </div>
+    <div class="c" data-l="Pagado">
+      <input name="paid" class="num" inputmode="decimal" aria-label="Pagado" placeholder="0.00" [ngModel]="paid()" (ngModelChange)="paid.set($event)" />
+    </div>
+    <span></span>
+    <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
+  </form>
+</section>

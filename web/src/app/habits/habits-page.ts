@@ -1,6 +1,4 @@
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../auth.service';
 import { ConfigService } from '../config.service';
 import { Habits, SupabaseService } from '../supabase.service';
 import { DN, MN, XP_LEVEL, XP_PER } from './habits.config';
@@ -8,14 +6,11 @@ import { Days, addDays, computeStreaks, countDone, dateKey, doneAtLabel, isRestD
 
 @Component({
   selector: 'app-habits-page',
-  imports: [RouterLink],
   templateUrl: './habits-page.html',
   styleUrl: './habits-page.css',
 })
 export class HabitsPage implements OnInit {
   private readonly db = inject(SupabaseService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   protected readonly config = inject(ConfigService);
 
   protected readonly xpPer = XP_PER;
@@ -120,11 +115,6 @@ export class HabitsPage implements OnInit {
       this.showToast(k === this.todayKey() ? '¡Racha asegurada por hoy! 🔥' : 'Día completado ✓');
     }
     this.persist(k, h);
-  }
-
-  protected async signOut() {
-    await this.auth.signOut();
-    await this.router.navigate(['/login']);
   }
 
   /** Guarda en orden por día, para que dos toques seguidos no se pisen. */

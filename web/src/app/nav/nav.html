@@ -1,0 +1,8 @@
+<nav aria-label="Menú principal">
+  <span class="brand">JustMe</span>
+  <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }">🔥 Racha</a>
+  <a routerLink="/finanzas" routerLinkActive="on">💰 Finanzas</a>
+  <span class="gap"></span>
+  <a routerLink="/admin" routerLinkActive="on" class="quiet" aria-label="Modo administrador" title="Modo administrador">⚙</a>
+  <button type="button" class="quiet" (click)="signOut()">Salir</button>
+</nav>

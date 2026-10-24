@@ -1,0 +1,32 @@
+/* Estilos comunes de las secciones de finanzas (tarjetas, filas editables, botones). */
+:host{display:block;min-width:0}
+h2,h3{font-family:var(--font-display);margin:0}
+h2{font-size:1.1rem}
+h3{font-size:.95rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+input,select{font:inherit;font-size:.92rem;font-weight:400;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);min-width:0;width:100%;box-sizing:border-box}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:var(--cols);gap:8px;align-items:center}
+.head{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ro{padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.total{font-weight:800;border-top:2px solid var(--line);padding-top:10px}
+.total .ro{color:var(--ink);padding-inline:0}
+.pos{color:var(--done)}
+.neg{color:#d63b3b}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}
+.primary{font:inherit;font-weight:700;padding:9px 14px;border:0;border-bottom:4px solid #d95f00;border-radius:12px;background:var(--flame);color:#fff;cursor:pointer;white-space:nowrap}
+.primary:disabled{opacity:.5;cursor:default}
+.icon{font:inherit;font-size:.8rem;width:30px;height:30px;flex:none;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);cursor:pointer}
+.icon:hover{color:#d63b3b;border-color:#d63b3b}
+.x{justify-self:end}
+.add{padding-top:8px;border-top:2px dashed var(--line)}
+@media (max-width:760px){
+  .head{display:none}
+  .grid{grid-template-columns:1fr 1fr}
+  .grid>:first-child{grid-column:1/-1}
+  .c::before{content:attr(data-l);display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:2px}
+  .row{border:2px solid var(--line);border-radius:14px;padding:10px}
+  .x{grid-column:1/-1}
+  .ro{text-align:left;padding-inline:0}
+}
