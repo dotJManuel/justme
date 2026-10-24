@@ -3,6 +3,15 @@
   <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }">🔥 Racha</a>
   <a routerLink="/finanzas" routerLinkActive="on">💰 Finanzas</a>
   <span class="gap"></span>
+  <button
+    type="button"
+    class="quiet"
+    [attr.aria-label]="theme.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    [title]="theme.theme() === 'dark' ? 'Modo claro' : 'Modo oscuro'"
+    (click)="theme.toggle()"
+  >
+    {{ theme.theme() === 'dark' ? '☀' : '☾' }}
+  </button>
   <a routerLink="/admin" routerLinkActive="on" class="quiet" aria-label="Modo administrador" title="Modo administrador">⚙</a>
   <button type="button" class="quiet" (click)="signOut()">Salir</button>
 </nav>

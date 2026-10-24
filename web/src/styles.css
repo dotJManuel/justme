@@ -1,6 +1,7 @@
 /* Paleta: gris azulado como color principal (--accent). Los tonos cálidos (--flame) quedan solo para la
    llama y el progreso de la racha, donde el color cuenta algo: encendida o apagada. */
 :root {
+  color-scheme: light;
   --bg: #eceff2; --surface: #ffffff; --ink: #1d2731; --muted: #64727f; --line: #d8dee4;
   --accent: #5a7893; --accent-2: #8aa2b8; --accent-edge: #46617a;
   /* Un matiz por familia de secciones: --sec lo toma cada tarjeta, cuadro y botón de esa sección. */
@@ -10,14 +11,22 @@
   --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
+/* Oscuro: lo pide el sistema (si no se eligió claro a mano) o se eligió a mano con el interruptor del menú. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #11161b; --surface: #1a2129; --ink: #e7ecf1; --muted: #97a5b2; --line: #2a343e;
     --accent: #5a7893; --accent-2: #7d97ae; --accent-edge: #3f566b;
     --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #232c35;
     --ice: #1b3347; --ice-ink: #6cc0f5;
     color-scheme: dark;
   }
+}
+:root[data-theme='dark'] {
+  --bg: #11161b; --surface: #1a2129; --ink: #e7ecf1; --muted: #97a5b2; --line: #2a343e;
+  --accent: #5a7893; --accent-2: #7d97ae; --accent-edge: #3f566b;
+  --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #232c35;
+  --ice: #1b3347; --ice-ink: #6cc0f5;
+  color-scheme: dark;
 }
 .s-steel { --sec: var(--c-steel); }
 .s-teal { --sec: var(--c-teal); }
