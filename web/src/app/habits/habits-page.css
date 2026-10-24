@@ -20,8 +20,8 @@ h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
 .flame.iced path:first-of-type{fill:var(--ice-ink)}
 .freeze{margin-top:6px;font-size:.85rem;font-weight:600;color:var(--ice-ink)}
 .dot.rest{background:transparent;border:2px dashed var(--line)}
-.dayb.sel{border-color:var(--flame)}
-.dayb:focus-visible,.habit:focus-visible,button:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+.dayb.sel{border-color:var(--accent)}
+.dayb:focus-visible,.habit:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .goal{display:flex;flex-direction:column;gap:8px}
 .goalrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .goalrow h2{font-size:1.15rem}

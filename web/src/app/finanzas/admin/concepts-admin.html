@@ -1,4 +1,4 @@
-<section class="card" [style.--cols]="cols">
+<section class="card" [class.s-steel]="scope() === 'gasto'" [class.s-violet]="scope() === 'movimiento'" [class.s-sage]="scope() === 'familia'" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
   <p class="hint">{{ help() }}</p>
 

@@ -1,4 +1,4 @@
-<section class="card" [style.--cols]="cols">
+<section class="card" [class.s-sage]="received()" [class.s-rose]="!received()" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
 
   <div class="scroll">

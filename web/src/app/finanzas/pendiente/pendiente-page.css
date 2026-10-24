@@ -6,3 +6,7 @@
 .lbl{font-size:.78rem;font-weight:600;color:var(--muted)}
 .neg b{color:#d63b3b}
 @media (max-width:520px){.summary{grid-template-columns:minmax(0,1fr)}}
+/* Cuadros de resumen: franja y fondo suave del color de su sección */
+.tile{border-left:5px solid var(--sec,var(--line));background:color-mix(in srgb,var(--sec,transparent) 16%,var(--surface))}
+.card.s-teal{background:color-mix(in srgb,var(--sec) 9%,var(--surface));border-top:4px solid var(--sec)}
+.sec::before{content:"";display:inline-block;width:.55em;height:.55em;margin-right:.5em;border-radius:50%;background:var(--sec,var(--accent));vertical-align:.05em}

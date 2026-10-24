@@ -39,7 +39,7 @@ input {
 }
 input:focus-visible,
 button:focus-visible {
-  outline: 3px solid var(--flame);
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 .primary {
@@ -47,9 +47,9 @@ button:focus-visible {
   font-weight: 700;
   padding: 12px 14px;
   border: 0;
-  border-bottom: 4px solid #d95f00;
+  border-bottom: 4px solid var(--accent-edge);
   border-radius: 14px;
-  background: var(--flame);
+  background: var(--accent);
   color: #fff;
   cursor: pointer;
 }

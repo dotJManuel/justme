@@ -1,19 +1,30 @@
-/* Paleta y tipografía tomadas de racha.html */
+/* Paleta: gris azulado como color principal (--accent). Los tonos cálidos (--flame) quedan solo para la
+   llama y el progreso de la racha, donde el color cuenta algo: encendida o apagada. */
 :root {
-  --bg: #f3f4fa; --surface: #ffffff; --ink: #1e2240; --muted: #6a6f92; --line: #e1e3f0;
-  --flame: #ff7a1a; --flame-2: #ffc233; --done: #2bb673; --done-soft: #ddf5e9; --off: #ecedf5;
+  --bg: #eceff2; --surface: #ffffff; --ink: #1d2731; --muted: #64727f; --line: #d8dee4;
+  --accent: #5a7893; --accent-2: #8aa2b8; --accent-edge: #46617a;
+  /* Un matiz por familia de secciones: --sec lo toma cada tarjeta, cuadro y botón de esa sección. */
+  --c-steel: #5a7893; --c-teal: #3a7d82; --c-sand: #8f6f3a; --c-violet: #7060a8; --c-sage: #4f7f54; --c-rose: #a85a54;
+  --flame: #ff7a1a; --flame-2: #ffc233; --done: #2bb673; --done-soft: #ddf5e9; --off: #e4e8ec;
   --ice: #dff2ff; --ice-ink: #2a8ac4;
   --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #12142a; --surface: #1c1f3a; --ink: #eef0ff; --muted: #9da2c8; --line: #2c3058;
-    --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #262a4a;
+    --bg: #11161b; --surface: #1a2129; --ink: #e7ecf1; --muted: #97a5b2; --line: #2a343e;
+    --accent: #5a7893; --accent-2: #7d97ae; --accent-edge: #3f566b;
+    --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #232c35;
     --ice: #1b3347; --ice-ink: #6cc0f5;
     color-scheme: dark;
   }
 }
+.s-steel { --sec: var(--c-steel); }
+.s-teal { --sec: var(--c-teal); }
+.s-sand { --sec: var(--c-sand); }
+.s-violet { --sec: var(--c-violet); }
+.s-sage { --sec: var(--c-sage); }
+.s-rose { --sec: var(--c-rose); }
 body {
   margin: 0;
   background: var(--bg);

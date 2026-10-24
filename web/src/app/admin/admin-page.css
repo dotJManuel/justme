@@ -7,18 +7,18 @@ h2{font-size:1.1rem}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px}
 label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:.9rem}
 input[type="text"],input:not([type]),input[type="number"]{font:inherit;font-weight:400;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);min-width:0}
-input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 legend{font-weight:700;font-size:.9rem;padding:0;margin-bottom:8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font:inherit;font-weight:700;font-size:.85rem;text-transform:uppercase;padding:8px 12px;border:2px solid var(--line);border-radius:999px;background:var(--bg);color:var(--muted);cursor:pointer}
-.chip.on{background:var(--flame);border-color:var(--flame);color:#fff}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .hint{margin:0;font-size:.85rem;color:var(--muted)}
 .msg{margin:0;font-size:.9rem}
 .error{color:#d63b3b}
 .info{color:var(--done)}
 .warn{color:#c07a00}
-.primary{font:inherit;font-weight:700;padding:12px 14px;border:0;border-bottom:4px solid #d95f00;border-radius:14px;background:var(--flame);color:#fff;cursor:pointer}
+.primary{font:inherit;font-weight:700;padding:12px 14px;border:0;border-bottom:4px solid var(--accent-edge);border-radius:14px;background:var(--accent);color:#fff;cursor:pointer}
 .primary:disabled{opacity:.5;cursor:default}
 .habits{list-style:none;margin:0;padding:2px 4px 2px 2px;display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;overscroll-behavior:contain}
 .habits{gap:6px}

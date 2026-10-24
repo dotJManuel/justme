@@ -1,28 +1,34 @@
 <section data-section class="summary" aria-label="Resumen del mes">
   @for (c of summary().cards; track c.card.id) {
-    <div class="tile">
+    <div class="tile s-steel">
       <span class="lbl">Tarjeta {{ c.card.name }} (a pagar)</span>
       <b>{{ money(c.amount) }}</b>
     </div>
   }
-  <div class="tile">
+  <div class="tile s-teal">
     <span class="lbl">Total tarjetas (a pagar)</span>
     <b>{{ money(summary().tarjetas) }}</b>
   </div>
-  <div class="tile">
+  <div class="tile s-sand">
     <span class="lbl">Gastos fijos</span>
     <b>{{ money(summary().fijos) }}</b>
   </div>
 
-  <div class="tile big">
+  <div class="tile big s-teal">
     <span class="lbl">Gran total del mes</span>
     <b>{{ money(summary().gran) }}</b>
   </div>
-  <label class="tile big">
+  <label class="tile big s-sage">
     <span class="lbl">Ingreso mensual</span>
     <input #inc class="num" inputmode="decimal" [value]="income()" (change)="setIncome(inc)" />
   </label>
-  <div class="tile big" [class.pos]="summary().balance >= 0" [class.neg]="summary().balance < 0">
+  <div
+    class="tile big"
+    [class.s-sage]="summary().balance >= 0"
+    [class.s-rose]="summary().balance < 0"
+    [class.pos]="summary().balance >= 0"
+    [class.neg]="summary().balance < 0"
+  >
     <span class="lbl">Balance · {{ summary().balance >= 0 ? 'te sobra' : 'te falta' }}</span>
     <b>{{ money(summary().balance) }}</b>
   </div>
@@ -35,7 +41,7 @@
 }
 
 @if (cards().length) {
-  <section data-section class="card both">
+  <section data-section class="card both s-teal">
     <h2>Total general ({{ cards().length === 1 ? 'tarjeta' : 'todas las tarjetas' }})</h2>
     <div class="row">
       <span class="lbl">Monto total <b>{{ money(cardsTotal().total) }}</b></span>

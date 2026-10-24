@@ -3,15 +3,15 @@ h1{font-family:var(--font-display);font-size:1.25rem;font-weight:800;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
 .tabs a{font-weight:700;font-size:.9rem;color:var(--muted);text-decoration:none;padding:6px 16px;border-radius:999px}
-.tabs a.on{background:var(--flame);color:#fff}
-.tabs a:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+.tabs a.on{background:var(--accent);color:#fff}
+.tabs a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .msg{margin:0;font-size:.9rem;color:#d63b3b}
 .hint{margin:0;font-size:.85rem;color:var(--muted)}
 .fab{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:1.15rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.fab:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+.fab:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 /* Celular: flechas en fila, abajo a la derecha; la página deja espacio al final para no taparse. */
 .jump{position:fixed;z-index:20;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:row;gap:10px}
-.jump .fab{background:var(--flame);border-color:var(--flame);color:#fff}
+.jump .fab{background:var(--accent);border-color:var(--accent);color:#fff}
 .wrap{padding-bottom:84px}
 /* Pantalla mediana: las flechas van a media altura en su propio carril a la derecha, sin tapar el contenido. */
 @media (min-width:520px){

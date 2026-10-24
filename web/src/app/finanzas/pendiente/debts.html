@@ -1,4 +1,4 @@
-<section class="card" [style.--cols]="summaryCols">
+<section class="card s-violet" [style.--cols]="summaryCols">
   <h2>Resumen por persona</h2>
 
   <div class="scroll">
@@ -46,7 +46,7 @@
   </div>
 </section>
 
-<section data-section class="card" #form>
+<section data-section class="card s-violet" #form>
   <h2>{{ editId() ? 'Editar movimiento' : 'Nuevo movimiento' }}</h2>
   <form class="form" (ngSubmit)="submit()">
     <label>
@@ -103,7 +103,7 @@
   }
 </section>
 
-<section data-section class="card" [style.--cols]="movCols">
+<section data-section class="card s-violet" [style.--cols]="movCols">
   <h2>Movimientos (cargos y abonos)</h2>
 
   @if (summary().people.length > 1) {
