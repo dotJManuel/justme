@@ -1,7 +1,10 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { currentCutPeriod, cutPending, fmtMoney, parseMoney } from '../finanzas.calc';
 import { CreditCard } from '../finanzas.models';
+import { cutsSheet, today } from '../finanzas.export';
 import { FinanzasService } from '../finanzas.service';
+import { ExportButton } from '../export-button/export-button';
+import { downloadXlsx } from '../xlsx';
 
 /**
  * Corte en curso de una tarjeta. El periodo se calcula solo a partir del día de corte de la tarjeta
@@ -9,6 +12,7 @@ import { FinanzasService } from '../finanzas.service';
  */
 @Component({
   selector: 'app-cut-list',
+  imports: [ExportButton],
   templateUrl: './cut-list.html',
   styleUrl: '../finanzas.shared.css',
 })
@@ -39,6 +43,12 @@ export class CutList {
 
   protected setPaid(el: HTMLInputElement) {
     this.setMoney(el, 'paid');
+  }
+
+  /** Todos los cortes de la tarjeta (el actual y los anteriores). */
+  protected exportExcel() {
+    const cuts = this.fin.cuts().filter((c) => c.cardId === this.card().id);
+    downloadXlsx(`${this.title()} - ${today()}`, [cutsSheet('Cortes', cuts)]);
   }
 
   private setMoney(el: HTMLInputElement, field: 'amount' | 'paid') {

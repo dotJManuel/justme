@@ -1,5 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ExportButton } from '../export-button/export-button';
 import { fmtMoney } from '../finanzas.calc';
+import { historySheet, today } from '../finanzas.export';
 import {
   AuditAction,
   AuditEntry,
@@ -11,6 +13,8 @@ import {
   fmtDateTime,
 } from '../finanzas.history';
 import { FinanzasService } from '../finanzas.service';
+import { deleteHistoryMessage, plural } from '../finanzas.warn';
+import { downloadXlsx } from '../xlsx';
 
 /** Cuántos registros se piden cada vez. */
 const PAGE = 100;
@@ -19,10 +23,12 @@ const ACTIONS: Record<AuditAction, string> = { insert: 'Agregado', update: 'Edit
 
 /**
  * Historial: todo lo que se agregó, editó o eliminó, con su fecha y hora. Sirve para revisar pagos y cobros
- * (también los que ya se eliminaron) y aclarar malos entendidos.
+ * (también los que ya se eliminaron) y aclarar malos entendidos. Se pueden exportar a Excel o borrar por completo
+ * una o varias líneas (solo la línea del historial: el movimiento real no se toca).
  */
 @Component({
   selector: 'app-historial-page',
+  imports: [ExportButton],
   templateUrl: './historial-page.html',
   styleUrls: ['../finanzas.shared.css', './historial-page.css'],
 })
@@ -42,6 +48,9 @@ export class HistorialPage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly more = signal(false);
   protected readonly error = signal('');
+  protected readonly notice = signal('');
+  /** Borrando o preparando la exportación: se bloquean los botones. */
+  protected readonly busy = signal(false);
 
   // Filtros (se aplican a lo ya cargado)
   protected readonly person = signal('');
@@ -82,6 +91,12 @@ export class HistorialPage implements OnInit {
     );
   });
 
+  // Selección (ids de las líneas marcadas). Solo cuentan las que se ven: lo oculto por un filtro no se borra.
+  private readonly marked = signal<ReadonlySet<number>>(new Set());
+  protected readonly selected = computed(() => this.visible().filter((l) => this.marked().has(l.id)));
+  protected readonly allSelected = computed(() => this.visible().length > 0 && this.selected().length === this.visible().length);
+  protected readonly someSelected = computed(() => this.selected().length > 0 && !this.allSelected());
+
   async ngOnInit() {
     try {
       this.catalog.set(await this.fin.loadAuditNames());
@@ -114,8 +129,69 @@ export class HistorialPage implements OnInit {
     return !!(this.person() || this.kind() || this.action() || this.query());
   }
 
+  protected isMarked(id: number): boolean {
+    return this.marked().has(id);
+  }
+
+  protected toggle(id: number) {
+    this.marked.update((set) => {
+      const next = new Set(set);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  /** Marca todo lo que se ve; si ya estaba todo marcado, lo desmarca. */
+  protected toggleAll() {
+    const ids = this.visible().map((l) => l.id);
+    this.marked.update((set) => {
+      const next = new Set(set);
+      if (this.allSelected()) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  protected clearSelection() {
+    this.marked.set(new Set());
+  }
+
+  /** Borra por completo de la base de datos las líneas marcadas (solo las que se ven). */
+  protected async deleteSelected() {
+    const ids = this.selected().map((l) => l.id);
+    if (!ids.length || this.busy() || !confirm(deleteHistoryMessage(ids.length))) return;
+    this.busy.set(true);
+    this.error.set('');
+    this.notice.set('');
+    const ok = await this.fin.deleteAudit(ids);
+    if (ok) {
+      const gone = new Set(ids);
+      this.entries.update((l) => l.filter((e) => !gone.has(e.id)));
+      this.clearSelection();
+      this.notice.set(`✓ ${plural(ids.length, 'registro eliminado', 'registros eliminados')} del historial.`);
+    } else {
+      // Pudo borrarse una parte: se vuelve a leer para mostrar lo que de verdad queda.
+      this.error.set('No se pudo eliminar del historial. Revisa tu conexión e intenta de nuevo.');
+      this.clearSelection();
+      await this.reload();
+    }
+    this.busy.set(false);
+  }
+
+  /** Exporta lo que se ve (con los filtros); antes carga lo que falte para no dejar el archivo a medias. */
+  protected async exportExcel() {
+    this.busy.set(true);
+    this.notice.set('');
+    while (this.more() && !this.error()) await this.fetch(this.entries().length);
+    this.busy.set(false);
+    if (this.error()) return;
+    const label = HISTORY_AREAS.find((a) => a.key === this.area())?.label ?? 'Historial';
+    downloadXlsx(`Historial ${label} - ${today()}`, [historySheet(label, this.visible())]);
+  }
+
   private async reload() {
     this.entries.set([]);
+    this.clearSelection();
     await this.fetch(0);
   }
 

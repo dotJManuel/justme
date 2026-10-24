@@ -14,13 +14,16 @@ import {
 } from '../finanzas.calc';
 import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { Concept, Debt, Person } from '../finanzas.models';
+import { movementsSheet, peopleSheet, today } from '../finanzas.export';
 import { FinanzasService } from '../finanzas.service';
+import { ExportButton } from '../export-button/export-button';
+import { downloadXlsx } from '../xlsx';
 import { deleteMessage, deleteRowMessage, plural } from '../finanzas.warn';
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
 @Component({
   selector: 'app-debts',
-  imports: [FormsModule, ConceptField],
+  imports: [FormsModule, ConceptField, ExportButton],
   templateUrl: './debts.html',
   styleUrls: ['../finanzas.shared.css', './debts.css'],
 })
@@ -102,6 +105,15 @@ export class Debts {
   protected onConcept(e: ConceptChange) {
     this.concept.set(e.value);
     e.done(true);
+  }
+
+  protected exportSummary() {
+    downloadXlsx(`Resumen por persona - ${today()}`, [peopleSheet(this.summary())]);
+  }
+
+  /** Lo que se ve: con el filtro de persona y el orden elegidos. */
+  protected exportMovements() {
+    downloadXlsx(`Movimientos - ${today()}`, [movementsSheet(this.visible(), this.rows())]);
   }
 
   protected pct(ratio: number): string {

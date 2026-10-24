@@ -11,12 +11,15 @@ import {
 import { ConceptChange, ConceptField } from '../concept-field/concept-field';
 import { CreditCard, Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
+import { expensesSheet, today } from '../finanzas.export';
 import { deleteRowMessage } from '../finanzas.warn';
+import { ExportButton } from '../export-button/export-button';
+import { downloadXlsx } from '../xlsx';
 
 /** Tabla editable de una sección: una tarjeta de crédito o los gastos fijos. Los gastos nuevos se agregan arriba. */
 @Component({
   selector: 'app-expense-list',
-  imports: [ConceptField],
+  imports: [ConceptField, ExportButton],
   templateUrl: './expense-list.html',
   styleUrl: '../finanzas.shared.css',
 })
@@ -80,6 +83,11 @@ export class ExpenseList {
 
   protected async remove(r: Expense) {
     if (confirm(deleteRowMessage(`el gasto «${this.label(r)}»`))) await this.fin.removeExpense(r.id);
+  }
+
+  protected exportExcel() {
+    const name = this.card()?.name ?? 'Gastos fijos';
+    downloadXlsx(`${this.title()} - ${today()}`, [expensesSheet(name, this.rows(), this.cards(), (r) => this.label(r))]);
   }
 
   private async save(r: Expense, el: HTMLInputElement, patch: Partial<Expense>, back: string) {

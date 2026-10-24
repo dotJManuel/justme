@@ -1,5 +1,8 @@
 <section class="card" [class.s-steel]="cards()" [class.s-sand]="!cards()" [style.--cols]="cols()">
-  <h2>{{ title() }}</h2>
+  <div class="head2">
+    <h2>{{ title() }}</h2>
+    <app-export-button (click)="exportExcel()" />
+  </div>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">

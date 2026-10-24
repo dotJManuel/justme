@@ -53,10 +53,31 @@
   @if (error()) {
     <p class="msg" role="alert">{{ error() }}</p>
   }
+  @if (notice()) {
+    <p class="ok" role="status">{{ notice() }}</p>
+  }
+
+  <div class="bar">
+    <label class="all">
+      <input type="checkbox" [checked]="allSelected()" [indeterminate]="someSelected()" [disabled]="!visible().length || busy()" (change)="toggleAll()" />
+      Seleccionar todo lo que se ve ({{ visible().length }})
+    </label>
+    <app-export-button label="Exportar a Excel" [busy]="busy()" (click)="exportExcel()" />
+  </div>
+
+  @if (selected().length) {
+    <div class="selbar" role="status">
+      <b>{{ selected().length }} {{ selected().length === 1 ? 'seleccionado' : 'seleccionados' }}</b>
+      <button type="button" class="danger" [disabled]="busy()" (click)="deleteSelected()">Eliminar del historial</button>
+      <button type="button" class="ghost" [disabled]="busy()" (click)="clearSelection()">Quitar selección</button>
+    </div>
+  }
 
   <ul class="hist">
     @for (l of visible(); track l.id) {
-      <li class="ev" [class.del]="l.action === 'delete'" [class.upd]="l.action === 'update'">
+      <li class="ev" [class.del]="l.action === 'delete'" [class.upd]="l.action === 'update'" [class.sel]="isMarked(l.id)">
+        <input type="checkbox" class="pick" [checked]="isMarked(l.id)" [disabled]="busy()" aria-label="Seleccionar este registro del historial" (change)="toggle(l.id)" />
+        <div class="body">
         <div class="top">
           <span class="badge" [class.cargo]="l.badge === 'Cargo'" [class.abono]="l.badge === 'Abono'">{{ l.badge }}</span>
           <b class="who">{{ l.who }}</b>
@@ -79,6 +100,7 @@
             }
           </ul>
         }
+        </div>
       </li>
     } @empty {
       <li class="hint">

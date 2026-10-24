@@ -1,5 +1,8 @@
 <section class="card s-violet" [style.--cols]="summaryCols">
-  <h2>Resumen por persona</h2>
+  <div class="head2">
+    <h2>Resumen por persona</h2>
+    <app-export-button (click)="exportSummary()" />
+  </div>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">
@@ -104,7 +107,10 @@
 </section>
 
 <section data-section class="card s-violet" [style.--cols]="movCols">
-  <h2>Movimientos (cargos y abonos)</h2>
+  <div class="head2">
+    <h2>Movimientos (cargos y abonos)</h2>
+    <app-export-button (click)="exportMovements()" />
+  </div>
 
   @if (summary().people.length > 1) {
     <div class="chips" role="group" aria-label="Filtrar por persona">

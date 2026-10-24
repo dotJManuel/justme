@@ -447,6 +447,21 @@ export class FinanzasService {
     return (data as AuditRow[]).map(toAudit);
   }
 
+  /**
+   * Elimina por completo líneas del historial (no toca los movimientos reales). Si la base no borró todas
+   * (por ejemplo, falta correr 14_borrar_historial.sql), falla en vez de aparentar que se borraron.
+   */
+  deleteAudit(ids: number[]): Promise<boolean> {
+    return this.write(async () => {
+      for (let i = 0; i < ids.length; i += 100) {
+        const chunk = ids.slice(i, i + 100);
+        const { data, error } = await this.client.from('fin_audit').delete().in('id', chunk).select('id');
+        if (error) throw error;
+        if ((data?.length ?? 0) !== chunk.length) throw new Error('El historial no se pudo borrar completo');
+      }
+    });
+  }
+
   /** Historial de tarjetas, personas y conceptos: sirve para saber cómo se llamaban los que ya se eliminaron. */
   async loadAuditNames(): Promise<AuditEntry[]> {
     const { data, error } = await this.client

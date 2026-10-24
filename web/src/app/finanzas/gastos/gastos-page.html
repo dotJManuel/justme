@@ -1,5 +1,7 @@
 <app-expense-add data-section />
 
+<div class="toolbar"><app-export-button label="Exportar todo a Excel" (click)="exportAll()" /></div>
+
 <section data-section class="summary" aria-label="Resumen del mes">
   @for (c of summary().cards; track c.card.id) {
     <div class="tile s-steel">

@@ -29,3 +29,4 @@ h2{font-family:var(--font-display);margin:0;font-size:1.1rem}
   .lbl{font-size:.68rem}
   .card{padding:12px;border-radius:18px}
 }
+.toolbar{display:flex;justify-content:flex-end}

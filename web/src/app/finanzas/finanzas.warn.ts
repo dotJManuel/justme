@@ -28,3 +28,12 @@ export function deleteMessage(subject: string, related: string[], tip = ''): str
 export function deleteRowMessage(subject: string): string {
   return `⚠ ¿Eliminar ${subject}?\n\nQuedará registrado en la pestaña Historial.`;
 }
+
+/** Advertencia al borrar líneas del historial (no se borra el movimiento real, solo su historial). */
+export function deleteHistoryMessage(n: number): string {
+  return [
+    `⚠ ¿Eliminar ${plural(n, 'registro', 'registros')} del historial por completo?`,
+    'Se borran definitivamente de la base de datos y no se pueden recuperar.',
+    'Los movimientos, gastos y demás registros reales no se borran: solo su historial. Si ese historial era la prueba de un pago o cobro, ya no podrás consultarla aquí.',
+  ].join('\n\n');
+}

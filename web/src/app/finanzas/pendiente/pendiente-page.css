@@ -18,3 +18,4 @@
   .tile b{font-size:.95rem}
   .lbl{font-size:.66rem}
 }
+.toolbar{display:flex;justify-content:flex-end}

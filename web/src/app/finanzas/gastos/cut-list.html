@@ -1,5 +1,8 @@
 <section class="card s-steel" [style.--cols]="cols">
-  <h2>{{ title() }}</h2>
+  <div class="head2">
+    <h2>{{ title() }}</h2>
+    <app-export-button (click)="exportExcel()" />
+  </div>
 
   <div class="grid head" aria-hidden="true">
     <span>Periodo de corte</span>

@@ -5,7 +5,10 @@ import { conceptLabel, fmtMoney, parseMoney, sum } from '../finanzas.calc';
 import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { FamilyMove, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
+import { familySheet, today } from '../finanzas.export';
 import { deleteRowMessage } from '../finanzas.warn';
+import { ExportButton } from '../export-button/export-button';
+import { downloadXlsx } from '../xlsx';
 
 /**
  * Lista editable de lo recibido o de lo dado a la familia. Un recibido siempre lleva concepto (y de quién es
@@ -13,7 +16,7 @@ import { deleteRowMessage } from '../finanzas.warn';
  */
 @Component({
   selector: 'app-family-list',
-  imports: [FormsModule, ConceptField],
+  imports: [FormsModule, ConceptField, ExportButton],
   templateUrl: './family-list.html',
   styleUrl: '../finanzas.shared.css',
 })
@@ -115,6 +118,19 @@ export class FamilyList {
       this.date.set(dateKey(new Date()));
       this.amount.set('');
     }
+  }
+
+  protected exportExcel() {
+    const concepts = this.fin.concepts();
+    const people = this.fin.people();
+    const sheet = familySheet(
+      this.title(),
+      this.rows(),
+      this.personLabel(),
+      (m) => conceptLabel(concepts, m.conceptId, m.conceptText),
+      (m) => people.find((p) => p.id === m.personId)?.name ?? '',
+    );
+    downloadXlsx(`${this.title()} - ${today()}`, [sheet]);
   }
 
   private async save(

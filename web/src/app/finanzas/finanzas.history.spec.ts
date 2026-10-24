@@ -1,5 +1,5 @@
 import { AuditEntry, describeEntry } from './finanzas.history';
-import { deleteMessage, deleteRowMessage, plural } from './finanzas.warn';
+import { deleteHistoryMessage, deleteMessage, deleteRowMessage, plural } from './finanzas.warn';
 
 const NAMES: Record<string, string> = { p1: 'Isma', k1: 'Pago Nintendo', c1: 'Santander' };
 const nameOf = (id: string | null | undefined) => (id ? (NAMES[id] ?? '(eliminado)') : '');
@@ -95,6 +95,13 @@ describe('advertencias al eliminar', () => {
 
   it('si no hay nada relacionado, también lo dicen', () => {
     expect(deleteMessage('la persona «Ange»', [])).toContain('No tiene nada relacionado');
+  });
+
+  it('borrar del historial avisa que no se puede recuperar y que no borra el movimiento real', () => {
+    const m = deleteHistoryMessage(3);
+    expect(m).toContain('3 registros');
+    expect(m).toContain('no se pueden recuperar');
+    expect(m).toContain('no se borran');
   });
 
   it('un registro suelto avisa que queda en el Historial', () => {

@@ -34,3 +34,13 @@
   .who{font-size:.9rem}
 }
 .chg b{margin-right:.4em}
+.ok{margin:0;font-size:.85rem;font-weight:700;color:var(--done)}
+.bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.all{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.82rem;color:var(--muted);cursor:pointer}
+.selbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--c-rose) 55%,var(--line));background:color-mix(in srgb,var(--c-rose) 10%,var(--surface))}
+.danger{font:inherit;font-weight:700;font-size:.85rem;padding:7px 14px;border:0;border-bottom:3px solid color-mix(in srgb,var(--c-rose) 70%,#000);border-radius:10px;background:var(--c-rose);color:#fff;cursor:pointer}
+.danger:disabled{opacity:.5;cursor:default}
+.ev{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:0 10px}
+.ev.sel{background:color-mix(in srgb,var(--c-rose) 9%,var(--surface))}
+.pick{margin-top:2px}
+.body{display:flex;flex-direction:column;gap:4px;min-width:0}
