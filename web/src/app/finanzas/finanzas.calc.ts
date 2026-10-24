@@ -106,6 +106,10 @@ export function localInputToIso(value: string): string | null {
   return value && !Number.isNaN(d.getTime()) ? d.toISOString() : null;
 }
 
+/** Nombre del concepto de un registro: su texto libre o, si no tiene, el del catálogo. */
+export const conceptLabel = (concepts: Concept[], id: string | null, text: string): string =>
+  text || concepts.find((c) => c.id === id)?.name || '';
+
 // ── Dinero que me deben ─────────────────────────────────────────────────
 
 export interface DebtRow extends Debt {
@@ -135,7 +139,7 @@ export function debtRows(debts: Debt[], today: Date, people: Person[], concepts:
   return debts.map((d) => ({
     ...d,
     personName: personNames.get(d.personId) ?? '',
-    conceptName: (d.conceptId && conceptNames.get(d.conceptId)) || '',
+    conceptName: d.conceptText || (d.conceptId && conceptNames.get(d.conceptId)) || '',
     balance: d.kind === 'cargo' ? round2(d.amount - (paidTo.get(d.id) ?? 0)) : null,
     age: d.date ? ageDays(d.date, today) : null,
   }));

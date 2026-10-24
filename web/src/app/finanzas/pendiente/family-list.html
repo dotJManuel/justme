@@ -1,6 +1,7 @@
 <section class="card" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
 
+  <div class="scroll">
   <div class="grid head" aria-hidden="true">
     <span>Concepto</span>
     <span>{{ personLabel() }}</span>
@@ -12,14 +13,7 @@
   @for (m of rows(); track m.id) {
     <div class="grid row">
       <div class="c" data-l="Concepto">
-        <select #cs aria-label="Concepto" (change)="setConcept(m, cs)">
-          @if (!received()) {
-            <option value="" [selected]="!m.conceptId">—</option>
-          }
-          @for (o of conceptsFor(m); track o.id) {
-            <option [value]="o.id" [selected]="o.id === m.conceptId">{{ o.name }}{{ o.active ? '' : ' (inactivo)' }}</option>
-          }
-        </select>
+        <app-concept-field [options]="conceptOptions()" [value]="{ id: m.conceptId, text: m.conceptText }" [blank]="received() ? '' : '—'" (valueChange)="setConcept(m, $event)" />
       </div>
       <div class="c" [attr.data-l]="personLabel()">
         <select #ps [attr.aria-label]="personLabel()" (change)="setPerson(m, ps)">
@@ -42,7 +36,9 @@
   } @empty {
     <p class="hint">Todavía no hay registros.</p>
   }
+  </div>
 
+  <div class="foot">
   <div class="grid total">
     <span>Total</span>
     <span></span>
@@ -53,12 +49,7 @@
 
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Concepto">
-      <select name="concept" aria-label="Concepto" [ngModel]="concept()" (ngModelChange)="concept.set($event)">
-        <option value="">{{ received() ? 'Elige un concepto…' : 'Sin concepto' }}</option>
-        @for (o of activeConcepts(); track o.id) {
-          <option [value]="o.id">{{ o.name }}</option>
-        }
-      </select>
+      <app-concept-field [options]="conceptOptions()" [value]="concept()" [blank]="received() ? 'Elige un concepto…' : 'Sin concepto'" (valueChange)="onConcept($event)" />
     </div>
     <div class="c" [attr.data-l]="personLabel()">
       <select name="person" [attr.aria-label]="personLabel()" [ngModel]="person()" (ngModelChange)="person.set($event)">
@@ -76,7 +67,8 @@
     </div>
     <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
   </form>
-  @if (!activeConcepts().length || !activePeople().length) {
-    <p class="hint">Da de alta conceptos y personas de familia en la pestaña Administrar.</p>
+  </div>
+  @if (!activePeople().length) {
+    <p class="hint">Da de alta personas de familia en la pestaña Administrar.</p>
   }
 </section>

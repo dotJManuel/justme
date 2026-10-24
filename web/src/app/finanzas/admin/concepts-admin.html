@@ -2,6 +2,7 @@
   <h2>{{ title() }}</h2>
   <p class="hint">{{ help() }}</p>
 
+  <div class="scroll">
   <div class="grid head" aria-hidden="true">
     <span>Nombre</span>
     <span>Activo</span>
@@ -24,7 +25,9 @@
   } @empty {
     <p class="hint">Todavía no hay conceptos. Agrega el primero abajo.</p>
   }
+  </div>
 
+  <div class="foot">
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Nombre">
       <input name="name" aria-label="Nuevo concepto" placeholder="Nuevo concepto" [attr.maxlength]="maxLength()" [ngModel]="name()" (ngModelChange)="name.set($event)" />
@@ -32,4 +35,5 @@
     <span></span>
     <button type="submit" class="primary x" [disabled]="!name().trim()">Agregar</button>
   </form>
+  </div>
 </section>

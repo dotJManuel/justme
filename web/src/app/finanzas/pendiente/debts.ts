@@ -12,13 +12,14 @@ import {
   personSummaries,
   sortDebtRows,
 } from '../finanzas.calc';
+import { ConceptChange, ConceptField, ConceptValue } from '../concept-field/concept-field';
 import { Concept, Debt, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
 @Component({
   selector: 'app-debts',
-  imports: [FormsModule],
+  imports: [FormsModule, ConceptField],
   templateUrl: './debts.html',
   styleUrls: ['../finanzas.shared.css', './debts.css'],
 })
@@ -65,8 +66,8 @@ export class Debts {
   /** Id de la persona elegida (vacío = ninguna). */
   protected readonly person = signal('');
   protected readonly kind = signal<Debt['kind']>('cargo');
-  /** Id del concepto elegido (vacío = sin concepto). */
-  protected readonly concept = signal('');
+  /** Concepto del movimiento: del catálogo, texto libre o ninguno. */
+  protected readonly concept = signal<ConceptValue>({ id: null, text: '' });
   protected readonly amount = signal('');
   protected readonly date = signal(dateKey(new Date()));
   protected readonly appliesTo = signal('');
@@ -75,9 +76,8 @@ export class Debts {
   protected readonly personOptions = computed<Person[]>(() =>
     this.fin.people().filter((p) => p.scope === 'deudor' && (p.active || p.id === this.person())),
   );
-  protected readonly conceptOptions = computed<Concept[]>(() =>
-    this.fin.concepts().filter((c) => c.scope === 'movimiento' && (c.active || c.id === this.concept())),
-  );
+  /** Conceptos del catálogo de movimientos (el campo oculta los desactivados). */
+  protected readonly conceptOptions = computed<Concept[]>(() => this.fin.concepts().filter((c) => c.scope === 'movimiento'));
   protected readonly hasActivePeople = computed(() => this.fin.people().some((p) => p.scope === 'deudor' && p.active));
 
   /** Cargos de esa persona a los que se puede aplicar un abono (con saldo, o el ya elegido). */
@@ -97,6 +97,11 @@ export class Debts {
     return !!id && this.rows().some((r) => r.appliesTo === id);
   });
   protected readonly canSave = computed(() => this.person() !== '' && (parseMoney(this.amount()) ?? 0) > 0);
+
+  protected onConcept(e: ConceptChange) {
+    this.concept.set(e.value);
+    e.done(true);
+  }
 
   protected pct(ratio: number): string {
     return `${Math.round(ratio * 100)}%`;
@@ -133,7 +138,7 @@ export class Debts {
     this.editId.set(r.id);
     this.person.set(r.personId);
     this.kind.set(r.kind);
-    this.concept.set(r.conceptId ?? '');
+    this.concept.set({ id: r.conceptId, text: r.conceptText });
     this.amount.set(String(r.amount));
     this.date.set(r.date ?? '');
     this.appliesTo.set(r.appliesTo ?? '');
@@ -143,7 +148,7 @@ export class Debts {
   protected clear() {
     this.editId.set(null);
     this.person.set('');
-    this.concept.set('');
+    this.concept.set({ id: null, text: '' });
     this.amount.set('');
     this.date.set(dateKey(new Date()));
     this.appliesTo.set('');
@@ -154,7 +159,8 @@ export class Debts {
     if (!this.canSave() || !amount) return;
     const data = {
       personId: this.person(),
-      conceptId: this.concept() || null,
+      conceptId: this.concept().id,
+      conceptText: this.concept().text,
       amount,
       date: this.date() || null,
       appliesTo: this.kind() === 'abono' ? this.appliesValue() || null : null,

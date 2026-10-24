@@ -1,6 +1,7 @@
 <section class="card" [style.--cols]="summaryCols">
   <h2>Resumen por persona</h2>
 
+  <div class="scroll">
   <div class="grid head" aria-hidden="true">
     <span>Persona</span>
     <span class="num">Prestado</span>
@@ -27,7 +28,9 @@
   } @empty {
     <p class="hint">Todavía no hay movimientos. Agrega un cargo cuando prestes dinero.</p>
   }
+  </div>
 
+  <div class="foot">
   <div class="grid total">
     <span>Total</span>
     <div class="c" data-l="Prestado"><div class="ro">{{ money(summary().total.lent) }}</div></div>
@@ -39,6 +42,7 @@
         <span>{{ pct(summary().total.ratio) }}</span>
       </div>
     </div>
+  </div>
   </div>
 </section>
 
@@ -63,12 +67,7 @@
     </label>
     <label>
       Concepto
-      <select name="concept" [ngModel]="concept()" (ngModelChange)="concept.set($event)">
-        <option value="">Sin concepto</option>
-        @for (c of conceptOptions(); track c.id) {
-          <option [value]="c.id">{{ c.name }}{{ c.active ? '' : ' (inactivo)' }}</option>
-        }
-      </select>
+      <app-concept-field [options]="conceptOptions()" [value]="concept()" blank="Sin concepto" (valueChange)="onConcept($event)" />
     </label>
     <label>
       Monto
@@ -130,6 +129,7 @@
   </div>
   <p class="hint">Toca varios criterios para combinarlos: el primero manda. Un segundo toque invierte el orden y el tercero lo quita.</p>
 
+  <div class="scroll">
   <div class="grid head" aria-hidden="true">
     <span>Persona</span>
     <span>Tipo</span>
@@ -164,4 +164,5 @@
   } @empty {
     <p class="hint">No hay movimientos.</p>
   }
+  </div>
 </section>

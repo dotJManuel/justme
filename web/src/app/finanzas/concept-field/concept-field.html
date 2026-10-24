@@ -1,0 +1,19 @@
+<select #sel [attr.aria-label]="label()" (change)="onSelect(sel)">
+  @if (blank()) {
+    <option value="" [selected]="selectValue() === ''">{{ blank() }}</option>
+  }
+  @for (o of shown(); track o.id) {
+    <option [value]="o.id" [selected]="selectValue() === o.id">{{ o.name }}{{ o.active ? '' : ' (inactivo)' }}</option>
+  }
+  <option [value]="OTHER" [selected]="selectValue() === OTHER">Otro (escribir)…</option>
+</select>
+@if (textMode()) {
+  <input
+    #txt
+    [attr.aria-label]="label() + ' (texto libre)'"
+    placeholder="Escribe el concepto"
+    [attr.maxlength]="maxLength()"
+    [value]="current().text"
+    (change)="onText(txt)"
+  />
+}

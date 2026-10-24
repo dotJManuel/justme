@@ -26,7 +26,8 @@ interface ExpenseRow {
   id: string;
   card_id: string | null;
   section: Expense['section'];
-  concept_id: string;
+  concept_id: string | null;
+  concept_text: string;
   installment: string;
   total: number | null;
   amount: number;
@@ -45,6 +46,7 @@ interface DebtRow {
   person_id: string;
   kind: Debt['kind'];
   concept_id: string | null;
+  concept_text: string;
   amount: number;
   date: string | null;
   applies_to: string | null;
@@ -53,6 +55,7 @@ interface FamilyRow {
   id: string;
   direction: FamilyMove['direction'];
   concept_id: string | null;
+  concept_text: string;
   person_id: string | null;
   date: string | null;
   amount: number;
@@ -61,10 +64,10 @@ interface FamilyRow {
 const PERSON_COLS = 'id, scope, name, active';
 const CONCEPT_COLS = 'id, scope, name, active';
 const CARD_COLS = 'id, name, cut_day, active';
-const EXPENSE_COLS = 'id, card_id, section, concept_id, installment, total, amount, purchased_at';
+const EXPENSE_COLS = 'id, card_id, section, concept_id, concept_text, installment, total, amount, purchased_at';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
-const DEBT_COLS = 'id, person_id, kind, concept_id, amount, date, applies_to';
-const FAMILY_COLS = 'id, direction, concept_id, person_id, date, amount';
+const DEBT_COLS = 'id, person_id, kind, concept_id, concept_text, amount, date, applies_to';
+const FAMILY_COLS = 'id, direction, concept_id, concept_text, person_id, date, amount';
 
 const toPerson = (r: PersonRow): Person => ({ ...r });
 const toConcept = (r: ConceptRow): Concept => ({ ...r });
@@ -74,6 +77,7 @@ const toExpense = (r: ExpenseRow): Expense => ({
   cardId: r.card_id,
   section: r.section,
   conceptId: r.concept_id,
+  conceptText: r.concept_text,
   installment: r.installment,
   total: r.total,
   amount: r.amount,
@@ -92,6 +96,7 @@ const expenseRow = (e: Partial<Omit<Expense, 'id'>>) => ({
   ...(e.section !== undefined && { section: e.section }),
   ...(e.cardId !== undefined && { card_id: e.cardId }),
   ...(e.conceptId !== undefined && { concept_id: e.conceptId }),
+  ...(e.conceptText !== undefined && { concept_text: e.conceptText }),
   ...(e.installment !== undefined && { installment: e.installment }),
   ...(e.total !== undefined && { total: e.total }),
   ...(e.amount !== undefined && { amount: e.amount }),
@@ -102,6 +107,7 @@ const toDebt = (r: DebtRow): Debt => ({
   personId: r.person_id,
   kind: r.kind,
   conceptId: r.concept_id,
+  conceptText: r.concept_text,
   amount: r.amount,
   date: r.date,
   appliesTo: r.applies_to,
@@ -110,6 +116,7 @@ const toFamily = (r: FamilyRow): FamilyMove => ({
   id: r.id,
   direction: r.direction,
   conceptId: r.concept_id,
+  conceptText: r.concept_text,
   personId: r.person_id,
   date: r.date,
   amount: r.amount,
@@ -118,6 +125,7 @@ const toFamily = (r: FamilyRow): FamilyMove => ({
 const familyRow = (m: Partial<Omit<FamilyMove, 'id'>>) => ({
   ...(m.direction !== undefined && { direction: m.direction }),
   ...(m.conceptId !== undefined && { concept_id: m.conceptId }),
+  ...(m.conceptText !== undefined && { concept_text: m.conceptText }),
   ...(m.personId !== undefined && { person_id: m.personId }),
   ...(m.date !== undefined && { date: m.date }),
   ...(m.amount !== undefined && { amount: m.amount }),
@@ -126,6 +134,7 @@ const familyRow = (m: Partial<Omit<FamilyMove, 'id'>>) => ({
 const debtPatchRow = (p: Partial<Omit<Debt, 'id'>>) => ({
   ...(p.personId !== undefined && { person_id: p.personId }),
   ...(p.conceptId !== undefined && { concept_id: p.conceptId }),
+  ...(p.conceptText !== undefined && { concept_text: p.conceptText }),
   ...(p.amount !== undefined && { amount: p.amount }),
   ...(p.date !== undefined && { date: p.date }),
   ...(p.appliesTo !== undefined && { applies_to: p.appliesTo }),
@@ -324,7 +333,7 @@ export class FinanzasService {
       const row = await this.single<DebtRow>(
         this.client
           .from('fin_debts')
-          .insert({ person_id: d.personId, kind: d.kind, concept_id: d.conceptId, amount: d.amount, date: d.date, applies_to: d.appliesTo })
+          .insert({ person_id: d.personId, kind: d.kind, concept_id: d.conceptId, concept_text: d.conceptText, amount: d.amount, date: d.date, applies_to: d.appliesTo })
           .select(DEBT_COLS)
           .single(),
       );

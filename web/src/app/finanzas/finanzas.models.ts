@@ -37,7 +37,9 @@ export interface Expense {
   section: Section;
   /** Tarjeta del gasto; null en gastos fijos. */
   cardId: string | null;
-  conceptId: string;
+  /** Concepto del catálogo o texto libre: siempre uno de los dos. */
+  conceptId: string | null;
+  conceptText: string;
   /** "A meses", por ejemplo "05/09". Vacío si es un pago único. */
   installment: string;
   /** Monto total de la compra; null en gastos fijos. */
@@ -64,8 +66,9 @@ export interface Debt {
   id: string;
   personId: string;
   kind: 'cargo' | 'abono';
-  /** Opcional: un movimiento puede no tener concepto. */
+  /** Opcional: un movimiento puede no tener concepto (catálogo o texto libre, no los dos). */
   conceptId: string | null;
+  conceptText: string;
   amount: number;
   /** AAAA-MM-DD */
   date: string | null;
@@ -76,8 +79,9 @@ export interface Debt {
 export interface FamilyMove {
   id: string;
   direction: 'recibido' | 'dado';
-  /** Obligatorio en "recibido"; opcional en "dado". */
+  /** Obligatorio en "recibido" (catálogo o texto libre); opcional en "dado". */
   conceptId: string | null;
+  conceptText: string;
   /** De quién se recibió (opcional) o para quién se dio (obligatorio en "dado"). */
   personId: string | null;
   date: string | null;

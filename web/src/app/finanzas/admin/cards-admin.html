@@ -5,6 +5,7 @@
     sumar en el resumen, pero conserva su historial. Eliminarla la borra por completo.
   </p>
 
+  <div class="scroll">
   <div class="grid head" aria-hidden="true">
     <span>Nombre</span>
     <span class="num">Día de corte</span>
@@ -31,7 +32,9 @@
   } @empty {
     <p class="hint">Todavía no hay tarjetas. Agrega la primera abajo.</p>
   }
+  </div>
 
+  <div class="foot">
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Nombre">
       <input name="name" aria-label="Nueva tarjeta" placeholder="Nueva tarjeta" maxlength="40" [ngModel]="name()" (ngModelChange)="name.set($event)" />
@@ -42,4 +45,5 @@
     <span></span>
     <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
   </form>
+  </div>
 </section>

@@ -3,6 +3,7 @@ import {
   currentCutPeriod,
   cutPending,
   debtRows,
+  conceptLabel,
   debtsWithDependents,
   expenseTotals,
   familyTotals,
@@ -24,6 +25,7 @@ const exp = (cardId: string | null, amount: number, total: number | null = null)
   section: cardId ? 'tarjeta' : 'fijos',
   cardId,
   conceptId: 'k',
+  conceptText: '',
   installment: '',
   total,
   amount,
@@ -44,7 +46,7 @@ const debt = (
   amount: number,
   appliesTo: string | null = null,
   conceptId: string | null = null,
-): Debt => ({ id, personId, kind, conceptId, amount, date: null, appliesTo });
+): Debt => ({ id, personId, kind, conceptId, conceptText: '', amount, date: null, appliesTo });
 
 describe('resumen del mes', () => {
   // Valores del Excel: Santander 6305.18, BBVA 2427, fijos 4155, ingreso 15000
@@ -140,6 +142,14 @@ describe('dinero que me deben', () => {
     expect(rows.find((r) => r.id === 'c1')?.conceptName).toBe('');
   });
 
+  it('un concepto de texto libre manda sobre el del catálogo y también se muestra', () => {
+    const free = { ...debt('f1', 'p-ange', 'cargo', 10), conceptText: 'Regalo único' };
+    expect(debtRows([free], today, PEOPLE, CONCEPTS)[0].conceptName).toBe('Regalo único');
+    expect(conceptLabel(CONCEPTS, 'k-pago', '')).toBe('Pago');
+    expect(conceptLabel(CONCEPTS, null, 'Algo único')).toBe('Algo único');
+    expect(conceptLabel(CONCEPTS, null, '')).toBe('');
+  });
+
   it('agrupa por persona y ordena alfabéticamente', () => {
     const { people, total } = personSummaries(debts, PEOPLE);
     expect(people.map((p) => p.person)).toEqual(['Ange', 'Isma']);
@@ -218,6 +228,7 @@ describe('dinero con familia', () => {
       id: `${direction}${amount}`,
       direction,
       conceptId: null,
+      conceptText: '',
       personId: null,
       date: null,
       amount,
