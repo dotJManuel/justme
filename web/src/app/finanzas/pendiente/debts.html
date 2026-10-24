@@ -108,6 +108,20 @@
     </div>
   }
 
+  <div class="chips" role="group" aria-label="Ordenar movimientos">
+    <span class="hint">Ordenar por:</span>
+    @for (k of sortKeys; track k.key) {
+      @let st = sortState(k.key);
+      <button type="button" class="chip" [class.on]="st" [attr.aria-pressed]="!!st" (click)="toggleSort(k.key)">
+        {{ k.label }}@if (st) { {{ sorts().length > 1 ? st.n : '' }} {{ st.arrow }} }
+      </button>
+    }
+    @if (sorts().length) {
+      <button type="button" class="chip" (click)="sorts.set([])">Quitar orden</button>
+    }
+  </div>
+  <p class="hint">Toca varios criterios para combinarlos: el primero manda. Un segundo toque invierte el orden y el tercero lo quita.</p>
+
   <div class="grid head" aria-hidden="true">
     <span>Persona</span>
     <span>Tipo</span>

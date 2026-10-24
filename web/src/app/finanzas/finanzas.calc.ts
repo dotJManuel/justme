@@ -166,3 +166,37 @@ export function familyTotals(moves: FamilyMove[]) {
   const dado = sum(moves.filter((m) => m.direction === 'dado').map((m) => m.amount));
   return { recibido, dado, left: round2(recibido - dado) };
 }
+
+// ── Orden de los movimientos ────────────────────────────────────────────
+
+export type SortKey = 'person' | 'kind' | 'concept' | 'amount' | 'date' | 'balance';
+export interface SortSpec {
+  key: SortKey;
+  /** 1 = ascendente, -1 = descendente */
+  dir: 1 | -1;
+}
+
+/** Ordena por varios criterios a la vez (el primero manda). Los vacíos siempre quedan al final. */
+export function sortDebtRows(rows: DebtRow[], sorts: SortSpec[]): DebtRow[] {
+  const specs: SortSpec[] = sorts.length ? sorts : [{ key: 'date', dir: -1 }];
+  const value = (r: DebtRow, key: SortKey): string | number | null => {
+    if (key === 'date') return r.date;
+    if (key === 'balance') return r.balance;
+    return r[key];
+  };
+  return [...rows].sort((a, b) => {
+    for (const { key, dir } of specs) {
+      const x = value(a, key);
+      const y = value(b, key);
+      if (x === y) continue;
+      if (x === null || x === '') return 1;
+      if (y === null || y === '') return -1;
+      const c =
+        typeof x === 'number' && typeof y === 'number'
+          ? x - y
+          : String(x).localeCompare(String(y), 'es', { sensitivity: 'base' });
+      if (c !== 0) return c * dir;
+    }
+    return 0;
+  });
+}

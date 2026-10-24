@@ -1,7 +1,18 @@
 import { Component, computed, inject, signal, viewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { dateKey } from '../../habits/streaks';
-import { DebtRow, debtRows, fmtDate, fmtMoney, parseMoney, personKey, personSummaries } from '../finanzas.calc';
+import {
+  DebtRow,
+  SortKey,
+  SortSpec,
+  debtRows,
+  fmtDate,
+  fmtMoney,
+  parseMoney,
+  personKey,
+  personSummaries,
+  sortDebtRows,
+} from '../finanzas.calc';
 import { Debt } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
@@ -31,11 +42,21 @@ export class Debts {
   protected readonly activeFilter = computed(() =>
     this.summary().people.some((p) => personKey(p.person) === this.filter()) ? this.filter() : '',
   );
+  protected readonly sorts = signal<SortSpec[]>([]);
+  protected readonly sortKeys: { key: SortKey; label: string }[] = [
+    { key: 'person', label: 'Persona' },
+    { key: 'kind', label: 'Tipo' },
+    { key: 'concept', label: 'Concepto' },
+    { key: 'amount', label: 'Monto' },
+    { key: 'date', label: 'Fecha' },
+    { key: 'balance', label: 'Saldo' },
+  ];
   protected readonly visible = computed(() => {
     const f = this.activeFilter();
-    return this.rows()
-      .filter((r) => !f || personKey(r.person) === f)
-      .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+    return sortDebtRows(
+      this.rows().filter((r) => !f || personKey(r.person) === f),
+      this.sorts(),
+    );
   });
   private readonly cargoNames = computed(() => new Map(this.rows().map((r) => [r.id, r.concept || 'Sin concepto'])));
 
@@ -68,6 +89,21 @@ export class Debts {
 
   protected pct(ratio: number): string {
     return `${Math.round(ratio * 100)}%`;
+  }
+
+  /** Cada toque en un criterio: lo agrega (ascendente), lo pasa a descendente y luego lo quita. */
+  protected toggleSort(key: SortKey) {
+    this.sorts.update((list) => {
+      const cur = list.find((s) => s.key === key);
+      if (!cur) return [...list, { key, dir: 1 }];
+      if (cur.dir === 1) return list.map((s) => (s.key === key ? { key, dir: -1 } : s));
+      return list.filter((s) => s.key !== key);
+    });
+  }
+
+  protected sortState(key: SortKey): { n: number; arrow: string } | null {
+    const i = this.sorts().findIndex((s) => s.key === key);
+    return i < 0 ? null : { n: i + 1, arrow: this.sorts()[i].dir === 1 ? '▲' : '▼' };
   }
 
   protected toggleFilter(person: string) {

@@ -10,6 +10,7 @@ import {
   monthSummary,
   parseMoney,
   personSummaries,
+  sortDebtRows,
 } from './finanzas.calc';
 import { Cut, Debt, Expense, FamilyMove } from './finanzas.models';
 
@@ -125,6 +126,32 @@ describe('dinero que me deben', () => {
   it('cuenta la antigüedad en días', () => {
     expect(ageDays('2026-10-13', new Date(2026, 9, 23, 18, 30))).toBe(10);
     expect(ageDays('2026-10-23', new Date(2026, 9, 23, 0, 5))).toBe(0);
+  });
+});
+
+describe('orden de movimientos', () => {
+  const at = (id: string, person: string, kind: Debt['kind'], amount: number, date: string | null): Debt => ({ ...debt(id, person, kind, amount), date });
+  const rows = debtRows(
+    [at('1', 'Isma', 'cargo', 300, '2026-10-01'), at('2', 'Ange', 'abono', 100, '2026-10-05'), at('3', 'Ange', 'cargo', 200, null), at('4', 'Ange', 'cargo', 500, '2026-09-01')],
+    new Date(2026, 9, 23),
+  );
+  const ids = (s: Parameters<typeof sortDebtRows>[1]) => sortDebtRows(rows, s).map((r) => r.id).join('');
+
+  it('sin criterios: la fecha más reciente primero y sin fecha al final', () => {
+    expect(ids([])).toBe('2143');
+  });
+
+  it('combina criterios: persona y luego monto descendente', () => {
+    expect(ids([{ key: 'person', dir: 1 }, { key: 'amount', dir: -1 }])).toBe('4321');
+  });
+
+  it('los vacíos quedan al final también en descendente', () => {
+    expect(ids([{ key: 'date', dir: 1 }])).toBe('4123');
+    expect(ids([{ key: 'date', dir: -1 }])).toBe('2143');
+  });
+
+  it('ordena por tipo y luego por persona', () => {
+    expect(ids([{ key: 'kind', dir: 1 }, { key: 'person', dir: -1 }])).toBe('2134');
   });
 });
 
