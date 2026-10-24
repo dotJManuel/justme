@@ -2,12 +2,13 @@ import { Component, computed, inject } from '@angular/core';
 import { expenseTotals, fmtMoney, monthSummary, parseMoney } from '../finanzas.calc';
 import { FinanzasService } from '../finanzas.service';
 import { CutList } from './cut-list';
+import { ExpenseAdd } from './expense-add';
 import { ExpenseList } from './expense-list';
 
 /** Gastos del mes: resumen, tarjetas Santander y BBVA, gastos fijos y cortes. */
 @Component({
   selector: 'app-gastos-page',
-  imports: [ExpenseList, CutList],
+  imports: [ExpenseAdd, ExpenseList, CutList],
   templateUrl: './gastos-page.html',
   styleUrl: './gastos-page.css',
 })

@@ -1,23 +1,21 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, inject, input } from '@angular/core';
 import {
   conceptLabel,
   expenseTotals,
   fmtMoney,
   isoToLocalInput,
   localInputToIso,
-  nowLocalInput,
   parseMoney,
   perQuincena,
 } from '../finanzas.calc';
-import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
+import { ConceptChange, ConceptField } from '../concept-field/concept-field';
 import { CreditCard, Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
-/** Tabla editable de una sección: tarjeta Santander, tarjeta BBVA o gastos fijos. */
+/** Tabla editable de una sección: una tarjeta de crédito o los gastos fijos. Los gastos nuevos se agregan arriba. */
 @Component({
   selector: 'app-expense-list',
-  imports: [FormsModule, ConceptField],
+  imports: [ConceptField],
   templateUrl: './expense-list.html',
   styleUrl: '../finanzas.shared.css',
 })
@@ -36,34 +34,16 @@ export class ExpenseList {
   protected readonly cards = computed(() => this.card() !== null);
   protected readonly cols = computed(() =>
     this.cards()
-      ? 'minmax(0,2fr) 11.5rem 5rem minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem'
-      : 'minmax(0,2.2fr) minmax(0,1fr) minmax(0,.9fr) 5.5rem',
+      ? 'minmax(0,2fr) 11.5rem 5rem minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) 3rem'
+      : 'minmax(0,2.2fr) minmax(0,1fr) minmax(0,.9fr) 3rem',
   );
-  protected readonly rows = computed(() => this.fin.expenses().filter((e) => (this.card() ? e.cardId === this.card()?.id : e.section === 'fijos')));
+  protected readonly rows = computed(() =>
+    this.fin.expenses().filter((e) => (this.card() ? e.cardId === this.card()?.id : e.section === 'fijos')),
+  );
   protected readonly totals = computed(() => expenseTotals(this.rows()));
 
   /** Conceptos del catálogo de gastos (el campo oculta los desactivados). */
   protected readonly conceptOptions = computed(() => this.fin.concepts().filter((c) => c.scope === 'gasto'));
-
-  /** Concepto del formulario: uno del catálogo o texto libre. */
-  protected readonly concept = signal<ConceptValue>({ id: null, text: '' });
-  protected readonly purchased = signal(nowLocalInput());
-  protected readonly installment = signal('');
-  protected readonly total = signal('');
-  protected readonly amount = signal('');
-
-  /** Si no la tocas, la fecha y hora se actualizan al empezar a escribir el concepto. */
-  private purchasedTouched = false;
-
-  /** Monto escrito en el formulario: vacío cuenta como 0; null si no es un monto válido. */
-  private readonly draftAmount = computed(() => (this.amount().trim() === '' ? 0 : parseMoney(this.amount())));
-  private readonly draftTotal = computed(() => (this.total().trim() === '' ? null : parseMoney(this.total())));
-  protected readonly canAdd = computed(
-    () =>
-      (this.concept().id !== null || this.concept().text.trim() !== '') &&
-      this.draftAmount() !== null &&
-      (this.total().trim() === '' || this.draftTotal() !== null),
-  );
 
   protected label(r: Expense): string {
     return conceptLabel(this.fin.concepts(), r.conceptId, r.conceptText);
@@ -74,20 +54,6 @@ export class ExpenseList {
     const { id, text } = e.value;
     if (id === null && text === '') return e.done(false);
     e.done(await this.fin.updateExpense(r.id, { conceptId: id, conceptText: text }));
-  }
-
-  protected onConcept(e: ConceptChange) {
-    const had = this.concept().id !== null || this.concept().text.trim() !== '';
-    if (!had && (e.value.id !== null || e.value.text.trim() !== '') && !this.purchasedTouched) {
-      this.purchased.set(nowLocalInput());
-    }
-    this.concept.set(e.value);
-    e.done(true);
-  }
-
-  protected onPurchased(value: string) {
-    this.purchasedTouched = true;
-    this.purchased.set(value);
   }
 
   protected setPurchased(r: Expense, el: HTMLInputElement) {
@@ -115,33 +81,7 @@ export class ExpenseList {
     if (confirm(`¿Eliminar «${this.label(r)}»?`)) await this.fin.removeExpense(r.id);
   }
 
-  protected async add() {
-    const amount = this.draftAmount();
-    if (!this.canAdd() || amount === null) return;
-    const typed = this.concept();
-    const concept = typed.id !== null ? typed : resolveConcept(this.conceptOptions(), typed.text);
-    const ok = await this.fin.addExpense({
-      section: this.card() ? 'tarjeta' : 'fijos',
-      cardId: this.card()?.id ?? null,
-      conceptId: concept.id,
-      conceptText: concept.text,
-      installment: this.cards() ? this.installment().trim() : '',
-      // Una compra sin monto total es un pago único: el total es lo que se paga.
-      total: this.cards() ? (this.draftTotal() ?? amount) : null,
-      amount,
-      purchasedAt: this.cards() ? localInputToIso(this.purchased()) : null,
-    });
-    if (ok) {
-      this.purchasedTouched = false;
-      this.purchased.set(nowLocalInput());
-      this.concept.set({ id: null, text: '' });
-      this.installment.set('');
-      this.total.set('');
-      this.amount.set('');
-    }
-  }
-
-  private async save(r: Expense, el: HTMLInputElement | HTMLSelectElement, patch: Partial<Expense>, back: string) {
+  private async save(r: Expense, el: HTMLInputElement, patch: Partial<Expense>, back: string) {
     if (!(await this.fin.updateExpense(r.id, patch))) el.value = back;
   }
 

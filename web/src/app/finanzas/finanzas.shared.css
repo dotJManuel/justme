@@ -46,9 +46,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
   /* tarjetas y gastos fijos: tres columnas */
   .m-exp,.m-fix{grid-template-columns:repeat(3,minmax(0,1fr))}
   .m-exp{grid-template-areas:"cc cc x" "dt dt am" "tot pay q"}
-  .m-exp.add{grid-template-areas:"cc cc cc" "dt dt am" "tot pay b"}
   .m-fix{grid-template-areas:"cc cc x" "pay q q"}
-  .m-fix.add{grid-template-areas:"cc cc cc" "pay b b"}
   .row>.e-cc{grid-area:cc}
   .row>.e-dt{grid-area:dt}
   .row>.e-am{grid-area:am}
@@ -56,7 +54,6 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
   .row>.e-pay{grid-area:pay}
   .row>.e-q{grid-area:q}
   .m-exp>.x,.m-fix>.x{grid-area:x;justify-self:end}
-  .m-exp>.e-b,.m-fix>.e-b{grid-area:b;justify-self:stretch}
   /* corte */
   .m-cut{grid-template-columns:repeat(3,minmax(0,1fr))}
   /* familia: concepto y monto arriba, persona y fecha abajo */
