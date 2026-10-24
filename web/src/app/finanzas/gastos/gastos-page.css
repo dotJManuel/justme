@@ -20,3 +20,12 @@ h2{font-family:var(--font-display);margin:0;font-size:1.1rem}
 /* Cuadros de resumen: franja y fondo suave del color de su sección */
 .tile{border-left:5px solid var(--sec,var(--line));background:color-mix(in srgb,var(--sec,transparent) 16%,var(--surface))}
 .card.s-teal{background:color-mix(in srgb,var(--sec) 9%,var(--surface));border-top:4px solid var(--sec)}
+@media (max-width:760px){
+  :host{gap:10px}
+  .summary{gap:6px}
+  .tile{padding:7px 10px;border-radius:12px;border-left-width:4px}
+  .tile b{font-size:1.02rem}
+  .big b,.tile input{font-size:1.2rem}
+  .lbl{font-size:.68rem}
+  .card{padding:12px;border-radius:18px}
+}

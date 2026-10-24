@@ -11,11 +11,11 @@
   </div>
 
   @for (m of rows(); track m.id) {
-    <div class="grid row">
-      <div class="c" data-l="Concepto">
+    <div class="grid row m-fam">
+      <div class="c f-cc" data-l="Concepto">
         <app-concept-field [options]="conceptOptions()" [value]="{ id: m.conceptId, text: m.conceptText }" [placeholder]="received() ? 'Elige o escribe un concepto' : 'Opcional'" (valueChange)="setConcept(m, $event)" />
       </div>
-      <div class="c" [attr.data-l]="personLabel()">
+      <div class="c f-pe" [attr.data-l]="personLabel()">
         <select #ps [attr.aria-label]="personLabel()" (change)="setPerson(m, ps)">
           @if (received()) {
             <option value="" [selected]="!m.personId">—</option>
@@ -25,10 +25,10 @@
           }
         </select>
       </div>
-      <div class="c" data-l="Fecha">
+      <div class="c f-dt" data-l="Fecha">
         <input #d type="date" aria-label="Fecha" [value]="m.date ?? ''" (change)="setDate(m, d)" />
       </div>
-      <div class="c" data-l="Monto">
+      <div class="c f-am" data-l="Monto">
         <input #a class="num" inputmode="decimal" aria-label="Monto" [value]="m.amount" (change)="setAmount(m, a)" />
       </div>
       <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + label(m)" (click)="remove(m)">✕</button>
@@ -43,15 +43,15 @@
     <span>Total</span>
     <span></span>
     <span></span>
-    <div class="c" data-l="Monto"><div class="ro">{{ money(total()) }}</div></div>
+    <div class="c f-am" data-l="Monto"><div class="ro">{{ money(total()) }}</div></div>
     <span></span>
   </div>
 
-  <form class="grid row add" (ngSubmit)="add()">
-    <div class="c" data-l="Concepto">
+  <form class="grid row add m-fam" (ngSubmit)="add()">
+    <div class="c f-cc" data-l="Concepto">
       <app-concept-field [options]="conceptOptions()" [value]="concept()" [live]="true" [placeholder]="received() ? 'Elige o escribe un concepto' : 'Opcional: elige o escribe'" (valueChange)="onConcept($event)" />
     </div>
-    <div class="c" [attr.data-l]="personLabel()">
+    <div class="c f-pe" [attr.data-l]="personLabel()">
       <select name="person" [attr.aria-label]="personLabel()" [ngModel]="person()" (ngModelChange)="person.set($event)">
         <option value="">{{ received() ? 'Sin indicar' : 'Elige una persona…' }}</option>
         @for (o of activePeople(); track o.id) {
@@ -59,10 +59,10 @@
         }
       </select>
     </div>
-    <div class="c" data-l="Fecha">
+    <div class="c f-dt" data-l="Fecha">
       <input name="date" type="date" aria-label="Fecha" [ngModel]="date()" (ngModelChange)="date.set($event)" />
     </div>
-    <div class="c" data-l="Monto">
+    <div class="c f-am" data-l="Monto">
       <input name="amount" class="num" inputmode="decimal" aria-label="Monto" placeholder="0.00" [ngModel]="amount()" (ngModelChange)="amount.set($event)" />
     </div>
     <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>

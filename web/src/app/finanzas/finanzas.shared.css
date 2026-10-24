@@ -21,14 +21,64 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
 .icon:hover{color:#d63b3b;border-color:#d63b3b}
 .x{justify-self:end}
 .add{padding-top:8px;border-top:2px dashed var(--line)}
+/* Celular (compacto): menos relleno, etiquetas chicas y cada fila acomodada en pocas líneas */
 @media (max-width:760px){
   .head{display:none}
-  .grid{grid-template-columns:1fr 1fr}
+  .card{padding:12px;gap:8px;border-radius:18px}
+  .card>h2{font-size:1rem}
+  .hint{font-size:.76rem}
+  .long{display:none}
+  .grid{grid-template-columns:1fr 1fr;gap:4px 8px}
   .grid>:first-child{grid-column:1/-1}
-  .c::before{content:attr(data-l);display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:2px}
-  .row{border:2px solid var(--line);border-radius:14px;padding:10px}
+  .c::before{content:attr(data-l);display:block;font-size:.62rem;font-weight:700;color:var(--muted);margin-bottom:1px}
+  .row{border:1px solid var(--line);border-radius:12px;padding:7px 9px}
+  input,select{padding:5px 8px;font-size:.85rem;border-width:1px;border-radius:8px}
+  .icon{width:26px;height:26px;font-size:.7rem;border-radius:7px}
+  .primary{padding:7px 12px;font-size:.85rem;border-bottom-width:3px;border-radius:10px}
   .x{grid-column:1/-1}
-  .ro{text-align:left;padding-inline:0}
+  .ro{text-align:left;padding:0}
+  .scroll{gap:6px}
+  .add>span{display:none}
+  .total{display:flex;align-items:flex-end;gap:10px;padding-top:6px}
+  .total>span{display:none}
+  .total>span:first-child{display:block;align-self:center}
+  .total>.c{flex:1;min-width:0}
+  /* tarjetas y gastos fijos: tres columnas */
+  .m-exp,.m-fix{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .m-exp{grid-template-areas:"cc cc x" "dt dt am" "tot pay q"}
+  .m-exp.add{grid-template-areas:"cc cc cc" "dt dt am" "tot pay b"}
+  .m-fix{grid-template-areas:"cc cc x" "pay q q"}
+  .m-fix.add{grid-template-areas:"cc cc cc" "pay b b"}
+  .row>.e-cc{grid-area:cc}
+  .row>.e-dt{grid-area:dt}
+  .row>.e-am{grid-area:am}
+  .row>.e-tot{grid-area:tot}
+  .row>.e-pay{grid-area:pay}
+  .row>.e-q{grid-area:q}
+  .m-exp>.x,.m-fix>.x{grid-area:x;justify-self:end}
+  .m-exp>.e-b,.m-fix>.e-b{grid-area:b;justify-self:stretch}
+  /* corte */
+  .m-cut{grid-template-columns:repeat(3,minmax(0,1fr))}
+  /* familia: concepto y monto arriba, persona y fecha abajo */
+  .m-fam{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .m-fam>.f-cc{grid-column:1/4;grid-row:1}
+  .m-fam>.f-am{grid-column:4/6;grid-row:1}
+  .m-fam>.f-pe{grid-column:1/4;grid-row:2}
+  .m-fam>.f-dt{grid-column:4/7;grid-row:2}
+  .m-fam>.x{grid-column:6;grid-row:1;justify-self:end}
+  .m-fam.add>.f-am{grid-column:4/7}
+  .m-fam.add>.x{grid-column:1/-1;grid-row:3}
+  /* administrar */
+  .m-adm1{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n n" "s x"}
+  .m-adm1.add{grid-template-areas:"n b"}
+  .m-adm2{grid-template-columns:5.5rem minmax(0,1fr) auto;grid-template-areas:"n n x" "d s s"}
+  .m-adm2.add{grid-template-columns:5.5rem minmax(0,1fr);grid-template-areas:"n n" "d b"}
+  .row>.ad-n{grid-area:n}
+  .row>.ad-d{grid-area:d}
+  .row>.ad-s{grid-area:s}
+  .m-adm1 .c::before,.m-adm2 .ad-n::before,.m-adm2 .ad-s::before{display:none}
+  .m-adm1>.x,.m-adm2>.x{grid-area:x;justify-self:end}
+  .m-adm1>.ad-b,.m-adm2>.ad-b{grid-area:b;justify-self:stretch}
 }
 .ro.period{text-align:left;color:var(--ink);font-weight:700;padding-inline:0}
 .switch{display:flex;align-items:center;gap:8px;font-size:.8rem;cursor:pointer}

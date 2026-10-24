@@ -11,14 +11,14 @@
   </div>
 
   @for (p of summary().people; track p.personId) {
-    <div class="grid row" [class.off]="!p.active">
-      <button type="button" class="who" [class.on]="activeFilter() === p.personId" [attr.aria-pressed]="activeFilter() === p.personId" title="Ver solo sus movimientos" (click)="toggleFilter(p.personId)">
+    <div class="grid row m-sum" [class.off]="!p.active">
+      <button type="button" class="who r-w" [class.on]="activeFilter() === p.personId" [attr.aria-pressed]="activeFilter() === p.personId" title="Ver solo sus movimientos" (click)="toggleFilter(p.personId)">
         {{ p.person }}{{ p.active ? '' : ' (inactiva)' }}
       </button>
-      <div class="c" data-l="Prestado"><div class="ro">{{ money(p.lent) }}</div></div>
-      <div class="c" data-l="Pagado"><div class="ro">{{ money(p.paid) }}</div></div>
-      <div class="c" data-l="Pendiente"><div class="ro strong" [class.pos]="p.pending <= 0">{{ money(p.pending) }}</div></div>
-      <div class="c" data-l="% pagado">
+      <div class="c r-l" data-l="Prestado"><div class="ro">{{ money(p.lent) }}</div></div>
+      <div class="c r-p" data-l="Pagado"><div class="ro">{{ money(p.paid) }}</div></div>
+      <div class="c r-e" data-l="Pendiente"><div class="ro strong" [class.pos]="p.pending <= 0">{{ money(p.pending) }}</div></div>
+      <div class="c r-pc" data-l="% pagado">
         <div class="pct">
           <div class="bar"><i [style.width.%]="p.ratio * 100"></i></div>
           <span>{{ pct(p.ratio) }}</span>
@@ -31,12 +31,12 @@
   </div>
 
   <div class="foot">
-  <div class="grid total">
-    <span>Total</span>
-    <div class="c" data-l="Prestado"><div class="ro">{{ money(summary().total.lent) }}</div></div>
-    <div class="c" data-l="Pagado"><div class="ro">{{ money(summary().total.paid) }}</div></div>
-    <div class="c" data-l="Pendiente"><div class="ro">{{ money(summary().total.pending) }}</div></div>
-    <div class="c" data-l="% pagado">
+  <div class="grid total m-sum">
+    <span class="r-w">Total</span>
+    <div class="c r-l" data-l="Prestado"><div class="ro">{{ money(summary().total.lent) }}</div></div>
+    <div class="c r-p" data-l="Pagado"><div class="ro">{{ money(summary().total.paid) }}</div></div>
+    <div class="c r-e" data-l="Pendiente"><div class="ro">{{ money(summary().total.pending) }}</div></div>
+    <div class="c r-pc" data-l="% pagado">
       <div class="pct">
         <div class="bar"><i [style.width.%]="summary().total.ratio * 100"></i></div>
         <span>{{ pct(summary().total.ratio) }}</span>
@@ -65,7 +65,7 @@
         <option value="abono">Abono (me pagó)</option>
       </select>
     </label>
-    <label>
+    <label class="span2">
       Concepto
       <app-concept-field [options]="conceptOptions()" [value]="concept()" [live]="true" placeholder="Opcional: elige o escribe" (valueChange)="onConcept($event)" />
     </label>
@@ -78,7 +78,7 @@
       <input name="date" type="date" [ngModel]="date()" (ngModelChange)="date.set($event)" />
     </label>
     @if (kind() === 'abono') {
-      <label>
+      <label class="span2">
         Aplica a
         <select name="appliesTo" [ngModel]="appliesValue()" (ngModelChange)="appliesTo.set($event)">
           <option value="">Sin asignar a un cargo</option>

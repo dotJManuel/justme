@@ -10,11 +10,11 @@
   </div>
 
   @for (p of people(); track p.id) {
-    <div class="grid row" [class.off]="!p.active">
-      <div class="c" data-l="Nombre">
+    <div class="grid row m-adm1" [class.off]="!p.active">
+      <div class="c ad-n" data-l="Nombre">
         <input #n aria-label="Nombre de la persona" maxlength="60" [value]="p.name" (change)="setName(p, n)" />
       </div>
-      <div class="c" data-l="Activa">
+      <div class="c ad-s" data-l="Activa">
         <label class="switch">
           <input type="checkbox" [checked]="p.active" (change)="toggle(p)" [attr.aria-label]="(p.active ? 'Desactivar ' : 'Activar ') + p.name" />
           <span class="muted">{{ usageText(p) }}</span>
@@ -28,12 +28,12 @@
   </div>
 
   <div class="foot">
-  <form class="grid row add" (ngSubmit)="add()">
-    <div class="c" data-l="Nombre">
+  <form class="grid row add m-adm1" (ngSubmit)="add()">
+    <div class="c ad-n" data-l="Nombre">
       <input name="name" aria-label="Nueva persona" placeholder="Nueva persona" maxlength="60" [ngModel]="name()" (ngModelChange)="name.set($event)" />
     </div>
     <span></span>
-    <button type="submit" class="primary x" [disabled]="!name().trim()">Agregar</button>
+    <button type="submit" class="primary x ad-b" [disabled]="!name().trim()">Agregar</button>
   </form>
   </div>
 </section>

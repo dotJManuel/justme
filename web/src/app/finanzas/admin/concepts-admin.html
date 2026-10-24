@@ -10,11 +10,11 @@
   </div>
 
   @for (c of concepts(); track c.id) {
-    <div class="grid row" [class.off]="!c.active">
-      <div class="c" data-l="Nombre">
+    <div class="grid row m-adm1" [class.off]="!c.active">
+      <div class="c ad-n" data-l="Nombre">
         <input #n aria-label="Nombre del concepto" [attr.maxlength]="maxLength()" [value]="c.name" (change)="setName(c, n)" />
       </div>
-      <div class="c" data-l="Activo">
+      <div class="c ad-s" data-l="Activo">
         <label class="switch">
           <input type="checkbox" [checked]="c.active" (change)="toggle(c)" [attr.aria-label]="(c.active ? 'Desactivar ' : 'Activar ') + c.name" />
           <span class="muted">{{ usageText(c) }}</span>
@@ -28,12 +28,12 @@
   </div>
 
   <div class="foot">
-  <form class="grid row add" (ngSubmit)="add()">
-    <div class="c" data-l="Nombre">
+  <form class="grid row add m-adm1" (ngSubmit)="add()">
+    <div class="c ad-n" data-l="Nombre">
       <input name="name" aria-label="Nuevo concepto" placeholder="Nuevo concepto" [attr.maxlength]="maxLength()" [ngModel]="name()" (ngModelChange)="name.set($event)" />
     </div>
     <span></span>
-    <button type="submit" class="primary x" [disabled]="!name().trim()">Agregar</button>
+    <button type="submit" class="primary x ad-b" [disabled]="!name().trim()">Agregar</button>
   </form>
   </div>
 </section>

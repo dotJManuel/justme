@@ -8,7 +8,7 @@
     <span class="num">Pendiente</span>
   </div>
 
-  <div class="grid row">
+  <div class="grid row m-cut">
     <div class="c" data-l="Periodo de corte"><div class="ro period">{{ period().label }}</div></div>
     <div class="c" data-l="Monto del corte">
       <input #a class="num" inputmode="decimal" aria-label="Monto del corte" [value]="amount()" (change)="setAmount(a)" />
