@@ -1,0 +1,36 @@
+:host{display:block;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-weight:700;font-size:.85rem;padding:6px 12px;border:2px solid var(--line);border-radius:999px;background:var(--bg);color:var(--muted);cursor:pointer}
+.chip.on{background:var(--sec,var(--accent));border-color:var(--sec,var(--accent));color:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.flt{display:flex;flex-direction:column;gap:3px;font-weight:700;font-size:.72rem;color:var(--muted);min-width:9rem}
+.flt.grow{flex:1;min-width:11rem}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ev{display:flex;flex-direction:column;gap:4px;padding:9px 12px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--done);border-radius:12px}
+.ev.upd{border-left-color:var(--c-sand)}
+.ev.del{border-left-color:var(--c-rose)}
+.top{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
+.who{font-size:.95rem}
+.what{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.amt{margin-left:auto;font-variant-numeric:tabular-nums;font-size:.95rem}
+.ev.del .amt,.ev.del .what{text-decoration:line-through}
+.badge{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:var(--off);color:var(--muted)}
+.badge.cargo{background:var(--ice);color:var(--ice-ink)}
+.badge.abono{background:var(--done-soft);color:var(--done)}
+.meta{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:.76rem;color:var(--muted)}
+.act{font-weight:700;color:var(--done)}
+.ev.upd .act{color:var(--c-sand)}
+.ev.del .act{color:var(--c-rose)}
+.chg{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:1px;font-size:.8rem}
+.chg s{color:var(--muted)}
+.ghost{align-self:flex-start;font:inherit;font-weight:700;font-size:.85rem;padding:7px 14px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--muted);cursor:pointer}
+.ghost:disabled{opacity:.5}
+.msg{margin:0;font-size:.9rem;color:#d63b3b}
+@media (max-width:760px){
+  .chip{padding:4px 10px;font-size:.78rem}
+  .flt{min-width:calc(50% - 4px);flex:1}
+  .flt.grow{min-width:calc(50% - 4px)}
+  .ev{padding:7px 10px}
+  .who{font-size:.9rem}
+}
+.chg b{margin-right:.4em}

@@ -1,0 +1,107 @@
+<section class="card" [class]="tone()">
+  <h2>Historial</h2>
+  <p class="hint">
+    Cada cambio queda registrado con su fecha y hora: lo agregado, lo editado y lo eliminado. Lo que ya borraste se sigue
+    viendo aquí, así que sirve para revisar pagos y cobros y aclarar cualquier duda.
+  </p>
+
+  <div class="chips" role="group" aria-label="Qué historial ver">
+    @for (a of areas; track a.key) {
+      <button type="button" class="chip" [class.on]="a.key === area()" [attr.aria-pressed]="a.key === area()" (click)="pick(a.key)">
+        {{ a.label }}
+      </button>
+    }
+  </div>
+
+  <div class="filters">
+    @if (hasPeople()) {
+      <label class="flt">
+        Persona
+        <select #ps (change)="person.set(ps.value)">
+          <option value="" [selected]="!person()">Todas</option>
+          @for (p of people(); track p) {
+            <option [value]="p" [selected]="p === person()">{{ p }}</option>
+          }
+        </select>
+      </label>
+    }
+    @if (area() === 'movimientos') {
+      <label class="flt">
+        Tipo
+        <select #ks (change)="kind.set($any(ks.value))">
+          <option value="" [selected]="!kind()">Todos</option>
+          <option value="abono" [selected]="kind() === 'abono'">Pagos recibidos (abonos)</option>
+          <option value="cargo" [selected]="kind() === 'cargo'">Préstamos (cargos)</option>
+        </select>
+      </label>
+    }
+    <label class="flt">
+      Acción
+      <select #acts (change)="action.set($any(acts.value))">
+        <option value="" [selected]="!action()">Todas</option>
+        <option value="insert" [selected]="action() === 'insert'">Agregado</option>
+        <option value="update" [selected]="action() === 'update'">Editado</option>
+        <option value="delete" [selected]="action() === 'delete'">Eliminado</option>
+      </select>
+    </label>
+    <label class="flt grow">
+      Buscar
+      <input #q type="search" placeholder="Persona o concepto" [value]="query()" (input)="query.set(q.value)" />
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="msg" role="alert">{{ error() }}</p>
+  }
+
+  <ul class="hist">
+    @for (l of visible(); track l.id) {
+      <li class="ev" [class.del]="l.action === 'delete'" [class.upd]="l.action === 'update'">
+        <div class="top">
+          <span class="badge" [class.cargo]="l.badge === 'Cargo'" [class.abono]="l.badge === 'Abono'">{{ l.badge }}</span>
+          <b class="who">{{ l.who }}</b>
+          <span class="what">{{ l.what }}</span>
+          @if (l.amount !== null) {
+            <b class="amt">{{ money(l.amount) }}</b>
+          }
+        </div>
+        <div class="meta">
+          <span class="act">{{ actions[l.action] }}</span>
+          <span>{{ when(l.at) }}</span>
+          @if (l.when) {
+            <span>· Fecha del movimiento: {{ l.when }}</span>
+          }
+        </div>
+        @if (l.changes.length) {
+          <ul class="chg">
+            @for (c of l.changes; track c.label) {
+              <li><b>{{ c.label }}:</b> <s>{{ c.from }}</s> → {{ c.to }}</li>
+            }
+          </ul>
+        }
+      </li>
+    } @empty {
+      <li class="hint">
+        @if (loading()) {
+          Cargando…
+        } @else if (filtered) {
+          Nada coincide con esos filtros.
+        } @else {
+          Todavía no hay historial aquí.
+        }
+      </li>
+    }
+  </ul>
+
+  @if (more()) {
+    <button type="button" class="ghost" [disabled]="loading()" (click)="loadMore()">
+      {{ loading() ? 'Cargando…' : 'Cargar más' }}
+    </button>
+    @if (filtered) {
+      <p class="hint">Los filtros se aplican a lo ya cargado. Carga más para buscar más atrás.</p>
+    }
+  }
+  @if (filtered) {
+    <button type="button" class="ghost" (click)="clearFilters()">Quitar filtros</button>
+  }
+</section>

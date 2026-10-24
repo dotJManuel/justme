@@ -96,3 +96,4 @@ input[type=checkbox]{width:20px;height:20px;padding:0;flex:none;accent-color:var
 .total{border-top-color:color-mix(in srgb,var(--sec,var(--line)) 45%,var(--line))}
 .add{border-top-color:color-mix(in srgb,var(--sec,var(--line)) 45%,var(--line))}
 .primary{background:var(--sec,var(--accent));border-bottom-color:color-mix(in srgb,var(--sec,var(--accent)) 70%,#000)}
+.warn-box{margin:0;padding:8px 10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--c-rose) 55%,var(--line));background:color-mix(in srgb,var(--c-rose) 10%,var(--surface));font-size:.8rem;font-weight:600;line-height:1.35}

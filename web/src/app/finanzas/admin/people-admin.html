@@ -1,6 +1,7 @@
 <section class="card" [class.s-violet]="scope() === 'deudor'" [class.s-sage]="scope() === 'familia'" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
   <p class="hint">{{ help() }}</p>
+  <p class="warn-box">⚠ {{ warning() }}</p>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">

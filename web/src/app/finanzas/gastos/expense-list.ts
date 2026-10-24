@@ -11,6 +11,7 @@ import {
 import { ConceptChange, ConceptField } from '../concept-field/concept-field';
 import { CreditCard, Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
+import { deleteRowMessage } from '../finanzas.warn';
 
 /** Tabla editable de una sección: una tarjeta de crédito o los gastos fijos. Los gastos nuevos se agregan arriba. */
 @Component({
@@ -78,7 +79,7 @@ export class ExpenseList {
   }
 
   protected async remove(r: Expense) {
-    if (confirm(`¿Eliminar «${this.label(r)}»?`)) await this.fin.removeExpense(r.id);
+    if (confirm(deleteRowMessage(`el gasto «${this.label(r)}»`))) await this.fin.removeExpense(r.id);
   }
 
   private async save(r: Expense, el: HTMLInputElement, patch: Partial<Expense>, back: string) {

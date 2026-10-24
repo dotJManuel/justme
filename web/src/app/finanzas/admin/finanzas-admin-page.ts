@@ -10,7 +10,7 @@ import { PeopleAdmin } from './people-admin';
   template: `
     <p class="hint">
       Administra las opciones de Finanzas. <b>Desactivar</b> oculta una opción sin perder su historial;
-      <b>eliminar</b> la borra por completo, junto con los registros que dependan de ella.
+      <b>eliminar</b> la borra por completo, junto con los registros que dependan de ella. Todo lo que se elimina queda registrado en la pestaña <b>Historial</b>.
     </p>
     <app-cards-admin data-section />
     <app-concepts-admin

@@ -5,6 +5,7 @@ import { conceptLabel, fmtMoney, parseMoney, sum } from '../finanzas.calc';
 import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { FamilyMove, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
+import { deleteRowMessage } from '../finanzas.warn';
 
 /**
  * Lista editable de lo recibido o de lo dado a la familia. Un recibido siempre lleva concepto (y de quién es
@@ -92,7 +93,7 @@ export class FamilyList {
   }
 
   protected async remove(m: FamilyMove) {
-    if (confirm(`¿Eliminar «${this.label(m)}»?`)) await this.fin.removeFamily(m.id);
+    if (confirm(deleteRowMessage(`este registro «${this.label(m)}»`))) await this.fin.removeFamily(m.id);
   }
 
   protected async add() {

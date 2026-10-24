@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { PostgrestError } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase.service';
 import { debtsWithDependents } from './finanzas.calc';
+import { AuditAction, AuditEntry, AuditTable } from './finanzas.history';
 import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove, Person } from './finanzas.models';
 
 interface PersonRow {
@@ -62,6 +63,27 @@ interface FamilyRow {
 }
 
 const PERSON_COLS = 'id, scope, name, active';
+const AUDIT_COLS = 'id, at, table_name, action, row_id, old_row, new_row';
+
+interface AuditRow {
+  id: number;
+  at: string;
+  table_name: AuditTable;
+  action: AuditAction;
+  row_id: string;
+  old_row: Record<string, unknown> | null;
+  new_row: Record<string, unknown> | null;
+}
+const toAudit = (r: AuditRow): AuditEntry => ({
+  id: r.id,
+  at: r.at,
+  table: r.table_name,
+  action: r.action,
+  rowId: r.row_id,
+  old: r.old_row,
+  new: r.new_row,
+});
+
 const CONCEPT_COLS = 'id, scope, name, active';
 const CARD_COLS = 'id, name, cut_day, active';
 const EXPENSE_COLS = 'id, card_id, section, concept_id, concept_text, installment, total, amount, purchased_at';
@@ -410,6 +432,31 @@ export class FinanzasService {
     this.debts.set((debts.data as DebtRow[]).map(toDebt));
     this.family.set((family.data as FamilyRow[]).map(toFamily));
     this.loaded.set(true);
+  }
+
+  /** Una página del historial de esas tablas, de lo más reciente a lo más antiguo. */
+  async loadAudit(tables: AuditTable[], offset: number, limit: number): Promise<AuditEntry[]> {
+    const { data, error } = await this.client
+      .from('fin_audit')
+      .select(AUDIT_COLS)
+      .in('table_name', tables)
+      .order('at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) throw error;
+    return (data as AuditRow[]).map(toAudit);
+  }
+
+  /** Historial de tarjetas, personas y conceptos: sirve para saber cómo se llamaban los que ya se eliminaron. */
+  async loadAuditNames(): Promise<AuditEntry[]> {
+    const { data, error } = await this.client
+      .from('fin_audit')
+      .select(AUDIT_COLS)
+      .in('table_name', ['fin_cards', 'fin_people', 'fin_concepts'])
+      .order('at', { ascending: true })
+      .order('id', { ascending: true });
+    if (error) throw error;
+    return (data as AuditRow[]).map(toAudit);
   }
 
   private async single<T>(query: PromiseLike<{ data: unknown; error: PostgrestError | null }>): Promise<T> {

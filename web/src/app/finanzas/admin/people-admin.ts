@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debtsWithDependents } from '../finanzas.calc';
 import { Person } from '../finanzas.models';
+import { deleteMessage, plural } from '../finanzas.warn';
 import { FinanzasService } from '../finanzas.service';
 
 /** Catálogo de personas: agregar, renombrar, desactivar y eliminar. */
@@ -19,6 +20,13 @@ export class PeopleAdmin {
   readonly help = input.required<string>();
 
   protected readonly cols = 'minmax(0,2fr) 9rem 5.5rem';
+
+  /** Qué más se borra al eliminar una persona de este catálogo. */
+  protected readonly warning = computed(() =>
+    this.scope() === 'familia'
+      ? 'Si eliminas a una persona, se borran también todos sus registros de Recibido y Dado.'
+      : 'Si eliminas a una persona, se borran también todos sus movimientos (cargos y abonos).',
+  );
 
   protected readonly people = computed(() => this.fin.people().filter((p) => p.scope === this.scope()));
 
@@ -49,15 +57,13 @@ export class PeopleAdmin {
   }
 
   protected async remove(p: Person) {
-    const n =
-      this.scope() === 'familia'
-        ? (this.usage().get(p.id) ?? 0)
-        : debtsWithDependents(this.fin.debts(), (d) => d.personId === p.id).length;
-    const detail =
-      n > 0
-        ? `\n\nTambién se ${n === 1 ? 'eliminará 1 movimiento suyo' : `eliminarán ${n} movimientos suyos`}${this.scope() === 'familia' ? '' : ' (cargos y abonos)'}. Si solo quieres dejar de usarla, desactívala.`
-        : '';
-    if (confirm(`¿Eliminar a «${p.name}» por completo?${detail}`)) await this.fin.removePerson(p.id);
+    const familia = this.scope() === 'familia';
+    const n = familia ? (this.usage().get(p.id) ?? 0) : debtsWithDependents(this.fin.debts(), (d) => d.personId === p.id).length;
+    const what = familia
+      ? plural(n, 'registro de Recibido o Dado', 'registros de Recibido y Dado')
+      : `${plural(n, 'movimiento', 'movimientos')} (cargos y abonos)`;
+    const message = deleteMessage(`a «${p.name}»`, n ? [what] : [], 'Si solo quieres dejar de usarla, desactívala.');
+    if (confirm(message)) await this.fin.removePerson(p.id);
   }
 
   protected async add() {

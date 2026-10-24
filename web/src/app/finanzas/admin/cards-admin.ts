@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CreditCard } from '../finanzas.models';
+import { deleteMessage, plural } from '../finanzas.warn';
 import { FinanzasService } from '../finanzas.service';
 
 const validDay = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= 31;
@@ -45,12 +46,9 @@ export class CardsAdmin {
   protected async remove(c: CreditCard) {
     const expenses = this.fin.expenses().filter((e) => e.cardId === c.id).length;
     const cuts = this.fin.cuts().filter((x) => x.cardId === c.id).length;
-    const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-    const detail =
-      expenses + cuts > 0
-        ? `\n\nTambién se eliminarán ${plural(expenses, 'gasto', 'gastos')} y ${plural(cuts, 'corte', 'cortes')} de esta tarjeta. Si solo quieres ocultarla, desactívala.`
-        : '';
-    if (confirm(`¿Eliminar la tarjeta «${c.name}» por completo?${detail}`)) await this.fin.removeCard(c.id);
+    const related = [...(expenses ? [plural(expenses, 'gasto', 'gastos')] : []), ...(cuts ? [plural(cuts, 'corte', 'cortes')] : [])];
+    const message = deleteMessage(`la tarjeta «${c.name}»`, related, 'Si solo quieres ocultarla, desactívala.');
+    if (confirm(message)) await this.fin.removeCard(c.id);
   }
 
   protected async add() {

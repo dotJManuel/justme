@@ -15,6 +15,7 @@ import {
 import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { Concept, Debt, Person } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
+import { deleteMessage, deleteRowMessage, plural } from '../finanzas.warn';
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
 @Component({
@@ -175,8 +176,8 @@ export class Debts {
   protected async remove(r: DebtRow) {
     const abonos = r.kind === 'cargo' ? this.rows().filter((x) => x.appliesTo === r.id).length : 0;
     const msg = abonos
-      ? `Este cargo tiene ${abonos} abono${abonos === 1 ? '' : 's'} aplicado${abonos === 1 ? '' : 's'}; también se ${abonos === 1 ? 'eliminará' : 'eliminarán'}. ¿Continuar?`
-      : `¿Eliminar este ${r.kind} de ${r.personName}?`;
+      ? deleteMessage(`este cargo de ${r.personName}`, [plural(abonos, 'abono aplicado', 'abonos aplicados')])
+      : deleteRowMessage(`este ${r.kind} de ${r.personName}`);
     if (!confirm(msg)) return;
     if (await this.fin.removeDebt(r.id)) {
       const id = this.editId();
