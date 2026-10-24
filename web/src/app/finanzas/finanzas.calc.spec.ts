@@ -22,7 +22,7 @@ const exp = (cardId: string | null, amount: number, total: number | null = null)
   id: `${cardId}-${amount}`,
   section: cardId ? 'tarjeta' : 'fijos',
   cardId,
-  concept: 'x',
+  conceptId: 'k',
   installment: '',
   total,
   amount,

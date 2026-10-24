@@ -16,7 +16,11 @@
   @for (r of rows(); track r.id) {
     <div class="grid row">
       <div class="c" data-l="Concepto">
-        <input #cn aria-label="Concepto" maxlength="120" [value]="r.concept" (change)="setConcept(r, cn)" />
+        <select #cn aria-label="Concepto" (change)="setConcept(r, cn)">
+          @for (o of optionsFor(r); track o.id) {
+            <option [value]="o.id" [selected]="o.id === r.conceptId">{{ o.name }}{{ o.active ? '' : ' (inactivo)' }}</option>
+          }
+        </select>
       </div>
       @if (cards()) {
         <div class="c" data-l="Fecha y hora">
@@ -33,7 +37,7 @@
         <input #am class="num" inputmode="decimal" [attr.aria-label]="cards() ? 'Por pagar' : 'Monto mensual'" [value]="r.amount" (change)="setAmount(r, am)" />
       </div>
       <div class="c" data-l="Por quincena"><div class="ro">{{ money(half(r.amount)) }}</div></div>
-      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + r.concept" (click)="remove(r)">✕</button>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + conceptName(r.conceptId)" (click)="remove(r)">✕</button>
     </div>
   } @empty {
     <p class="hint">Todavía no hay registros.</p>
@@ -53,7 +57,12 @@
 
   <form class="grid row add" (ngSubmit)="add()">
     <div class="c" data-l="Concepto">
-      <input name="concept" aria-label="Nuevo concepto" placeholder="Nuevo concepto" maxlength="120" [ngModel]="concept()" (ngModelChange)="onConcept($event)" />
+      <select name="concept" aria-label="Concepto" [ngModel]="concept()" (ngModelChange)="onConcept($event)">
+        <option value="">Elige un concepto…</option>
+        @for (o of activeConcepts(); track o.id) {
+          <option [value]="o.id">{{ o.name }}</option>
+        }
+      </select>
     </div>
     @if (cards()) {
       <div class="c" data-l="Fecha y hora">
@@ -72,6 +81,9 @@
     <span></span>
     <button type="submit" class="primary x" [disabled]="!canAdd()">Agregar</button>
   </form>
+  @if (!activeConcepts().length) {
+    <p class="hint">Primero da de alta conceptos en la pestaña Administrar.</p>
+  }
   @if (cards()) {
     <p class="hint">La fecha y hora se ponen solas al capturar el concepto; puedes cambiarlas. Si dejas el monto total vacío, se usa lo que se paga este mes.</p>
   }

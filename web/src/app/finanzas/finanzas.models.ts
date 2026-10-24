@@ -1,3 +1,13 @@
+/** Opción de un catálogo (select) dada de alta en el panel de administración. */
+export interface Concept {
+  id: string;
+  /** Para qué lista sirve: hoy solo los gastos. */
+  scope: 'gasto';
+  name: string;
+  /** Desactivado: ya no se ofrece al capturar, pero conserva sus registros. */
+  active: boolean;
+}
+
 /** Gasto de una tarjeta de crédito o gasto fijo mensual. */
 export type Section = 'tarjeta' | 'fijos';
 
@@ -17,7 +27,7 @@ export interface Expense {
   section: Section;
   /** Tarjeta del gasto; null en gastos fijos. */
   cardId: string | null;
-  concept: string;
+  conceptId: string;
   /** "A meses", por ejemplo "05/09". Vacío si es un pago único. */
   installment: string;
   /** Monto total de la compra; null en gastos fijos. */

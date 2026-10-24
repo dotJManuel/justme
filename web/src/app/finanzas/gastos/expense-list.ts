@@ -9,7 +9,7 @@ import {
   parseMoney,
   perQuincena,
 } from '../finanzas.calc';
-import { CreditCard, Expense } from '../finanzas.models';
+import { Concept, CreditCard, Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
 
 /** Tabla editable de una sección: tarjeta Santander, tarjeta BBVA o gastos fijos. */
@@ -40,6 +40,10 @@ export class ExpenseList {
   protected readonly rows = computed(() => this.fin.expenses().filter((e) => (this.card() ? e.cardId === this.card()?.id : e.section === 'fijos')));
   protected readonly totals = computed(() => expenseTotals(this.rows()));
 
+  /** Conceptos que se pueden elegir al capturar un gasto nuevo. */
+  protected readonly activeConcepts = computed(() => this.fin.concepts().filter((c) => c.scope === 'gasto' && c.active));
+
+  /** Id del concepto elegido en el formulario (vacío = ninguno). */
   protected readonly concept = signal('');
   protected readonly purchased = signal(nowLocalInput());
   protected readonly installment = signal('');
@@ -54,15 +58,22 @@ export class ExpenseList {
   private readonly draftTotal = computed(() => (this.total().trim() === '' ? null : parseMoney(this.total())));
   protected readonly canAdd = computed(
     () =>
-      this.concept().trim() !== '' &&
+      this.concept() !== '' &&
       this.draftAmount() !== null &&
       (this.total().trim() === '' || this.draftTotal() !== null),
   );
 
-  protected setConcept(r: Expense, el: HTMLInputElement) {
-    const concept = el.value.trim();
-    if (!concept) return void (el.value = r.concept);
-    if (concept !== r.concept) this.save(r, el, { concept }, r.concept);
+  /** Opciones de una fila: los conceptos activos y, si ya está desactivado, el que tiene la fila. */
+  protected optionsFor(r: Expense): Concept[] {
+    return this.fin.concepts().filter((c) => c.scope === 'gasto' && (c.active || c.id === r.conceptId));
+  }
+
+  protected conceptName(id: string): string {
+    return this.fin.concepts().find((c) => c.id === id)?.name ?? '';
+  }
+
+  protected setConcept(r: Expense, el: HTMLSelectElement) {
+    if (el.value && el.value !== r.conceptId) this.save(r, el, { conceptId: el.value }, r.conceptId);
   }
 
   protected onConcept(value: string) {
@@ -97,7 +108,7 @@ export class ExpenseList {
   }
 
   protected async remove(r: Expense) {
-    if (confirm(`¿Eliminar «${r.concept}»?`)) await this.fin.removeExpense(r.id);
+    if (confirm(`¿Eliminar «${this.conceptName(r.conceptId)}»?`)) await this.fin.removeExpense(r.id);
   }
 
   protected async add() {
@@ -106,7 +117,7 @@ export class ExpenseList {
     const ok = await this.fin.addExpense({
       section: this.card() ? 'tarjeta' : 'fijos',
       cardId: this.card()?.id ?? null,
-      concept: this.concept().trim(),
+      conceptId: this.concept(),
       installment: this.cards() ? this.installment().trim() : '',
       // Una compra sin monto total es un pago único: el total es lo que se paga.
       total: this.cards() ? (this.draftTotal() ?? amount) : null,
@@ -123,7 +134,7 @@ export class ExpenseList {
     }
   }
 
-  private async save(r: Expense, el: HTMLInputElement, patch: Partial<Expense>, back: string) {
+  private async save(r: Expense, el: HTMLInputElement | HTMLSelectElement, patch: Partial<Expense>, back: string) {
     if (!(await this.fin.updateExpense(r.id, patch))) el.value = back;
   }
 

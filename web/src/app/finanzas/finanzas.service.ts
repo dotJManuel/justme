@@ -1,8 +1,14 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PostgrestError } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase.service';
-import { CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
+import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove } from './finanzas.models';
 
+interface ConceptRow {
+  id: string;
+  scope: Concept['scope'];
+  name: string;
+  active: boolean;
+}
 interface CardRow {
   id: string;
   name: string;
@@ -13,7 +19,7 @@ interface ExpenseRow {
   id: string;
   card_id: string | null;
   section: Expense['section'];
-  concept: string;
+  concept_id: string;
   installment: string;
   total: number | null;
   amount: number;
@@ -45,18 +51,20 @@ interface FamilyRow {
   amount: number;
 }
 
+const CONCEPT_COLS = 'id, scope, name, active';
 const CARD_COLS = 'id, name, cut_day, active';
-const EXPENSE_COLS = 'id, card_id, section, concept, installment, total, amount, purchased_at';
+const EXPENSE_COLS = 'id, card_id, section, concept_id, installment, total, amount, purchased_at';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
 const DEBT_COLS = 'id, person, kind, concept, amount, date, applies_to';
 const FAMILY_COLS = 'id, direction, name, person, date, amount';
 
+const toConcept = (r: ConceptRow): Concept => ({ ...r });
 const toCard = (r: CardRow): CreditCard => ({ id: r.id, name: r.name, cutDay: r.cut_day, active: r.active });
 const toExpense = (r: ExpenseRow): Expense => ({
   id: r.id,
   cardId: r.card_id,
   section: r.section,
-  concept: r.concept,
+  conceptId: r.concept_id,
   installment: r.installment,
   total: r.total,
   amount: r.amount,
@@ -74,7 +82,7 @@ const toCut = (r: CutRow): Cut => ({
 const expenseRow = (e: Partial<Omit<Expense, 'id'>>) => ({
   ...(e.section !== undefined && { section: e.section }),
   ...(e.cardId !== undefined && { card_id: e.cardId }),
-  ...(e.concept !== undefined && { concept: e.concept }),
+  ...(e.conceptId !== undefined && { concept_id: e.conceptId }),
   ...(e.installment !== undefined && { installment: e.installment }),
   ...(e.total !== undefined && { total: e.total }),
   ...(e.amount !== undefined && { amount: e.amount }),
@@ -104,6 +112,7 @@ const debtPatchRow = (p: Partial<Omit<Debt, 'id'>>) => ({
 export class FinanzasService {
   private readonly client = inject(SupabaseService).client;
 
+  readonly concepts = signal<Concept[]>([]);
   readonly cards = signal<CreditCard[]>([]);
   readonly expenses = signal<Expense[]>([]);
   readonly cuts = signal<Cut[]>([]);
@@ -132,6 +141,7 @@ export class FinanzasService {
     this.loading = undefined;
     this.loaded.set(false);
     this.error.set('');
+    this.concepts.set([]);
     this.cards.set([]);
     this.expenses.set([]);
     this.cuts.set([]);
@@ -149,6 +159,33 @@ export class FinanzasService {
         .upsert({ monthly_income: amount, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
       if (error) throw error;
       this.income.set(amount);
+    });
+  }
+
+  addConcept(scope: Concept['scope'], name: string): Promise<boolean> {
+    return this.write(async () => {
+      const row = await this.single<ConceptRow>(
+        this.client.from('fin_concepts').insert({ scope, name }).select(CONCEPT_COLS).single(),
+      );
+      this.concepts.update((l) => [...l, toConcept(row)]);
+    });
+  }
+
+  updateConcept(id: string, patch: Partial<Pick<Concept, 'name' | 'active'>>): Promise<boolean> {
+    return this.write(async () => {
+      const { error } = await this.client.from('fin_concepts').update(patch).eq('id', id);
+      if (error) throw error;
+      this.concepts.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    });
+  }
+
+  /** Borrar un concepto borra también los gastos que lo usan (lo hace la base de datos; aquí se refleja igual). */
+  removeConcept(id: string): Promise<boolean> {
+    return this.write(async () => {
+      const { error } = await this.client.from('fin_concepts').delete().eq('id', id);
+      if (error) throw error;
+      this.concepts.update((l) => l.filter((x) => x.id !== id));
+      this.expenses.update((l) => l.filter((x) => x.conceptId !== id));
     });
   }
 
@@ -282,16 +319,18 @@ export class FinanzasService {
 
   private async fetch(): Promise<void> {
     const c = this.client;
-    const [settings, cards, expenses, cuts, debts, family] = await Promise.all([
+    const [settings, concepts, cards, expenses, cuts, debts, family] = await Promise.all([
       c.from('fin_settings').select('monthly_income').maybeSingle(),
+      c.from('fin_concepts').select(CONCEPT_COLS).order('created_at'),
       c.from('fin_cards').select(CARD_COLS).order('created_at'),
       c.from('fin_expenses').select(EXPENSE_COLS).order('created_at'),
       c.from('fin_cuts').select(CUT_COLS).order('created_at'),
       c.from('fin_debts').select(DEBT_COLS).order('created_at'),
       c.from('fin_family').select(FAMILY_COLS).order('created_at'),
     ]);
-    for (const r of [settings, cards, expenses, cuts, debts, family]) if (r.error) throw r.error;
+    for (const r of [settings, concepts, cards, expenses, cuts, debts, family]) if (r.error) throw r.error;
     this.income.set(settings.data?.monthly_income ?? 0);
+    this.concepts.set((concepts.data as ConceptRow[]).map(toConcept));
     this.cards.set((cards.data as CardRow[]).map(toCard));
     this.expenses.set((expenses.data as ExpenseRow[]).map(toExpense));
     this.cuts.set((cuts.data as CutRow[]).map(toCut));
