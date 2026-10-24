@@ -7,3 +7,19 @@ h1{font-family:var(--font-display);font-size:1.25rem;font-weight:800;margin:0}
 .tabs a:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
 .msg{margin:0;font-size:.9rem;color:#d63b3b}
 .hint{margin:0;font-size:.85rem;color:var(--muted)}
+.fab{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:1.15rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.fab:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+/* Celular: flechas en fila, abajo a la derecha; la página deja espacio al final para no taparse. */
+.jump{position:fixed;z-index:20;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:row;gap:10px}
+.jump .fab{background:var(--flame);border-color:var(--flame);color:#fff}
+.wrap{padding-bottom:84px}
+/* Pantalla mediana: las flechas van a media altura en su propio carril a la derecha, sin tapar el contenido. */
+@media (min-width:520px){
+  .jump{right:max(8px,env(safe-area-inset-right,0px));top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column}
+  .wrap{padding-right:68px;padding-bottom:40px}
+}
+/* Pantalla ancha: a media altura, junto al borde izquierdo del contenido. */
+@media (min-width:1100px){
+  .jump{right:calc(50% + 488px)}
+  .wrap{padding-right:max(16px,env(safe-area-inset-right,0px))}
+}

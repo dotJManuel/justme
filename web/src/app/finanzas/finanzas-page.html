@@ -17,3 +17,14 @@
     <p class="hint">Cargando…</p>
   }
 </div>
+
+@if (fin.loaded()) {
+  <div class="jump">
+    @if (!atTop()) {
+      <button type="button" class="fab" aria-label="Sección anterior" (click)="step(-1)">↑</button>
+    }
+    @if (!atBottom()) {
+      <button type="button" class="fab" aria-label="Siguiente sección" (click)="step(1)">↓</button>
+    }
+  </div>
+}

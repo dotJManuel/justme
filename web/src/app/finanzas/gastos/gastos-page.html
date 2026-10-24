@@ -1,4 +1,4 @@
-<section class="summary" aria-label="Resumen del mes">
+<section data-section class="summary" aria-label="Resumen del mes">
   <div class="tile">
     <span class="lbl">Tarjeta Santander (a pagar)</span>
     <b>{{ money(summary().santander) }}</b>
@@ -30,10 +30,10 @@
   </div>
 </section>
 
-<app-expense-list section="santander" title="Tarjeta de crédito — Santander" />
-<app-expense-list section="bbva" title="Tarjeta de crédito — BBVA" />
+<app-expense-list data-section section="santander" title="Tarjeta de crédito — Santander" />
+<app-expense-list data-section section="bbva" title="Tarjeta de crédito — BBVA" />
 
-<section class="card both">
+<section data-section class="card both">
   <h2>Total general (ambas tarjetas)</h2>
   <div class="row">
     <span class="lbl">Monto total <b>{{ money(cardsTotal().total) }}</b></span>
@@ -42,7 +42,7 @@
   </div>
 </section>
 
-<app-expense-list section="fijos" title="Gastos fijos mensuales" />
+<app-cut-list data-section card="santander" title="Corte — Tarjeta Santander" />
+<app-cut-list data-section card="bbva" title="Corte — Tarjeta BBVA" />
 
-<app-cut-list card="santander" title="Corte — Tarjeta Santander" />
-<app-cut-list card="bbva" title="Corte — Tarjeta BBVA" />
+<app-expense-list data-section section="fijos" title="Gastos fijos mensuales" />

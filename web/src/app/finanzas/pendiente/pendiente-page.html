@@ -1,7 +1,7 @@
-<h2 class="sec">Dinero que me deben</h2>
+<h2 data-section class="sec">Dinero que me deben</h2>
 <app-debts />
 
-<h2 class="sec">Dinero con familia</h2>
+<h2 data-section class="sec">Dinero con familia</h2>
 <section class="summary" aria-label="Resumen con familia">
   <div class="tile">
     <span class="lbl">Total recibido</span>
@@ -16,5 +16,5 @@
     <b>{{ money(totals().left) }}</b>
   </div>
 </section>
-<app-family-list direction="recibido" />
-<app-family-list direction="dado" />
+<app-family-list data-section direction="recibido" />
+<app-family-list data-section direction="dado" />

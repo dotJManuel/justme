@@ -42,7 +42,7 @@
   </div>
 </section>
 
-<section class="card" #form>
+<section data-section class="card" #form>
   <h2>{{ editId() ? 'Editar movimiento' : 'Nuevo movimiento' }}</h2>
   <form class="form" (ngSubmit)="submit()">
     <label>
@@ -96,7 +96,7 @@
   }
 </section>
 
-<section class="card" [style.--cols]="movCols">
+<section data-section class="card" [style.--cols]="movCols">
   <h2>Movimientos (cargos y abonos)</h2>
 
   @if (summary().people.length > 1) {
