@@ -3,10 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
 import { DN } from '../habits/habits.config';
+import { Icon } from '../icons/icon';
 
 @Component({
   selector: 'app-admin-page',
-  imports: [FormsModule, RouterLink],
+  imports: [Icon, FormsModule, RouterLink],
   templateUrl: './admin-page.html',
   styleUrl: './admin-page.css',
 })

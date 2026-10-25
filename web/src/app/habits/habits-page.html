@@ -2,7 +2,7 @@
   <div class="top">
     <h1>Mi racha</h1>
     <div class="stats">
-      <span class="stat" title="Puntos de experiencia">⚡ <b>{{ xp() }}</b> XP</span>
+      <span class="stat" title="Puntos de experiencia"><app-icon name="zap" /> <b>{{ xp() }}</b> XP</span>
       <span class="stat" title="Nivel">Nv <b>{{ level() }}</b></span>
     </div>
   </div>
@@ -23,9 +23,9 @@
       <div class="sub">{{ streaks().cur === 1 ? 'día de racha' : 'días de racha' }}</div>
       <div class="best">Mejor racha: {{ streaks().best }} {{ streaks().best === 1 ? 'día' : 'días' }}</div>
       @if (streaks().recovering) {
-        <div class="freeze">❄ Racha congelada: cumple {{ config.goal() }} misiones para recuperarla</div>
+        <div class="freeze"><app-icon name="snowflake" /> Racha congelada: cumple {{ config.goal() }} misiones para recuperarla</div>
       } @else if (streaks().freezeReady) {
-        <div class="freeze">❄ Tienes una congelación lista por si falla un día</div>
+        <div class="freeze"><app-icon name="snowflake" /> Tienes una congelación lista por si falla un día</div>
       }
     </div>
   </section>
@@ -74,7 +74,7 @@
           <span class="when">{{ h.when }}</span>
         </span>
         @if (doneAt(h.k); as at) {
-          <span class="at" title="Hora en que se completó">✓ {{ at }}</span>
+          <span class="at" title="Hora en que se completó"><app-icon name="check" /> {{ at }}</span>
         }
         <span class="xp">+{{ xpPer }} XP</span>
       </button>

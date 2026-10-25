@@ -122,7 +122,7 @@
 
   <div class="tools">
     <button type="button" class="tools-toggle" [attr.aria-expanded]="panelOpen()" aria-controls="mov-panel" (click)="panelOpen.set(!panelOpen())">
-      Filtros y orden <span aria-hidden="true">{{ panelOpen() ? '▴' : '▾' }}</span>
+      Filtros y orden <app-icon [name]="panelOpen() ? 'chevron-up' : 'chevron-down'" />
     </button>
     @for (t of tags(); track t) {
       <span class="tag">{{ t }}</span>
@@ -171,7 +171,7 @@
             </select>
           </label>
           <button type="button" class="dir" [attr.aria-label]="'Cambiar el sentido del orden. Ahora: ' + dirLabel(sortA(), dirA())" (click)="flipA()">
-            {{ dirLabel(sortA(), dirA()) }} <span aria-hidden="true">⇅</span>
+            {{ dirLabel(sortA(), dirA()) }} <app-icon name="sort" />
           </button>
         </div>
         <div class="f-sort">
@@ -188,7 +188,7 @@
           </label>
           @if (sortB()) {
             <button type="button" class="dir" [attr.aria-label]="'Cambiar el sentido del segundo orden. Ahora: ' + dirLabel(sortB(), dirB())" (click)="flipB()">
-              {{ dirLabel(sortB(), dirB()) }} <span aria-hidden="true">⇅</span>
+              {{ dirLabel(sortB(), dirB()) }} <app-icon name="sort" />
             </button>
           }
         </div>
@@ -228,8 +228,8 @@
         }
       </div>
       <div class="x acts">
-        <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.personName" (click)="startEdit(r)">✎</button>
-        <button type="button" class="icon" [attr.aria-label]="'Eliminar movimiento de ' + r.personName" (click)="remove(r)">✕</button>
+        <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.personName" (click)="startEdit(r)"><app-icon name="pencil" /></button>
+        <button type="button" class="icon" [attr.aria-label]="'Eliminar movimiento de ' + r.personName" (click)="remove(r)"><app-icon name="x" /></button>
       </div>
     </div>
   } @empty {

@@ -4,11 +4,12 @@ import { debtsWithDependents } from '../finanzas.calc';
 import { Concept } from '../finanzas.models';
 import { deleteMessage, plural } from '../finanzas.warn';
 import { FinanzasService } from '../finanzas.service';
+import { Icon } from '../../icons/icon';
 
 /** Catálogo de opciones de un select de conceptos: agregar, renombrar, desactivar y eliminar. */
 @Component({
   selector: 'app-concepts-admin',
-  imports: [FormsModule],
+  imports: [Icon, FormsModule],
   templateUrl: './concepts-admin.html',
   styleUrl: '../finanzas.shared.css',
 })

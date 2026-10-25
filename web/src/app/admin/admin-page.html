@@ -1,7 +1,7 @@
 <div class="wrap">
   <div class="top">
     <h1>Modo administrador</h1>
-    <a routerLink="/" class="back">← Volver</a>
+    <a routerLink="/" class="back"><app-icon name="arrow-left" /> Volver</a>
   </div>
 
   @if (error()) {
@@ -57,8 +57,8 @@
           <li [class.off]="!h.active">
             <div class="line">
               <input #n class="name" aria-label="Nombre" [value]="h.name" maxlength="80" (change)="rename(h.k, n, h.name)" />
-              <button type="button" class="icon" aria-label="Subir" [disabled]="first || busy()" (click)="move(h.k, -1)">▲</button>
-              <button type="button" class="icon" aria-label="Bajar" [disabled]="last || busy()" (click)="move(h.k, 1)">▼</button>
+              <button type="button" class="icon" aria-label="Subir" [disabled]="first || busy()" (click)="move(h.k, -1)"><app-icon name="chevron-up" /></button>
+              <button type="button" class="icon" aria-label="Bajar" [disabled]="last || busy()" (click)="move(h.k, 1)"><app-icon name="chevron-down" /></button>
               <input
                 type="checkbox"
                 class="toggle"

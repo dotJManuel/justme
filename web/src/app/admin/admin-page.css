@@ -27,7 +27,7 @@ legend{font-weight:700;font-size:.9rem;padding:0;margin-bottom:8px}
 .line{display:flex;align-items:center;gap:6px}
 .line .name{flex:1;font-weight:700;padding:5px 8px}
 .habits .when{font-size:.8rem;padding:3px 8px;color:var(--muted)}
-.icon{font:inherit;font-size:.75rem;width:28px;height:28px;flex:none;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
+.icon{display:inline-flex;align-items:center;justify-content:center;padding:0;font:inherit;font-size:.75rem;width:28px;height:28px;flex:none;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
 .icon:disabled{opacity:.35;cursor:default}
 .toggle{width:18px;height:18px;flex:none;margin:0 2px;accent-color:var(--done);cursor:pointer}
 .add{display:flex;flex-direction:column;gap:8px}

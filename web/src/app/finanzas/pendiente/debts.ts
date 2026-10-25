@@ -22,11 +22,12 @@ import { buildStatement } from '../finanzas.statement';
 import { downloadXlsx } from '../xlsx';
 import { StatementDialog } from './statement-dialog';
 import { deleteMessage, deleteRowMessage, plural } from '../finanzas.warn';
+import { Icon } from '../../icons/icon';
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
 @Component({
   selector: 'app-debts',
-  imports: [FormsModule, ConceptField, ExportButton, StatementDialog],
+  imports: [Icon, FormsModule, ConceptField, ExportButton, StatementDialog],
   templateUrl: './debts.html',
   styleUrls: ['../finanzas.shared.css', './debts.css'],
 })

@@ -23,10 +23,10 @@
 @if (fin.loaded()) {
   <div class="jump">
     @if (!atTop()) {
-      <button type="button" class="fab" aria-label="Sección anterior" (click)="step(-1)">↑</button>
+      <button type="button" class="fab" aria-label="Sección anterior" (click)="step(-1)"><app-icon name="arrow-up" /></button>
     }
     @if (!atBottom()) {
-      <button type="button" class="fab" aria-label="Siguiente sección" (click)="step(1)">↓</button>
+      <button type="button" class="fab" aria-label="Siguiente sección" (click)="step(1)"><app-icon name="arrow-down" /></button>
     }
   </div>
 }

@@ -4,11 +4,12 @@ import { debtsWithDependents } from '../finanzas.calc';
 import { Person } from '../finanzas.models';
 import { deleteMessage, plural } from '../finanzas.warn';
 import { FinanzasService } from '../finanzas.service';
+import { Icon } from '../../icons/icon';
 
 /** Catálogo de personas: agregar, renombrar, desactivar y eliminar. */
 @Component({
   selector: 'app-people-admin',
-  imports: [FormsModule],
+  imports: [Icon, FormsModule],
   templateUrl: './people-admin.html',
   styleUrl: '../finanzas.shared.css',
 })

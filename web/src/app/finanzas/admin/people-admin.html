@@ -1,7 +1,7 @@
 <section class="card" [class.s-violet]="scope() === 'deudor'" [class.s-sage]="scope() === 'familia'" [style.--cols]="cols">
   <h2>{{ title() }}</h2>
   <p class="hint">{{ help() }}</p>
-  <p class="warn-box">⚠ {{ warning() }}</p>
+  <p class="warn-box"><app-icon name="alert" /> {{ warning() }}</p>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">
@@ -21,7 +21,7 @@
           <span class="muted">{{ usageText(p) }}</span>
         </label>
       </div>
-      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + p.name" (click)="remove(p)">✕</button>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + p.name" (click)="remove(p)"><app-icon name="x" /></button>
     </div>
   } @empty {
     <p class="hint">Todavía no hay personas. Agrega la primera abajo.</p>

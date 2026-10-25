@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { Icon } from '../../icons/icon';
 
 /**
  * Botón "Exportar a Excel". No hace nada por sí solo: quien lo usa escucha el clic (`(click)`) y descarga el archivo.
@@ -6,9 +7,10 @@ import { Component, input } from '@angular/core';
  */
 @Component({
   selector: 'app-export-button',
+  imports: [Icon],
   template: `
     <button type="button" [disabled]="busy()" [attr.aria-label]="label() === 'Excel' ? 'Exportar a Excel' : label()" title="Descargar en Excel (.xlsx)">
-      <span aria-hidden="true">⬇</span> {{ busy() ? 'Preparando…' : label() }}
+      <app-icon name="download" /> {{ busy() ? 'Preparando…' : label() }}
     </button>
   `,
   styles: `

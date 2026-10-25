@@ -3,13 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { CreditCard } from '../finanzas.models';
 import { deleteMessage, plural } from '../finanzas.warn';
 import { FinanzasService } from '../finanzas.service';
+import { Icon } from '../../icons/icon';
 
 const validDay = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= 31;
 
 /** Catálogo de tarjetas de crédito: agregar, renombrar, cambiar el día de corte, desactivar y eliminar. */
 @Component({
   selector: 'app-cards-admin',
-  imports: [FormsModule],
+  imports: [Icon, FormsModule],
   templateUrl: './cards-admin.html',
   styleUrl: '../finanzas.shared.css',
 })

@@ -34,7 +34,7 @@
       <div class="c f-am" data-l="Monto">
         <input #a class="num" inputmode="decimal" aria-label="Monto" [value]="m.amount" (change)="setAmount(m, a)" />
       </div>
-      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + label(m)" (click)="remove(m)">✕</button>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + label(m)" (click)="remove(m)"><app-icon name="x" /></button>
     </div>
   } @empty {
     <p class="hint">Todavía no hay registros.</p>

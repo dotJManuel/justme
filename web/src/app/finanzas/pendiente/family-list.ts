@@ -9,6 +9,7 @@ import { familySheet, today } from '../finanzas.export';
 import { deleteRowMessage } from '../finanzas.warn';
 import { ExportButton } from '../export-button/export-button';
 import { downloadXlsx } from '../xlsx';
+import { Icon } from '../../icons/icon';
 
 /**
  * Lista editable de lo recibido o de lo dado a la familia. Un recibido siempre lleva concepto (y de quién es
@@ -16,7 +17,7 @@ import { downloadXlsx } from '../xlsx';
  */
 @Component({
   selector: 'app-family-list',
-  imports: [FormsModule, ConceptField, ExportButton],
+  imports: [Icon, FormsModule, ConceptField, ExportButton],
   templateUrl: './family-list.html',
   styleUrl: '../finanzas.shared.css',
 })

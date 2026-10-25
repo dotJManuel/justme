@@ -1,12 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../auth.service';
+import { Icon } from '../icons/icon';
 import { ThemeService } from '../theme.service';
 
 /** Menú principal: se ve en todas las pantallas cuando hay sesión. */
 @Component({
   selector: 'app-nav',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, Icon],
   templateUrl: './nav.html',
   styleUrl: './nav.css',
 })

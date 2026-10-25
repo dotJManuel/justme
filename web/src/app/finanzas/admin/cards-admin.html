@@ -4,7 +4,7 @@
     Cada tarjeta activa aparece en Gastos con su tabla y su corte. Desactivar una tarjeta la oculta y deja de
     sumar en el resumen, pero conserva su historial. Eliminarla la borra por completo.
   </p>
-  <p class="warn-box">⚠ Si eliminas una tarjeta, se borran también todos sus gastos y cortes. Para solo ocultarla, desactívala.</p>
+  <p class="warn-box"><app-icon name="alert" /> Si eliminas una tarjeta, se borran también todos sus gastos y cortes. Para solo ocultarla, desactívala.</p>
 
   <div class="scroll">
   <div class="grid head" aria-hidden="true">
@@ -28,7 +28,7 @@
           <span class="muted">{{ usage(c) }}</span>
         </label>
       </div>
-      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + c.name" (click)="remove(c)">✕</button>
+      <button type="button" class="icon x" [attr.aria-label]="'Eliminar ' + c.name" (click)="remove(c)"><app-icon name="x" /></button>
     </div>
   } @empty {
     <p class="hint">Todavía no hay tarjetas. Agrega la primera abajo.</p>

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ConceptChange, ConceptField, ConceptValue, resolveConcept } from '../concept-field/concept-field';
 import { localInputToIso, nowLocalInput, parseMoney } from '../finanzas.calc';
 import { FinanzasService } from '../finanzas.service';
+import { Icon } from '../../icons/icon';
 
 /** Valor del destino "Gastos fijos mensuales" (los ids de tarjeta son uuid, no chocan). */
 const FIXED = 'fijos';
@@ -13,7 +14,7 @@ const FIXED = 'fijos';
  */
 @Component({
   selector: 'app-expense-add',
-  imports: [FormsModule, ConceptField],
+  imports: [Icon, FormsModule, ConceptField],
   templateUrl: './expense-add.html',
   styleUrls: ['../finanzas.shared.css', './expense-add.css'],
 })

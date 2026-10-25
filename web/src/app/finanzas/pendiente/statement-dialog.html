@@ -2,7 +2,7 @@
   <div class="box">
     <div class="top">
       <h2 id="stm-title">Estado de cuenta de {{ statement().person }}</h2>
-      <button type="button" class="x" aria-label="Cerrar" (click)="close()">✕</button>
+      <button type="button" class="x" aria-label="Cerrar" (click)="close()"><app-icon name="x" /></button>
     </div>
 
     <div class="sheet" [attr.aria-busy]="busy()">

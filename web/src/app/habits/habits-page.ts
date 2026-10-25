@@ -3,8 +3,10 @@ import { ConfigService } from '../config.service';
 import { Habits, SupabaseService } from '../supabase.service';
 import { DN, MN, XP_LEVEL, XP_PER } from './habits.config';
 import { Days, addDays, computeStreaks, countDone, dateKey, doneAtLabel, isRestDay, parseKey } from './streaks';
+import { Icon } from '../icons/icon';
 
 @Component({
+  imports: [Icon],
   selector: 'app-habits-page',
   templateUrl: './habits-page.html',
   styleUrl: './habits-page.css',

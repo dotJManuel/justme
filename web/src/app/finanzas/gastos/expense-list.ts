@@ -15,11 +15,12 @@ import { expensesSheet, today } from '../finanzas.export';
 import { deleteRowMessage } from '../finanzas.warn';
 import { ExportButton } from '../export-button/export-button';
 import { downloadXlsx } from '../xlsx';
+import { Icon } from '../../icons/icon';
 
 /** Tabla editable de una sección: una tarjeta de crédito o los gastos fijos. Los gastos nuevos se agregan arriba. */
 @Component({
   selector: 'app-expense-list',
-  imports: [ConceptField, ExportButton],
+  imports: [Icon, ConceptField, ExportButton],
   templateUrl: './expense-list.html',
   styleUrl: '../finanzas.shared.css',
 })

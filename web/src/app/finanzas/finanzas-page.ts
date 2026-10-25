@@ -1,5 +1,6 @@
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Icon } from '../icons/icon';
 import { FinanzasService } from './finanzas.service';
 
 /** Espacio que deja el menú fijo de arriba al llevar una sección al inicio de la pantalla. */
@@ -8,7 +9,7 @@ const TOP_OFFSET = 68;
 /** Contenedor del módulo: pestañas Gastos / Pendiente, carga de datos y flechas entre secciones. */
 @Component({
   selector: 'app-finanzas-page',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
   templateUrl: './finanzas-page.html',
   styleUrl: './finanzas-page.css',
 })

@@ -1,7 +1,7 @@
 <nav aria-label="Menú principal">
   <span class="brand">JustMe</span>
-  <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }">🔥 Racha</a>
-  <a routerLink="/finanzas" routerLinkActive="on">💰 Finanzas</a>
+  <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }"><app-icon name="flame" /> Racha</a>
+  <a routerLink="/finanzas" routerLinkActive="on"><app-icon name="wallet" /> Finanzas</a>
   <span class="gap"></span>
   <button
     type="button"
@@ -10,8 +10,8 @@
     [title]="theme.theme() === 'dark' ? 'Modo claro' : 'Modo oscuro'"
     (click)="theme.toggle()"
   >
-    {{ theme.theme() === 'dark' ? '☀' : '☾' }}
+    <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
   </button>
-  <a routerLink="/admin" routerLinkActive="on" class="quiet" aria-label="Modo administrador" title="Modo administrador">⚙</a>
-  <button type="button" class="quiet" (click)="signOut()">Salir</button>
+  <a routerLink="/admin" routerLinkActive="on" class="quiet" aria-label="Modo administrador" title="Modo administrador"><app-icon name="settings" /></a>
+  <button type="button" class="quiet" aria-label="Salir" title="Salir" (click)="signOut()"><app-icon name="logout" /></button>
 </nav>

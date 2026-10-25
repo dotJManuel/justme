@@ -3,12 +3,14 @@ import { dateKey } from '../../habits/streaks';
 import { Statement, statementText } from '../finanzas.statement';
 import { safeFileName } from '../xlsx';
 import { drawStatement } from './statement-canvas';
+import { Icon } from '../../icons/icon';
 
 /**
  * Ventana con el estado de cuenta de una persona, dibujado como hoja de Excel, listo para mandar por WhatsApp:
  * compartir la imagen (en el celular abre la hoja de compartir), mandar el texto o descargar la imagen.
  */
 @Component({
+  imports: [Icon],
   selector: 'app-statement-dialog',
   templateUrl: './statement-dialog.html',
   styleUrl: './statement-dialog.css',
