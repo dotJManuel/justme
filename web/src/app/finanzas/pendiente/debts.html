@@ -88,6 +88,17 @@
       Fecha
       <input name="date" type="date" [ngModel]="date()" (ngModelChange)="date.set($event)" />
     </label>
+    @if (kind() === 'cargo' && !editId()) {
+      <label class="span2">
+        Pagado con tarjeta
+        <select name="card" [ngModel]="cardValue()" (ngModelChange)="card.set($event)">
+          <option value="">Efectivo / otra forma (no se registra en tarjeta)</option>
+          @for (c of cardOptions(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+    }
     @if (splitting()) {
       <fieldset class="split span2">
         <legend>Aplicar el pago a</legend>

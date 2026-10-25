@@ -7,8 +7,11 @@ import {
   SortSpec,
   debtRows,
   fmtDate,
+  conceptLabel,
   fmtMoney,
   isArchived,
+  localInputToIso,
+  nowLocalInput,
   parseMoney,
   round2,
   sum,
@@ -177,6 +180,10 @@ export class Debts {
   protected readonly amount = signal('');
   protected readonly date = signal(dateKey(new Date()));
   protected readonly appliesTo = signal('');
+  /** Tarjeta con la que se pagó lo prestado (id; vacío = efectivo u otra forma): genera su gasto en la tarjeta. */
+  protected readonly card = signal('');
+  protected readonly cardOptions = computed(() => this.fin.cards().filter((c) => c.active));
+  protected readonly cardValue = computed(() => (this.cardOptions().some((c) => c.id === this.card()) ? this.card() : ''));
 
   /** Personas que se pueden elegir: las activas y, al editar, la que ya tiene el movimiento. */
   protected readonly personOptions = computed<Person[]>(() =>
@@ -330,6 +337,7 @@ export class Debts {
     this.amount.set('');
     this.date.set(dateKey(new Date()));
     this.appliesTo.set('');
+    this.card.set('');
     this.alloc.set({});
   }
 
@@ -355,7 +363,23 @@ export class Debts {
       if (done) this.clear();
       return;
     }
+    const cardId = !id && this.kind() === 'cargo' ? this.cardValue() : '';
     const ok = id ? await this.fin.updateDebt(id, data) : await this.fin.addDebt({ ...data, kind: this.kind() });
+    if (ok && cardId) {
+      // Lo prestado se pagó con tarjeta: queda como compra en esa tarjeta, para el corte.
+      const name = conceptLabel(this.fin.concepts(), data.conceptId, data.conceptText) || 'Préstamo';
+      const who = this.fin.people().find((p) => p.id === data.personId)?.name ?? '';
+      await this.fin.addExpense({
+        section: 'tarjeta',
+        cardId,
+        conceptId: null,
+        conceptText: who ? `${name} · ${who}` : name,
+        installment: '',
+        total: amount,
+        amount,
+        purchasedAt: localInputToIso(`${this.date() || nowLocalInput().slice(0, 10)}T${nowLocalInput().slice(11)}`),
+      });
+    }
     if (ok) this.clear();
   }
 
