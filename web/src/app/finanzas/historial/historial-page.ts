@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { dateKey } from '../../habits/streaks';
 import { ExportButton } from '../export-button/export-button';
 import { Icon } from '../../icons/icon';
 import { PaidList } from './paid-list';
@@ -66,6 +67,9 @@ export class HistorialPage implements OnInit {
   protected readonly kind = signal<'' | 'abono' | 'cargo'>('');
   protected readonly action = signal<'' | AuditAction>('');
   protected readonly query = signal('');
+  /** Rango de fechas del cambio (AAAA-MM-DD, hora local); vacío = sin límite. */
+  protected readonly from = signal('');
+  protected readonly to = signal('');
 
   /** Nombres de tarjetas, personas y conceptos: los de ahora y los de los ya eliminados (por su historial). */
   private readonly names = computed(() => {
@@ -96,6 +100,8 @@ export class HistorialPage implements OnInit {
         (!this.person() || l.who === this.person()) &&
         (!this.kind() || l.kind === this.kind()) &&
         (!this.action() || l.action === this.action()) &&
+        (!this.from() || dateKey(new Date(l.at)) >= this.from()) &&
+        (!this.to() || dateKey(new Date(l.at)) <= this.to()) &&
         (!q || `${l.who} ${l.what} ${l.badge}`.toLowerCase().includes(q)),
     );
   });
@@ -185,10 +191,12 @@ export class HistorialPage implements OnInit {
     this.kind.set('');
     this.action.set('');
     this.query.set('');
+    this.from.set('');
+    this.to.set('');
   }
 
   protected get filtered(): boolean {
-    return !!(this.person() || this.kind() || this.action() || this.query());
+    return !!(this.person() || this.kind() || this.action() || this.query() || this.from() || this.to());
   }
 
   protected isMarked(id: number): boolean {

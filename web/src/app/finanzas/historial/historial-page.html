@@ -46,6 +46,14 @@
         <option value="delete" [selected]="action() === 'delete'">Eliminado</option>
       </select>
     </label>
+    <label class="flt">
+      Desde
+      <input #df type="date" [value]="from()" [max]="to() || null" (input)="from.set(df.value)" />
+    </label>
+    <label class="flt">
+      Hasta
+      <input #dt type="date" [value]="to()" [min]="from() || null" (input)="to.set(dt.value)" />
+    </label>
     <label class="flt grow">
       Buscar
       <input #q type="search" placeholder="Persona o concepto" [value]="query()" (input)="query.set(q.value)" />
