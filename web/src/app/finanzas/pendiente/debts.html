@@ -215,7 +215,7 @@
   }
 
   <p class="count" aria-live="polite">
-    Mostrando {{ visible().length }} de {{ openRows().length }} {{ openRows().length === 1 ? 'movimiento' : 'movimientos' }}
+    Mostrando {{ visible().length }} de {{ itemCount() }} {{ itemCount() === 1 ? 'movimiento' : 'movimientos' }}
   </p>
 
   <div class="scroll">
@@ -230,26 +230,45 @@
     <span></span>
   </div>
 
-  @for (r of visible(); track r.id) {
+  @for (it of items(); track it.key) {
+    @let r = it.r;
     <div class="grid row mov" [class.is-cargo]="r.kind === 'cargo'" [class.is-abono]="r.kind === 'abono'">
       <div class="c a-p" data-l="Persona"><div class="t strong">{{ r.personName }}</div></div>
       <div class="c a-k" data-l="Tipo"><span class="badge" [class.cargo]="r.kind === 'cargo'">{{ r.kind === 'cargo' ? 'Cargo' : 'Abono' }}</span></div>
       <div class="c wide a-cc" [class.empty]="!r.conceptName" data-l="Concepto"><div class="t">{{ r.conceptName || '—' }}</div></div>
-      <div class="c a-m" data-l="Monto"><div class="t num">{{ money(r.amount) }}</div></div>
+      <div class="c a-m" data-l="Monto"><div class="t num">{{ money(it.total) }}</div></div>
       <div class="c a-f" data-l="Fecha"><div class="t">{{ r.date ? fmtDate(r.date) : '—' }}</div></div>
       <div class="c a-d" data-l="Días"><div class="t num" [class.has-age]="r.age !== null">{{ r.age === null ? '—' : r.age }}</div></div>
       <div class="c a-s" [attr.data-l]="r.kind === 'cargo' ? 'Saldo' : 'Aplica a'">
-        @if (r.balance !== null) {
+        @if (it.parts) {
+          <button type="button" class="link parts-btn" [attr.aria-expanded]="expanded().has(it.key)" (click)="toggleParts(it.key)">
+            {{ it.parts.length }} cargos <app-icon [name]="expanded().has(it.key) ? 'chevron-up' : 'chevron-down'" />
+          </button>
+        } @else if (r.balance !== null) {
           <div class="t num strong" [class.pos]="r.balance <= 0">{{ r.balance <= 0 ? 'Pagado' : money(r.balance) }}</div>
         } @else {
           <div class="t num muted">{{ target(r) }}</div>
         }
       </div>
       <div class="x acts">
-        <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.personName" (click)="startEdit(r)"><app-icon name="pencil" /></button>
-        <button type="button" class="icon" [attr.aria-label]="'Eliminar movimiento de ' + r.personName" (click)="remove(r)"><app-icon name="x" /></button>
+        @if (!it.parts) {
+          <button type="button" class="icon edit" [attr.aria-label]="'Editar movimiento de ' + r.personName" (click)="startEdit(r)"><app-icon name="pencil" /></button>
+        }
+        <button type="button" class="icon" [attr.aria-label]="it.parts ? 'Eliminar el pago completo de ' + r.personName : 'Eliminar movimiento de ' + r.personName" (click)="it.parts ? removePayment(it) : remove(r)"><app-icon name="x" /></button>
       </div>
     </div>
+    @if (it.parts && expanded().has(it.key)) {
+      <ul class="parts" [attr.aria-label]="'Desglose del pago de ' + r.personName">
+        @for (p of it.parts; track p.id) {
+          <li>
+            <span class="pn">{{ target(p) }}@if (inPaid(p)) { <small>(ya pagado)</small> }</span>
+            <b class="num">{{ money(p.amount) }}</b>
+            <button type="button" class="icon edit" [attr.aria-label]="'Editar esta parte del pago: ' + target(p)" (click)="startEdit(p)"><app-icon name="pencil" /></button>
+            <button type="button" class="icon" [attr.aria-label]="'Eliminar esta parte del pago: ' + target(p)" (click)="remove(p)"><app-icon name="x" /></button>
+          </li>
+        }
+      </ul>
+    }
   } @empty {
     <p class="hint">No hay movimientos.</p>
   }

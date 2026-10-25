@@ -11,6 +11,7 @@ import {
   isArchived,
   parseMoney,
   round2,
+  sum,
   filterDebtRows,
   personSummaries,
   sortDebtRows,
@@ -25,6 +26,14 @@ import { downloadXlsx } from '../xlsx';
 import { StatementDialog } from './statement-dialog';
 import { deleteMessage, deleteRowMessage, plural } from '../finanzas.warn';
 import { Icon } from '../../icons/icon';
+
+interface PayItem {
+  key: string;
+  r: DebtRow;
+  /** Abonos del pago repartido; null si es un movimiento suelto. */
+  parts: DebtRow[] | null;
+  total: number;
+}
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
 @Component({
@@ -92,6 +101,49 @@ export class Debts {
       this.sorts(),
     ),
   );
+  /** Los abonos de un mismo pago repartido se ven como un solo pago; el desglose se abre con un clic. */
+  private group(list: DebtRow[]): PayItem[] {
+    const all = this.rows();
+    const seen = new Set<string>();
+    const out: PayItem[] = [];
+    for (const r of list) {
+      const pid = r.kind === 'abono' ? r.paymentId : null;
+      const parts = pid ? all.filter((x) => x.paymentId === pid) : [];
+      if (pid && parts.length > 1) {
+        if (seen.has(pid)) continue;
+        seen.add(pid);
+        out.push({ key: pid, r, parts, total: sum(parts.map((p) => p.amount)) });
+      } else {
+        out.push({ key: r.id, r, parts: null, total: r.amount });
+      }
+    }
+    return out;
+  }
+  protected readonly items = computed(() => this.group(this.visible()));
+  protected readonly itemCount = computed(() => this.group(this.openRows()).length);
+  protected readonly expanded = signal<ReadonlySet<string>>(new Set());
+
+  protected toggleParts(key: string) {
+    this.expanded.update((s) => {
+      const n = new Set(s);
+      if (!n.delete(key)) n.add(key);
+      return n;
+    });
+  }
+
+  /** La parte de un pago cuyo cargo ya está en Pagados. */
+  protected inPaid(p: DebtRow): boolean {
+    return isArchived(p, this.fin.debts());
+  }
+
+  /** Borra el pago completo: todos sus abonos. */
+  protected async removePayment(item: PayItem) {
+    const parts = item.parts ?? [item.r];
+    if (!confirm(deleteMessage(`este pago de ${item.r.personName}`, [plural(parts.length, 'abono', 'abonos')]))) return;
+    for (const p of parts) if (!(await this.fin.removeDebt(p.id))) return;
+    this.clear();
+  }
+
   /** El orden por defecto: lo más reciente primero. */
   protected readonly sortChanged = computed(() => this.sortA() !== 'date' || this.dirA() !== -1 || !!this.sortB());
   protected readonly hasFilters = computed(() => !!(this.activeFilter() || this.kindFilter() || this.search().trim()));

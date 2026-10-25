@@ -76,16 +76,17 @@
   }
 
   <ul class="hist">
-    @for (l of visible(); track l.id) {
-      <li class="ev" [class.del]="l.action === 'delete'" [class.upd]="l.action === 'update'" [class.sel]="isMarked(l.id)">
-        <input type="checkbox" class="pick" [checked]="isMarked(l.id)" [disabled]="busy()" aria-label="Seleccionar este registro del historial" (change)="toggle(l.id)" />
+    @for (it of items(); track it.key) {
+      @let l = it.line;
+      <li class="ev" [class.del]="l.action === 'delete'" [class.upd]="l.action === 'update'" [class.sel]="isItemMarked(it)">
+        <input type="checkbox" class="pick" [checked]="isItemMarked(it)" [disabled]="busy()" aria-label="Seleccionar este registro del historial" (change)="toggleItem(it)" />
         <div class="body">
         <div class="top">
           <span class="badge" [class.cargo]="l.badge === 'Cargo'" [class.abono]="l.badge === 'Abono'">{{ l.badge }}</span>
           <b class="who">{{ l.who }}</b>
           <span class="what">{{ l.what }}</span>
-          @if (l.amount !== null) {
-            <b class="amt">{{ money(l.amount) }}</b>
+          @if (it.total !== null) {
+            <b class="amt">{{ money(it.total) }}</b>
           }
         </div>
         <div class="meta">
@@ -95,6 +96,18 @@
             <span>· Fecha del movimiento: {{ l.when }}</span>
           }
         </div>
+        @if (it.parts) {
+          <button type="button" class="linkbtn" [attr.aria-expanded]="expanded().has(it.key)" (click)="toggleParts(it.key)">
+            Pago repartido en {{ it.parts.length }} cargos <app-icon [name]="expanded().has(it.key) ? 'chevron-up' : 'chevron-down'" />
+          </button>
+          @if (expanded().has(it.key)) {
+            <ul class="chg">
+              @for (p of it.parts; track p.id) {
+                <li><b>{{ cargoName(p.appliesTo) }}:</b> {{ p.amount === null ? '—' : money(p.amount) }}</li>
+              }
+            </ul>
+          }
+        }
         @if (l.changes.length) {
           <ul class="chg">
             @for (c of l.changes; track c.label) {

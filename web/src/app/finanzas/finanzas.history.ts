@@ -48,6 +48,12 @@ export interface HistoryChange {
 
 export interface HistoryLine {
   id: number;
+  /** Id de la fila afectada. */
+  rowId?: string;
+  /** Abonos de un mismo pago repartido entre varios cargos comparten este id. */
+  paymentId?: string;
+  /** Cargo al que se aplicó el abono. */
+  appliesTo?: string;
   at: string;
   action: AuditAction;
   /** Qué es el registro: Cargo, Abono, Recibido, Dado, Gasto, Corte, Tarjeta, Concepto, Persona o Ingreso. */
@@ -155,6 +161,9 @@ export function describeEntry(e: AuditEntry, nameOf: NameOf): HistoryLine {
   const row = (e.new ?? e.old ?? {}) as Row;
   const line: HistoryLine = {
     id: e.id,
+    rowId: e.rowId,
+    paymentId: '',
+    appliesTo: '',
     at: e.at,
     action: e.action,
     badge: '',
@@ -173,6 +182,8 @@ export function describeEntry(e: AuditEntry, nameOf: NameOf): HistoryLine {
       line.what = conceptOf(row, nameOf) || 'Sin concepto';
       line.amount = num(row['amount']);
       line.when = row['date'] ? fmtDate(str(row['date'])) : '';
+      line.paymentId = line.kind === 'abono' ? str(row['payment_id']) : '';
+      line.appliesTo = str(row['applies_to']);
       break;
     case 'fin_family':
       line.badge = row['direction'] === 'dado' ? 'Dado' : 'Recibido';

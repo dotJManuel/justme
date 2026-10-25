@@ -44,3 +44,5 @@
 .ev.sel{background:color-mix(in srgb,var(--c-rose) 9%,var(--surface))}
 .pick{margin-top:2px}
 .body{display:flex;flex-direction:column;gap:4px;min-width:0}
+
+.linkbtn{display:inline-flex;align-items:center;gap:4px;font:inherit;font-weight:700;font-size:.8rem;background:none;border:0;padding:2px 0;color:var(--sec,var(--accent));text-decoration:underline;cursor:pointer}

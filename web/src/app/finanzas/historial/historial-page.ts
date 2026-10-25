@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ExportButton } from '../export-button/export-button';
+import { Icon } from '../../icons/icon';
 import { PaidList } from './paid-list';
-import { fmtMoney } from '../finanzas.calc';
+import { conceptLabel, fmtMoney } from '../finanzas.calc';
 import { historySheet, today } from '../finanzas.export';
 import {
   AuditAction,
@@ -17,6 +18,13 @@ import { FinanzasService } from '../finanzas.service';
 import { deleteHistoryMessage, plural } from '../finanzas.warn';
 import { downloadXlsx } from '../xlsx';
 
+interface HistItem {
+  key: string;
+  line: HistoryLine;
+  parts: HistoryLine[] | null;
+  total: number | null;
+}
+
 /** Cuántos registros se piden cada vez. */
 const PAGE = 100;
 
@@ -29,7 +37,7 @@ const ACTIONS: Record<AuditAction, string> = { insert: 'Agregado', update: 'Edit
  */
 @Component({
   selector: 'app-historial-page',
-  imports: [ExportButton, PaidList],
+  imports: [ExportButton, PaidList, Icon],
   templateUrl: './historial-page.html',
   styleUrls: ['../finanzas.shared.css', './historial-page.css'],
 })
@@ -91,6 +99,59 @@ export class HistorialPage implements OnInit {
         (!q || `${l.who} ${l.what} ${l.badge}`.toLowerCase().includes(q)),
     );
   });
+
+  /** Concepto de un cargo, por su id: del historial cargado o, si no, de lo que hay ahora. */
+  protected cargoName(id: string | undefined): string {
+    if (!id) return 'Sin asignar';
+    const line = this.lines().find((l) => l.rowId === id && l.kind === 'cargo');
+    if (line) return line.what;
+    const d = this.fin.debts().find((x) => x.id === id);
+    return (d && conceptLabel(this.fin.concepts(), d.conceptId, d.conceptText)) || 'Cargo eliminado';
+  }
+
+  /** Los abonos de un mismo pago repartido (misma acción) se ven como un solo pago con su desglose. */
+  protected readonly items = computed<HistItem[]>(() => {
+    const out: HistItem[] = [];
+    const byKey = new Map<string, HistItem>();
+    for (const line of this.visible()) {
+      const key = line.paymentId && line.action !== 'update' ? `${line.paymentId}|${line.action}` : '';
+      const grouped = key ? byKey.get(key) : undefined;
+      if (grouped) {
+        grouped.parts!.push(line);
+        grouped.total = (grouped.total ?? 0) + (line.amount ?? 0);
+        continue;
+      }
+      const item: HistItem = { key: key || String(line.id), line, parts: key ? [line] : null, total: line.amount };
+      if (key) byKey.set(key, item);
+      out.push(item);
+    }
+    // Un "pago" de un solo abono es un movimiento normal.
+    for (const it of out) if (it.parts && it.parts.length < 2) it.parts = null;
+    return out;
+  });
+  protected readonly expanded = signal<ReadonlySet<string>>(new Set());
+
+  protected toggleParts(key: string) {
+    this.expanded.update((s) => {
+      const n = new Set(s);
+      if (!n.delete(key)) n.add(key);
+      return n;
+    });
+  }
+
+  protected isItemMarked(it: HistItem): boolean {
+    return (it.parts ?? [it.line]).every((l) => this.marked().has(l.id));
+  }
+
+  protected toggleItem(it: HistItem) {
+    const ids = (it.parts ?? [it.line]).map((l) => l.id);
+    const all = this.isItemMarked(it);
+    this.marked.update((set) => {
+      const next = new Set(set);
+      ids.forEach((id) => (all ? next.delete(id) : next.add(id)));
+      return next;
+    });
+  }
 
   // Selección (ids de las líneas marcadas). Solo cuentan las que se ven: lo oculto por un filtro no se borra.
   private readonly marked = signal<ReadonlySet<number>>(new Set());
