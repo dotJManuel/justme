@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PostgrestError } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase.service';
-import { debtsWithDependents } from './finanzas.calc';
+import { debtsWithDependents, settledCargoIds } from './finanzas.calc';
 import { AuditAction, AuditEntry, AuditTable } from './finanzas.history';
 import { Concept, CreditCard, Cut, Debt, Expense, FamilyMove, Person } from './finanzas.models';
 
@@ -51,6 +51,8 @@ interface DebtRow {
   amount: number;
   date: string | null;
   applies_to: string | null;
+  payment_id: string | null;
+  archived: boolean;
 }
 interface FamilyRow {
   id: string;
@@ -88,7 +90,7 @@ const CONCEPT_COLS = 'id, scope, name, active';
 const CARD_COLS = 'id, name, cut_day, active';
 const EXPENSE_COLS = 'id, card_id, section, concept_id, concept_text, installment, total, amount, purchased_at';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
-const DEBT_COLS = 'id, person_id, kind, concept_id, concept_text, amount, date, applies_to';
+const DEBT_COLS = 'id, person_id, kind, concept_id, concept_text, amount, date, applies_to, payment_id, archived';
 const FAMILY_COLS = 'id, direction, concept_id, concept_text, person_id, date, amount';
 
 const toPerson = (r: PersonRow): Person => ({ ...r });
@@ -133,6 +135,8 @@ const toDebt = (r: DebtRow): Debt => ({
   amount: r.amount,
   date: r.date,
   appliesTo: r.applies_to,
+  paymentId: r.payment_id,
+  archived: r.archived,
 });
 const toFamily = (r: FamilyRow): FamilyMove => ({
   id: r.id,
@@ -360,15 +364,65 @@ export class FinanzasService {
           .single(),
       );
       this.debts.update((l) => [...l, toDebt(row)]);
+      await this.archiveSettled(d.appliesTo ? [d.appliesTo] : []);
     });
+  }
+
+  /** Un pago repartido: un abono por cada cargo al que se aplica (y uno sin asignar si sobra), todos con el mismo pago. */
+  addPayment(
+    personId: string,
+    parts: { appliesTo: string | null; amount: number }[],
+    common: Pick<Debt, 'conceptId' | 'conceptText' | 'date'>,
+  ): Promise<boolean> {
+    return this.write(async () => {
+      const paymentId = crypto.randomUUID();
+      const { data, error } = await this.client
+        .from('fin_debts')
+        .insert(
+          parts.map((p) => ({
+            person_id: personId,
+            kind: 'abono',
+            concept_id: common.conceptId,
+            concept_text: common.conceptText,
+            amount: p.amount,
+            date: common.date,
+            applies_to: p.appliesTo,
+            payment_id: paymentId,
+          })),
+        )
+        .select(DEBT_COLS);
+      if (error) throw error;
+      this.debts.update((l) => [...l, ...(data as DebtRow[]).map(toDebt)]);
+      await this.archiveSettled(parts.flatMap((p) => (p.appliesTo ? [p.appliesTo] : [])));
+    });
+  }
+
+  /** Regresa un cargo pagado a la lista de pendientes (con sus abonos) o lo manda a pagados. */
+  setArchived(id: string, archived: boolean): Promise<boolean> {
+    return this.write(async () => {
+      const { error } = await this.client.from('fin_debts').update({ archived }).eq('id', id);
+      if (error) throw error;
+      this.debts.update((l) => l.map((x) => (x.id === id ? { ...x, archived } : x)));
+    });
+  }
+
+  /** Los cargos que ya quedaron saldados pasan solos a pagados. */
+  private async archiveSettled(ids: string[]) {
+    const done = settledCargoIds(this.debts(), ids);
+    if (!done.length) return;
+    const { error } = await this.client.from('fin_debts').update({ archived: true }).in('id', done);
+    if (error) throw error;
+    this.debts.update((l) => l.map((x) => (done.includes(x.id) ? { ...x, archived: true } : x)));
   }
 
   /** No se puede cambiar el tipo (cargo/abono) de un movimiento ya creado. */
   updateDebt(id: string, patch: Partial<Omit<Debt, 'id' | 'kind'>>): Promise<boolean> {
     return this.write(async () => {
+      const before = this.debts().find((x) => x.id === id);
       const { error } = await this.client.from('fin_debts').update(debtPatchRow(patch)).eq('id', id);
       if (error) throw error;
       this.debts.update((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+      await this.archiveSettled([id, before?.appliesTo, patch.appliesTo].filter((x): x is string => !!x));
     });
   }
 

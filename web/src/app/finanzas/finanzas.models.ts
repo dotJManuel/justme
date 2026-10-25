@@ -74,6 +74,10 @@ export interface Debt {
   date: string | null;
   /** Solo abonos: id del cargo al que se aplica. */
   appliesTo: string | null;
+  /** Abonos de un mismo pago repartido entre varios cargos comparten este id. */
+  paymentId?: string | null;
+  /** Cargo ya pagado: está en el historial de pagados, junto con sus abonos. */
+  archived?: boolean;
 }
 
 export interface FamilyMove {

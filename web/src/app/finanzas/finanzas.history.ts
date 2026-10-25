@@ -62,7 +62,7 @@ export interface HistoryLine {
   changes: HistoryChange[];
 }
 
-const SKIP = new Set(['id', 'user_id', 'created_at', 'updated_at']);
+const SKIP = new Set(['id', 'user_id', 'created_at', 'updated_at', 'payment_id', 'archived']);
 
 const LABELS: Record<string, string> = {
   person_id: 'Persona',

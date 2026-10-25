@@ -8,7 +8,9 @@ import {
   debtRows,
   fmtDate,
   fmtMoney,
+  isArchived,
   parseMoney,
+  round2,
   filterDebtRows,
   personSummaries,
   sortDebtRows,
@@ -44,6 +46,8 @@ export class Debts {
   protected readonly rows = computed(() =>
     debtRows(this.fin.debts(), new Date(), this.fin.people(), this.fin.concepts()),
   );
+  /** Lo que sigue a la vista: sin los cargos ya pagados (están en el Historial) ni sus abonos. */
+  protected readonly openRows = computed(() => this.rows().filter((r) => !isArchived(r, this.fin.debts())));
   protected readonly summary = computed(() => personSummaries(this.fin.debts(), this.fin.people()));
 
   /** Persona de la que se muestra el estado de cuenta para compartir (id; vacío = ninguna). */
@@ -84,7 +88,7 @@ export class Debts {
   });
   protected readonly visible = computed(() =>
     sortDebtRows(
-      filterDebtRows(this.rows(), { personId: this.activeFilter(), kind: this.kindFilter(), query: this.search() }),
+      filterDebtRows(this.openRows(), { personId: this.activeFilter(), kind: this.kindFilter(), query: this.search() }),
       this.sorts(),
     ),
   );
@@ -141,12 +145,45 @@ export class Debts {
   protected readonly appliesValue = computed(() =>
     this.appliesOptions().some((o) => o.id === this.appliesTo()) ? this.appliesTo() : '',
   );
+  /** Pago nuevo: cuánto se aplica a cada cargo pendiente de la persona (texto por id de cargo). */
+  protected readonly alloc = signal<Record<string, string>>({});
+  protected readonly splitting = computed(() => this.kind() === 'abono' && !this.editId());
+  /** Cargos pendientes de la persona elegida, entre los que se reparte un pago nuevo. */
+  protected readonly pending = computed(() => {
+    const p = this.person();
+    if (!this.splitting() || !p) return [];
+    return this.rows().filter((r) => r.kind === 'cargo' && r.personId === p && (r.balance ?? 0) > 0);
+  });
+  private readonly allocated = computed(() =>
+    this.pending().map((c) => ({ id: c.id, balance: c.balance ?? 0, amount: parseMoney(this.alloc()[c.id] ?? '') ?? 0 })),
+  );
+  protected readonly allocSum = computed(() => round2(this.allocated().reduce((a, x) => a + x.amount, 0)));
+  /** Lo que queda sin aplicar a ningún cargo (puede ser negativo si se reparte de más). */
+  protected readonly remaining = computed(() => round2((parseMoney(this.amount()) ?? 0) - this.allocSum()));
+  protected readonly allocError = computed(() => {
+    if (!this.splitting()) return '';
+    if (this.allocated().some((x) => x.amount > x.balance)) return 'Un cargo no puede recibir más de lo que debe.';
+    if (this.remaining() < 0) return 'Repartiste más de lo que pagó.';
+    return '';
+  });
+
   /** Un cargo con abonos aplicados no puede cambiar de persona. */
   protected readonly personLocked = computed(() => {
     const id = this.editId();
     return !!id && this.rows().some((r) => r.appliesTo === id);
   });
-  protected readonly canSave = computed(() => this.person() !== '' && (parseMoney(this.amount()) ?? 0) > 0);
+  protected readonly canSave = computed(() => this.person() !== '' && (parseMoney(this.amount()) ?? 0) > 0 && !this.allocError());
+
+  protected setAlloc(id: string, value: string) {
+    this.alloc.update((a) => ({ ...a, [id]: value }));
+  }
+
+  /** Aplica a ese cargo todo su saldo, o lo que quede del pago si es menos. */
+  protected fillAlloc(id: string, balance: number) {
+    const own = parseMoney(this.alloc()[id] ?? '') ?? 0;
+    const left = round2(this.remaining() + own);
+    this.setAlloc(id, String(Math.max(0, Math.min(balance, left))));
+  }
 
   protected onConcept(e: ConceptChange) {
     this.concept.set(e.value);
@@ -241,6 +278,7 @@ export class Debts {
     this.amount.set('');
     this.date.set(dateKey(new Date()));
     this.appliesTo.set('');
+    this.alloc.set({});
   }
 
   protected async submit() {
@@ -257,6 +295,14 @@ export class Debts {
       appliesTo: this.kind() === 'abono' ? this.appliesValue() || null : null,
     };
     const id = this.editId();
+    if (!id && this.kind() === 'abono') {
+      // Un pago puede repartirse entre varios cargos: un abono por cada uno y, si sobra, uno sin asignar.
+      const parts = this.allocated().filter((x) => x.amount > 0).map((x) => ({ appliesTo: x.id as string | null, amount: x.amount }));
+      if (this.remaining() > 0) parts.push({ appliesTo: null, amount: this.remaining() });
+      const done = await this.fin.addPayment(data.personId, parts, { conceptId: data.conceptId, conceptText: data.conceptText, date: data.date });
+      if (done) this.clear();
+      return;
+    }
     const ok = id ? await this.fin.updateDebt(id, data) : await this.fin.addDebt({ ...data, kind: this.kind() });
     if (ok) this.clear();
   }

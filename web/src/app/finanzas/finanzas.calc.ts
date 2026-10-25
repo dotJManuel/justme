@@ -145,6 +145,35 @@ export function debtRows(debts: Debt[], today: Date, people: Person[], concepts:
   }));
 }
 
+/** Cargos saldados entre `ids` que todavía no están en pagados. */
+export function settledCargoIds(debts: Debt[], ids: string[]): string[] {
+  const paidTo = new Map<string, number>();
+  for (const d of debts) {
+    if (d.kind === 'abono' && d.appliesTo) paidTo.set(d.appliesTo, (paidTo.get(d.appliesTo) ?? 0) + d.amount);
+  }
+  return [...new Set(ids)].filter((id) => {
+    const c = debts.find((d) => d.id === id);
+    return !!c && c.kind === 'cargo' && !c.archived && round2(c.amount - (paidTo.get(id) ?? 0)) <= 0;
+  });
+}
+
+/** Un abono sigue a su cargo: si el cargo está en pagados, el abono también. */
+export const isArchived = (d: Debt, debts: Debt[]): boolean =>
+  d.kind === 'cargo' ? !!d.archived : !!d.appliesTo && !!debts.find((c) => c.id === d.appliesTo)?.archived;
+
+export interface PaidCargo {
+  cargo: DebtRow;
+  payments: DebtRow[];
+}
+
+/** Cargos pagados con sus abonos, el más reciente primero. */
+export function paidCargos(rows: DebtRow[]): PaidCargo[] {
+  return rows
+    .filter((r) => r.kind === 'cargo' && r.archived)
+    .map((cargo) => ({ cargo, payments: rows.filter((r) => r.appliesTo === cargo.id) }))
+    .sort((a, b) => (b.cargo.date ?? '').localeCompare(a.cargo.date ?? ''));
+}
+
 /** Los movimientos que cumplen `match` y, en cascada, los abonos aplicados a los cargos que desaparecen con ellos. */
 export function debtsWithDependents(debts: Debt[], match: (d: Debt) => boolean): Debt[] {
   const gone = new Set(debts.filter(match).map((d) => d.id));

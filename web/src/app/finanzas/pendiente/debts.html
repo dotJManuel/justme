@@ -88,7 +88,25 @@
       Fecha
       <input name="date" type="date" [ngModel]="date()" (ngModelChange)="date.set($event)" />
     </label>
-    @if (kind() === 'abono') {
+    @if (splitting()) {
+      <fieldset class="split span2">
+        <legend>Aplicar el pago a</legend>
+        @for (c of pending(); track c.id) {
+          <div class="srow">
+            <span class="sname">{{ c.conceptName || 'Sin concepto' }}<small>debe {{ money(c.balance ?? 0) }}</small></span>
+            <input class="num" inputmode="decimal" placeholder="0.00" [attr.aria-label]="'Cuánto aplicar a ' + (c.conceptName || 'sin concepto')" [value]="alloc()[c.id] ?? ''" (input)="setAlloc(c.id, $any($event.target).value)" />
+            <button type="button" class="link" (click)="fillAlloc(c.id, c.balance ?? 0)">Todo</button>
+          </div>
+        } @empty {
+          <p class="hint">{{ person() ? 'Esta persona no tiene cargos pendientes: el pago queda sin asignar.' : 'Elige una persona para ver sus cargos pendientes.' }}</p>
+        }
+        @if (pending().length) {
+          <p class="hint" [class.err]="!!allocError()">
+            {{ allocError() || (remaining() > 0 ? 'Sin asignar a un cargo: ' + money(remaining()) : 'Todo el pago está repartido.') }}
+          </p>
+        }
+      </fieldset>
+    } @else if (kind() === 'abono') {
       <label class="span2">
         Aplica a
         <select name="appliesTo" [ngModel]="appliesValue()" (ngModelChange)="appliesTo.set($event)">
@@ -197,7 +215,7 @@
   }
 
   <p class="count" aria-live="polite">
-    Mostrando {{ visible().length }} de {{ rows().length }} {{ rows().length === 1 ? 'movimiento' : 'movimientos' }}
+    Mostrando {{ visible().length }} de {{ openRows().length }} {{ openRows().length === 1 ? 'movimiento' : 'movimientos' }}
   </p>
 
   <div class="scroll">

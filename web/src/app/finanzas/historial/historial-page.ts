@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ExportButton } from '../export-button/export-button';
+import { PaidList } from './paid-list';
 import { fmtMoney } from '../finanzas.calc';
 import { historySheet, today } from '../finanzas.export';
 import {
@@ -28,7 +29,7 @@ const ACTIONS: Record<AuditAction, string> = { insert: 'Agregado', update: 'Edit
  */
 @Component({
   selector: 'app-historial-page',
-  imports: [ExportButton],
+  imports: [ExportButton, PaidList],
   templateUrl: './historial-page.html',
   styleUrls: ['../finanzas.shared.css', './historial-page.css'],
 })
