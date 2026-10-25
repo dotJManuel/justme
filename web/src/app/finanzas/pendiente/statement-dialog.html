@@ -1,0 +1,31 @@
+<dialog #dlg class="dlg" aria-labelledby="stm-title" (close)="finish()" (cancel)="finish()" (click)="onBackdrop($event)">
+  <div class="box">
+    <div class="top">
+      <h2 id="stm-title">Estado de cuenta de {{ statement().person }}</h2>
+      <button type="button" class="x" aria-label="Cerrar" (click)="close()">✕</button>
+    </div>
+
+    <div class="sheet" [attr.aria-busy]="busy()">
+      @if (imageUrl()) {
+        <img [src]="imageUrl()" [alt]="text()" />
+      } @else if (busy()) {
+        <p class="hint">Preparando la tarjeta…</p>
+      }
+    </div>
+
+    <div class="actions">
+      <button type="button" class="primary" [disabled]="!imageUrl()" (click)="shareImage()">Compartir imagen</button>
+      <button type="button" class="alt" (click)="whatsapp()">Texto por WhatsApp</button>
+      <button type="button" class="alt" (click)="copy()">Copiar texto</button>
+      <button type="button" class="alt" [disabled]="!imageUrl()" (click)="download()">Descargar imagen</button>
+    </div>
+
+    @if (message()) {
+      <p class="msg" role="status">{{ message() }}</p>
+    }
+    <p class="hint">
+      «Compartir imagen» abre la hoja de compartir del teléfono (ahí eliges WhatsApp y a quién). En computadora se
+      descarga la imagen para que la adjuntes.
+    </p>
+  </div>
+</dialog>

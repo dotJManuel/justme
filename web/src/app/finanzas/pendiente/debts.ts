@@ -18,13 +18,15 @@ import { Concept, Debt, Person } from '../finanzas.models';
 import { movementsSheet, peopleSheet, today } from '../finanzas.export';
 import { FinanzasService } from '../finanzas.service';
 import { ExportButton } from '../export-button/export-button';
+import { buildStatement } from '../finanzas.statement';
 import { downloadXlsx } from '../xlsx';
+import { StatementDialog } from './statement-dialog';
 import { deleteMessage, deleteRowMessage, plural } from '../finanzas.warn';
 
 /** Dinero que me deben: resumen por persona y la lista de cargos (lo prestado) y abonos (lo pagado). */
 @Component({
   selector: 'app-debts',
-  imports: [FormsModule, ConceptField, ExportButton],
+  imports: [FormsModule, ConceptField, ExportButton, StatementDialog],
   templateUrl: './debts.html',
   styleUrls: ['../finanzas.shared.css', './debts.css'],
 })
@@ -34,7 +36,7 @@ export class Debts {
 
   protected readonly money = fmtMoney;
   protected readonly fmtDate = fmtDate;
-  protected readonly summaryCols = 'minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr)';
+  protected readonly summaryCols = 'minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) 3rem';
   protected readonly movCols =
     'minmax(0,.9fr) 4.5rem minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 4rem minmax(0,1.3fr) 5.5rem';
 
@@ -42,6 +44,12 @@ export class Debts {
     debtRows(this.fin.debts(), new Date(), this.fin.people(), this.fin.concepts()),
   );
   protected readonly summary = computed(() => personSummaries(this.fin.debts(), this.fin.people()));
+
+  /** Persona de la que se muestra el estado de cuenta para compartir (id; vacío = ninguna). */
+  protected readonly statementFor = signal('');
+  protected readonly statement = computed(() =>
+    this.statementFor() ? buildStatement(this.rows(), this.statementFor(), new Date()) : null,
+  );
 
   /** Persona por la que se filtran los movimientos (id; vacío = todas). */
   private readonly filter = signal('');

@@ -58,13 +58,14 @@
   .form{grid-template-columns:1fr 1fr;gap:8px}
   .form .span2,.btns{grid-column:1/-1}
   .form label{font-size:.75rem;gap:2px}
-  .m-sum{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"w w pc" "l p e"}
+  .m-sum{grid-template-columns:repeat(3,minmax(0,1fr)) 2.7rem;grid-template-areas:"w w pc sh" "l p e e"}
   .m-sum.total{display:grid;align-items:end;padding-top:6px}
   .m-sum>.r-w{grid-area:w}
   .m-sum>.r-pc{grid-area:pc}
   .m-sum>.r-l{grid-area:l}
   .m-sum>.r-p{grid-area:p}
   .m-sum>.r-e{grid-area:e}
+  .m-sum>.r-sh{grid-area:sh;align-self:center}
   .m-sum .who{padding:2px 6px;font-size:.92rem}
   .m-sum.total>.r-w{align-self:center;font-weight:800}
 }
@@ -99,3 +100,7 @@
   .seg button{flex:1;padding:6px 4px}
   .dir{font-size:.72rem;padding:7px 8px}
 }
+/* Resumen por persona: el botón de compartir va en su propia columna, alineado a la derecha en todas las filas */
+.share{justify-self:end;display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border:2px solid var(--line);border-radius:999px;background:var(--bg);color:var(--muted);cursor:pointer}
+.share:hover{border-color:var(--sec,var(--accent));color:var(--ink)}
+.share:focus-visible{outline:3px solid var(--accent);outline-offset:2px}

@@ -11,6 +11,7 @@
     <span class="num">Pagado</span>
     <span class="num">Pendiente</span>
     <span class="pl">% pagado</span>
+    <span></span>
   </div>
 
   @for (p of summary().people; track p.personId) {
@@ -27,6 +28,13 @@
           <span>{{ pct(p.ratio) }}</span>
         </div>
       </div>
+      <button type="button" class="share r-sh" [attr.aria-label]="'Compartir el estado de cuenta de ' + p.person" title="Estado de cuenta para compartir por WhatsApp" (click)="statementFor.set(p.personId)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" x2="12" y1="2" y2="15" />
+        </svg>
+      </button>
     </div>
   } @empty {
     <p class="hint">Todavía no hay movimientos. Agrega un cargo cuando prestes dinero.</p>
@@ -229,3 +237,7 @@
   }
   </div>
 </section>
+
+@if (statement(); as s) {
+  <app-statement-dialog [statement]="s" (closed)="statementFor.set('')" />
+}
