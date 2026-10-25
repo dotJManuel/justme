@@ -11,6 +11,9 @@ const PAD = 20;
 const IW = W - PAD * 2;
 const RH = 28;
 const SCALE = 2;
+/** Límites seguros de un canvas en celulares (lado en píxeles y área total). */
+const MAX_SIDE = 16000;
+const MAX_AREA = 16_000_000;
 const FONT = '"Segoe UI", Calibri, Arial, sans-serif';
 
 const C = {
@@ -188,11 +191,13 @@ function render(ctx: CanvasRenderingContext2D | null, s: Statement): number {
 export function drawStatement(s: Statement): HTMLCanvasElement {
   const height = render(null, s);
   const canvas = document.createElement('canvas');
-  canvas.width = W * SCALE;
-  canvas.height = height * SCALE;
+  // Con mucha información la imagen es muy alta: se baja la resolución para no pasar el límite del navegador.
+  const scale = Math.min(SCALE, MAX_SIDE / height, Math.sqrt(MAX_AREA / (W * height)));
+  canvas.width = Math.floor(W * scale);
+  canvas.height = Math.floor(height * scale);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('El navegador no permite dibujar la imagen');
-  ctx.scale(SCALE, SCALE);
+  ctx.scale(scale, scale);
   render(ctx, s);
   return canvas;
 }

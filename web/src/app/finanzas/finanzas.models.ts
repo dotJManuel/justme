@@ -27,6 +27,8 @@ export interface CreditCard {
   name: string;
   /** Día del mes en que corta (1 a 31; en meses más cortos, el último día). */
   cutDay: number;
+  /** Últimos 4 dígitos (la terminación de las alertas del banco); vacío si no se capturaron. */
+  last4?: string;
   /** Desactivada: se oculta y no suma en el resumen, pero conserva su historial. */
   active: boolean;
 }

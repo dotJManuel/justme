@@ -2,7 +2,8 @@
   <h2>Tarjetas de crédito</h2>
   <p class="hint">
     Cada tarjeta activa aparece en Gastos con su tabla y su corte. Desactivar una tarjeta la oculta y deja de
-    sumar en el resumen, pero conserva su historial. Eliminarla la borra por completo.
+    sumar en el resumen, pero conserva su historial. Eliminarla la borra por completo. La terminación (últimos 4
+    dígitos) sirve para registrar solas las compras que avisa el banco por correo.
   </p>
   <p class="warn-box"><app-icon name="alert" /> Si eliminas una tarjeta, se borran también todos sus gastos y cortes. Para solo ocultarla, desactívala.</p>
 
@@ -10,6 +11,7 @@
   <div class="grid head" aria-hidden="true">
     <span>Nombre</span>
     <span class="num">Día de corte</span>
+    <span class="num">Terminación</span>
     <span class="num">Activa</span>
     <span></span>
   </div>
@@ -21,6 +23,9 @@
       </div>
       <div class="c ad-d" data-l="Día de corte">
         <input #d class="num" type="number" min="1" max="31" step="1" aria-label="Día de corte" [value]="c.cutDay" (change)="setCutDay(c, d)" />
+      </div>
+      <div class="c ad-t" data-l="Terminación">
+        <input #t class="num" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" aria-label="Últimos 4 dígitos de la tarjeta" placeholder="0000" [value]="c.last4" (change)="setLast4(c, t)" />
       </div>
       <div class="c ad-s" data-l="Activa">
         <label class="switch">
@@ -42,6 +47,9 @@
     </div>
     <div class="c ad-d" data-l="Día de corte">
       <input name="cutDay" class="num" type="number" min="1" max="31" step="1" aria-label="Día de corte" placeholder="1 a 31" [ngModel]="cutDay()" (ngModelChange)="cutDay.set($event)" />
+    </div>
+    <div class="c ad-t" data-l="Terminación">
+      <input name="last4" class="num" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" aria-label="Últimos 4 dígitos de la tarjeta" placeholder="0000" [ngModel]="last4()" (ngModelChange)="last4.set($event)" />
     </div>
     <span></span>
     <button type="submit" class="primary x ad-b" [disabled]="!canAdd()">Agregar</button>

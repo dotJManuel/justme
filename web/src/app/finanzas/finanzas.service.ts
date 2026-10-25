@@ -21,6 +21,7 @@ interface CardRow {
   id: string;
   name: string;
   cut_day: number;
+  last4: string;
   active: boolean;
 }
 interface ExpenseRow {
@@ -87,7 +88,7 @@ const toAudit = (r: AuditRow): AuditEntry => ({
 });
 
 const CONCEPT_COLS = 'id, scope, name, active';
-const CARD_COLS = 'id, name, cut_day, active';
+const CARD_COLS = 'id, name, cut_day, last4, active';
 const EXPENSE_COLS = 'id, card_id, section, concept_id, concept_text, installment, total, amount, purchased_at';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
 const DEBT_COLS = 'id, person_id, kind, concept_id, concept_text, amount, date, applies_to, payment_id, archived';
@@ -95,7 +96,7 @@ const FAMILY_COLS = 'id, direction, concept_id, concept_text, person_id, date, a
 
 const toPerson = (r: PersonRow): Person => ({ ...r });
 const toConcept = (r: ConceptRow): Concept => ({ ...r });
-const toCard = (r: CardRow): CreditCard => ({ id: r.id, name: r.name, cutDay: r.cut_day, active: r.active });
+const toCard = (r: CardRow): CreditCard => ({ id: r.id, name: r.name, cutDay: r.cut_day, last4: r.last4, active: r.active });
 const toExpense = (r: ExpenseRow): Expense => ({
   id: r.id,
   cardId: r.card_id,
@@ -280,10 +281,10 @@ export class FinanzasService {
     });
   }
 
-  addCard(name: string, cutDay: number): Promise<boolean> {
+  addCard(name: string, cutDay: number, last4 = ''): Promise<boolean> {
     return this.write(async () => {
       const row = await this.single<CardRow>(
-        this.client.from('fin_cards').insert({ name, cut_day: cutDay }).select(CARD_COLS).single(),
+        this.client.from('fin_cards').insert({ name, cut_day: cutDay, last4 }).select(CARD_COLS).single(),
       );
       this.cards.update((l) => [...l, toCard(row)]);
     });
@@ -294,6 +295,7 @@ export class FinanzasService {
       const row = {
         ...(patch.name !== undefined && { name: patch.name }),
         ...(patch.cutDay !== undefined && { cut_day: patch.cutDay }),
+        ...(patch.last4 !== undefined && { last4: patch.last4 }),
         ...(patch.active !== undefined && { active: patch.active }),
       };
       const { error } = await this.client.from('fin_cards').update(row).eq('id', id);

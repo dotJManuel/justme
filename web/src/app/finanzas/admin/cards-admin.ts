@@ -6,6 +6,7 @@ import { FinanzasService } from '../finanzas.service';
 import { Icon } from '../../icons/icon';
 
 const validDay = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= 31;
+const validLast4 = (s: string): boolean => /^(\d{4})?$/.test(s);
 
 /** Catálogo de tarjetas de crédito: agregar, renombrar, cambiar el día de corte, desactivar y eliminar. */
 @Component({
@@ -18,11 +19,12 @@ export class CardsAdmin {
   private readonly fin = inject(FinanzasService);
 
   protected readonly cards = this.fin.cards;
-  protected readonly cols = 'minmax(0,2fr) 7rem 5.5rem 5.5rem';
+  protected readonly cols = 'minmax(0,2fr) 6rem 6rem 5.5rem 5.5rem';
 
   protected readonly name = signal('');
   protected readonly cutDay = signal('');
-  protected readonly canAdd = computed(() => this.name().trim() !== '' && validDay(Number(this.cutDay())));
+  protected readonly last4 = signal('');
+  protected readonly canAdd = computed(() => this.name().trim() !== '' && validDay(Number(this.cutDay())) && validLast4(this.last4().trim()));
 
   protected setName(c: CreditCard, el: HTMLInputElement) {
     const name = el.value.trim();
@@ -40,6 +42,16 @@ export class CardsAdmin {
     }
   }
 
+  protected setLast4(c: CreditCard, el: HTMLInputElement) {
+    const v = el.value.trim();
+    if (!validLast4(v)) {
+      el.value = c.last4 ?? '';
+      this.fin.error.set('La terminación son los últimos 4 dígitos de la tarjeta (solo números), o déjala vacía.');
+    } else if (v !== (c.last4 ?? '')) {
+      this.save(c, el, { last4: v }, c.last4 ?? '');
+    }
+  }
+
   protected toggle(c: CreditCard) {
     return this.fin.updateCard(c.id, { active: !c.active });
   }
@@ -54,10 +66,11 @@ export class CardsAdmin {
 
   protected async add() {
     if (!this.canAdd()) return;
-    const ok = await this.fin.addCard(this.name().trim(), Number(this.cutDay()));
+    const ok = await this.fin.addCard(this.name().trim(), Number(this.cutDay()), this.last4().trim());
     if (ok) {
       this.name.set('');
       this.cutDay.set('');
+      this.last4.set('');
     }
   }
 
