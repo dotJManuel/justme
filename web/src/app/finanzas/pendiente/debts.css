@@ -75,7 +75,8 @@
 .tag{font-size:.74rem;font-weight:700;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--sec,var(--accent)) 18%,var(--surface));color:var(--ink)}
 .link{font:inherit;font-weight:700;font-size:.8rem;background:none;border:0;padding:4px 6px;color:var(--sec,var(--accent));text-decoration:underline;cursor:pointer}
 .panel{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:10px}
-.group{margin:0;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px;padding:8px 10px 10px;border:1px dashed var(--line);border-radius:12px}
+/* align-content:flex-start: si el otro bloque es más alto, el espacio sobrante queda abajo y no arriba de los campos */
+.group{margin:0;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-start;gap:8px 10px;padding:8px 10px 10px;border:1px dashed var(--line);border-radius:12px}
 .group legend{padding:0 6px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sec,var(--accent))}
 .group label,.lbl{display:flex;flex-direction:column;gap:3px;font-weight:700;font-size:.72rem;color:var(--muted);min-width:0}
 .f-person{flex:1 1 9rem}
