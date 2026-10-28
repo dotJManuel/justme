@@ -1,0 +1,14 @@
+.layout { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 720px; width: 100%; }
+@media (min-width: 1024px) { .layout { margin: 0; } }
+.b1 { display: flex; flex-direction: column; gap: 4px; }
+.legend { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--tx2); }
+.legend strong { font-weight: 600; }
+.row { min-height: 52px; padding: 10px 16px; }
+.row + .row::before { left: 64px; }
+.av { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--acs); color: var(--ac); font-size: 13px; font-weight: 700; }
+.lt { gap: 6px; }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ln small { font-size: 12px; font-weight: 500; color: var(--tx2); }
+.pg { display: flex; align-items: center; gap: 8px; }
+.pg ui-progress-bar { flex: 1; }
+.pc { width: 72px; font-size: 12px; color: var(--tx2); }

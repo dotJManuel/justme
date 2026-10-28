@@ -299,3 +299,23 @@ export function filterDebtRows(rows: DebtRow[], f: DebtFilter): DebtRow[] {
       (!q || plain(`${r.personName} ${r.conceptName}`).includes(q)),
   );
 }
+
+// ── Concepto de un registro ─────────────────────────────────────────────
+
+/** Concepto de un registro: uno del catálogo (id) o texto libre (text). Nunca los dos. */
+export interface ConceptValue {
+  id: string | null;
+  text: string;
+}
+
+/**
+ * Convierte lo que se escribió en un concepto: si coincide (sin importar mayúsculas) con uno activo del
+ * catálogo, se enlaza a él; si no, queda como texto libre. `keepId` es el concepto que ya tenía el registro:
+ * se puede conservar aunque esté desactivado.
+ */
+export function resolveConcept(options: Concept[], raw: string, keepId: string | null = null): ConceptValue {
+  const text = raw.trim();
+  if (!text) return { id: null, text: '' };
+  const hit = options.find((o) => (o.active || o.id === keepId) && o.name.trim().toLowerCase() === text.toLowerCase());
+  return hit ? { id: hit.id, text: '' } : { id: null, text };
+}

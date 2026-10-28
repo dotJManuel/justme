@@ -1,44 +1,40 @@
-/* Paleta: gris azulado como color principal (--accent). Los tonos cálidos (--flame) quedan solo para la
-   llama y el progreso de la racha, donde el color cuenta algo: encendida o apagada. */
-:root {
-  color-scheme: light;
-  --bg: #eceff2; --surface: #ffffff; --ink: #1d2731; --muted: #64727f; --line: #d8dee4;
-  --accent: #5a7893; --accent-2: #8aa2b8; --accent-edge: #46617a;
-  /* Un matiz por familia de secciones: --sec lo toma cada tarjeta, cuadro y botón de esa sección. */
-  --c-steel: #5a7893; --c-teal: #3a7d82; --c-sand: #8f6f3a; --c-violet: #7060a8; --c-sage: #4f7f54; --c-rose: #a85a54;
-  --flame: #ff7a1a; --flame-2: #ffc233; --done: #2bb673; --done-soft: #ddf5e9; --off: #e4e8ec;
-  --ice: #dff2ff; --ice-ink: #2a8ac4;
-  --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
-  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
-}
-/* Oscuro: lo pide el sistema (si no se eligió claro a mano) o se eligió a mano con el interruptor del menú. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #11161b; --surface: #1a2129; --ink: #e7ecf1; --muted: #97a5b2; --line: #2a343e;
-    --accent: #5a7893; --accent-2: #7d97ae; --accent-edge: #3f566b;
-    --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #232c35;
-    --ice: #1b3347; --ice-ink: #6cc0f5;
-    color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #11161b; --surface: #1a2129; --ink: #e7ecf1; --muted: #97a5b2; --line: #2a343e;
-  --accent: #5a7893; --accent-2: #7d97ae; --accent-edge: #3f566b;
-  --flame: #ff8a33; --flame-2: #ffcf57; --done: #3dd68c; --done-soft: #173a2c; --off: #232c35;
-  --ice: #1b3347; --ice-ink: #6cc0f5;
-  color-scheme: dark;
-}
-.s-steel { --sec: var(--c-steel); }
-.s-teal { --sec: var(--c-teal); }
-.s-sand { --sec: var(--c-sand); }
-.s-violet { --sec: var(--c-violet); }
-.s-sage { --sec: var(--c-sage); }
-.s-rose { --sec: var(--c-rose); }
+@import './styles/tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
   background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-body);
+  color: var(--tx);
+  font-family: var(--font);
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+h1, h2, h3, p { margin: 0; }
+
+/* Cifras: siempre tabulares y alineadas a la derecha */
+.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Etiqueta en mayúsculas */
+.label { font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Anillo de foco visible en todo lo interactivo */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,98 @@
+<div class="page">
+  <header>
+    <div class="hd">
+      <span class="date">{{ dateText() }}</span>
+      <h1>{{ greeting() }}</h1>
+    </div>
+    <a class="streak" routerLink="/racha" [attr.aria-label]="'Racha de ' + streak() + (streak() === 1 ? ' día' : ' días')">
+      <app-icon name="flame" [size]="20" />{{ streak() }}
+    </a>
+  </header>
+
+  @if (failed()) {
+    <ui-card [padded]="false"><ui-error-state message="No se pudo cargar tu información" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" /></ui-card>
+  } @else if (!ready()) {
+    <div class="skel" aria-busy="true" aria-label="Cargando">
+      <ui-card [padded]="true">
+        <div class="row">
+          <ui-skeleton width="80px" height="80px" [circle]="true" />
+          <div class="col"><ui-skeleton width="70%" height="20px" /><ui-skeleton height="14px" /><ui-skeleton width="85%" height="14px" /></div>
+        </div>
+        <ui-skeleton height="68px" radius="16px" />
+      </ui-card>
+      <ui-card [padded]="true"><div class="col"><ui-skeleton width="45%" height="14px" /><ui-skeleton width="60%" height="36px" /><ui-skeleton height="8px" radius="999px" /></div></ui-card>
+      <ui-card [padded]="true"><div class="col"><ui-skeleton width="40%" height="14px" /><ui-skeleton height="40px" /><ui-skeleton height="40px" /></div></ui-card>
+    </div>
+  } @else {
+    <section class="card racha" aria-labelledby="hoy-racha">
+      <div class="top">
+        <ui-progress-ring [size]="80" [stroke]="8" [value]="store.doneToday()" [max]="goal()" tone="orange" [label]="'Misiones de hoy: ' + store.doneToday() + ' de ' + goal()">
+          <span class="ring">{{ store.doneToday() }}/{{ goal() }}</span>
+        </ui-progress-ring>
+        <div class="txt">
+          <h2 id="hoy-racha">{{ racha().title }}</h2>
+          <p>{{ racha().text }}</p>
+        </div>
+      </div>
+      @if (store.next(); as n) {
+        <div class="next">
+          <button type="button" class="chk" [attr.aria-label]="'Completar ' + n.mission.name" (click)="complete(n.mission.k, n.mission.name)"></button>
+          <div class="nt">
+            <span class="label tag">{{ n.inWindow ? 'Ahora' : 'Siguiente' }}</span>
+            <span class="nm">{{ n.mission.name }}</span>
+            @if (n.mission.when) {
+              <span class="wh">{{ n.mission.when }}</span>
+            }
+          </div>
+          <a class="go" routerLink="/racha" aria-label="Ver todas las misiones"><app-icon name="chevron-right" [size]="20" /></a>
+        </div>
+      }
+    </section>
+
+    <section class="card mes" aria-labelledby="hoy-mes">
+      <div class="mh">
+        <h2 id="hoy-mes">{{ month().title }}</h2>
+        <a routerLink="/finanzas">Ver finanzas</a>
+      </div>
+      <span class="big num">{{ money(month().balance) }}</span>
+      @if (month().income > 0) {
+        <div class="bar">
+          <ui-progress-bar [value]="month().pct" label="Gastado del ingreso del mes" />
+          <div class="legend num"><span>Gastado {{ money(month().spent) }}</span><span>de {{ money(month().income) }}</span></div>
+        </div>
+      } @else {
+        <p class="hint">Define tu ingreso mensual para ver cuánto llevas gastado. <a routerLink="/perfil">Definir ingreso</a></p>
+      }
+    </section>
+
+    @if (cuts().length) {
+      <section aria-labelledby="hoy-cortes">
+        <h2 id="hoy-cortes" class="sec">Próximos cortes</h2>
+        <ui-card [padded]="false" class="list">
+          @for (c of cuts(); track c.id) {
+            <a class="line" routerLink="/finanzas/tarjetas">
+              <span class="ico"><app-icon name="card" [size]="20" /></span>
+              <span class="lt">
+                <span class="ln">{{ c.name }}{{ c.last4 ? ' ·· ' + c.last4 : '' }}</span>
+                <span class="ls" [class.warn]="c.alert">{{ c.text }}</span>
+              </span>
+              <span class="la num">{{ money(c.amount) }}</span>
+            </a>
+          }
+        </ui-card>
+      </section>
+    }
+
+    @if (owed().count) {
+      <a class="card owed" routerLink="/finanzas/por-cobrar">
+        <span class="ico acc"><app-icon name="users" [size]="20" /></span>
+        <span class="lt">
+          <span class="ln">Te deben</span>
+          <span class="ls">{{ owed().count }} {{ owed().count === 1 ? 'persona' : 'personas' }}</span>
+        </span>
+        <span class="la num">{{ money(owed().total) }}</span>
+        <app-icon class="chev" name="chevron-right" [size]="18" />
+      </a>
+    }
+  }
+</div>

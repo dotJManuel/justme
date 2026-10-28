@@ -1,0 +1,48 @@
+<div class="page">
+  <header>
+    <h1>Finanzas</h1>
+    <div class="tools">
+      <div class="month" role="group" aria-label="Mes">
+        <button type="button" aria-label="Mes anterior" [disabled]="!view.canPrev()" (click)="view.shift(-1)"><app-icon name="chevron-left" [size]="16" /></button>
+        <span class="ml" aria-live="polite">{{ view.label() }}</span>
+        <button type="button" aria-label="Mes siguiente" [disabled]="!view.canNext()" (click)="view.shift(1)"><app-icon name="chevron-right" [size]="16" /></button>
+      </div>
+      <button type="button" class="ib" [class.on]="view.searching()" aria-label="Buscar" [attr.aria-pressed]="view.searching()" (click)="view.searching.set(!view.searching())">
+        <app-icon name="search" [size]="20" />
+      </button>
+      @if (view.exporter(); as run) {
+        <button uiBtn variant="secondary" small type="button" class="exp" aria-label="Exportar" (click)="run()"><app-icon name="download" [size]="16" /><span class="el">Exportar</span></button>
+      }
+    </div>
+  </header>
+
+  @if (view.searching()) {
+    <div class="search">
+      <app-icon name="search" [size]="18" />
+      <input type="search" aria-label="Buscar en Finanzas" placeholder="Buscar concepto o persona" autocomplete="off" [value]="view.query()" (input)="onSearch($event)" />
+      <button type="button" aria-label="Cerrar búsqueda" (click)="view.clearSearch()"><app-icon name="x" [size]="18" /></button>
+    </div>
+  }
+
+  <nav class="tabs" aria-label="Secciones de finanzas">
+    <a routerLink="resumen" routerLinkActive="on" ariaCurrentWhenActive="page">Resumen</a>
+    <a routerLink="tarjetas" routerLinkActive="on" ariaCurrentWhenActive="page">Tarjetas</a>
+    <a routerLink="por-cobrar" routerLinkActive="on" ariaCurrentWhenActive="page">Por cobrar</a>
+    <a routerLink="familia" routerLinkActive="on" ariaCurrentWhenActive="page">Familia</a>
+  </nav>
+
+  @if (failed()) {
+    <ui-error-state message="No se pudieron cargar tus finanzas" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" />
+  } @else if (!fin.loaded()) {
+    <div class="skel" aria-busy="true" aria-label="Cargando">
+      <ui-skeleton height="150px" radius="12px" />
+      <ui-skeleton height="190px" radius="12px" />
+      <ui-skeleton height="140px" radius="12px" />
+    </div>
+  } @else {
+    @if (fin.error()) {
+      <ui-error-state [inline]="true" [message]="fin.error()" (retry)="fin.error.set('')" />
+    }
+    <router-outlet />
+  }
+</div>

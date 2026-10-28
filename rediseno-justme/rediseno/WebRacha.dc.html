@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Racha — escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1000px; box-sizing: border-box; display: flex; flex-wrap: wrap; {{vars}}; background: var(--bg); color: var(--tx); font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+
+  <aside style="flex: 1 1 232px; max-width: 280px; box-sizing: border-box; padding: 24px 16px; background: var(--sf); box-shadow: inset -1px 0 0 var(--bd); display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+      <div style="width: 32px; height: 32px; border-radius: 10px; background: var(--ac); color: var(--onac); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.check}}"></path></svg></div>
+      <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">JustMe</span>
+    </div>
+    <button style="height: 44px; border: 0; border-radius: 10px; background: var(--ac); color: var(--onac); font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>Agregar</button>
+    <nav aria-label="Principal" style="display: flex; flex-direction: column; gap: 2px">
+      <a href="#" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--tx2); font-size: 14px; font-weight: 500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.home}}"></path></svg>Hoy</a>
+      <a href="WebRacha.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: var(--ors); color: var(--or); font-size: 14px; font-weight: 700"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ic.flame}}" style="fill: var(--orf)"></path></svg><span style="flex: 1">Racha</span><span style="font-variant-numeric: tabular-nums">2</span></a>
+      <a href="WebFinanzas.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--tx2); font-size: 14px; font-weight: 500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.wallet}}"></path></svg>Finanzas</a>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--tx2); font-size: 14px; font-weight: 500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.user}}"></path></svg>Perfil y ajustes</a>
+    </nav>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px clamp(16px, 3vw, 40px) 48px">
+    <div style="max-width: 1160px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+      <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 16px">
+          <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em">Racha</h1>
+          <div style="display: flex; padding: 4px; gap: 4px; border-radius: 999px; background: var(--s2)">
+            <a href="#" aria-current="page" style="height: 34px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: var(--sf); color: var(--tx); font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: var(--sh1)">Hoy</a>
+            <a href="#" style="height: 34px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; color: var(--tx2); font-size: 14px; font-weight: 500; text-decoration: none">Logros</a>
+          </div>
+        </div>
+        <button style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--sf); color: var(--tx); font: inherit; font-size: 14px; font-weight: 600; box-shadow: inset 0 0 0 1px var(--bd2)">Editar misiones</button>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px">
+        <section aria-label="Tu racha" style="flex: 2 1 520px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 28px; padding: 24px 28px; border-radius: 24px; background: var(--ors)">
+          <div style="display: flex; align-items: center; gap: 16px">
+            <svg width="72" height="72" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1.2 3.8 6 6 6 11a6 6 0 0 1-12 0c0-2.5 1.2-4.2 2.4-5.4 0 2.4 1.2 3.6 2.4 3.6 0-3.6-1.2-6 1.2-9.2z" style="fill: var(--orf)"></path><path d="M12 12c.8 1.6 2.6 2.4 2.6 4.4a2.6 2.6 0 0 1-5.2 0c0-1.6 1.2-2.4 2.6-4.4z" style="fill: var(--orf2)"></path></svg>
+            <div style="display: flex; flex-direction: column">
+              <span style="font-size: 56px; line-height: 56px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums">2</span>
+              <span style="font-size: 15px; font-weight: 600">días de racha</span>
+            </div>
+          </div>
+          <div style="flex: 1 1 300px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+            <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: {{d.labelColor}}">{{d.label}}</span>
+                <div aria-label="{{d.aria}}" style="width: 40px; height: 40px; box-sizing: border-box; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; {{d.style}}">{{d.text}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section aria-label="Nivel" style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 24px; border-radius: 24px; background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd)">
+          <div style="display: flex; justify-content: space-between; align-items: baseline">
+            <span style="font-size: 18px; font-weight: 700">Nivel 2 · Constante</span>
+            <span style="font-size: 14px; color: var(--tx2); font-variant-numeric: tabular-nums">210 / 300 XP</span>
+          </div>
+          <div style="height: 10px; border-radius: 999px; background: var(--s2); overflow: hidden"><div style="width: 70%; height: 100%; border-radius: 999px; background: var(--orf)"></div></div>
+          <span style="font-size: 13px; color: var(--or); font-weight: 600">90 XP para nivel 3 · 2 insignias ganadas</span>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-top: 4px">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 700">Misiones de hoy</h2>
+        <div style="display: flex; align-items: center; gap: 12px; flex: 0 1 360px">
+          <div style="flex: 1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px" role="img" aria-label="4 de 6 misiones">
+            <div style="height: 8px; border-radius: 999px; background: var(--orf)"></div><div style="height: 8px; border-radius: 999px; background: var(--orf)"></div><div style="height: 8px; border-radius: 999px; background: var(--orf)"></div><div style="height: 8px; border-radius: 999px; background: var(--orf)"></div><div style="height: 8px; border-radius: 999px; background: var(--s3)"></div><div style="height: 8px; border-radius: 999px; background: var(--s3)"></div>
+          </div>
+          <span style="font-size: 14px; color: var(--tx2); white-space: nowrap"><strong style="color: var(--tx)">4</strong> de 6</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; align-items: start">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <section style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; padding: 0 4px"><span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3)">{{g.name}}</span><span style="font-size: 12px; color: var(--tx2); font-variant-numeric: tabular-nums">{{g.count}}</span></div>
+            <sc-for list="{{g.items}}" as="m" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 20px; {{m.card}}">
+                <sc-if value="{{m.done}}" hint-placeholder-val="{{false}}">
+                  <button aria-label="Desmarcar {{m.title}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 14px; background: var(--grf); color: var(--onac); display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.check}}"></path></svg></button>
+                </sc-if>
+                <sc-if value="{{m.todo}}" hint-placeholder-val="{{true}}">
+                  <button aria-label="Completar {{m.title}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 14px; background: var(--s2); box-shadow: inset 0 0 0 2px var(--bd2)"></button>
+                </sc-if>
+                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+                  <span style="font-size: 15px; font-weight: 600">{{m.title}}</span>
+                  <span style="font-size: 13px; color: {{m.metaColor}}; font-weight: {{m.metaWeight}}">{{m.meta}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </section>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+const TK={
+light:{bg:'#F3F5F8',sf:'#FFFFFF',s2:'#EBEFF4',s3:'#DFE5EC',bd:'#E1E6EC',bd2:'#C7D0DA',tx:'#141C26',tx2:'#475567',tx3:'#5B6A7C',ac:'#2E5781',ach:'#24476B',acs:'#E4ECF5',onac:'#FFFFFF',or:'#B5440A',orf:'#F47B2A',orf2:'#FFB547',ors:'#FFF0E5',gr:'#17794A',grf:'#22A06B',grs:'#E3F3EA',rd:'#C0362F',rds:'#FBEAE8',yl:'#8F5B00',yls:'#FFF3D6',ink:'#141C26',sh1:'0 1px 2px rgba(20,28,38,.06)',sh2:'0 1px 2px rgba(20,28,38,.05), 0 8px 24px rgba(20,28,38,.10)',ov:'rgba(14,19,26,.45)'},
+dark:{bg:'#0E131A',sf:'#161D26',s2:'#1E2732',s3:'#273240',bd:'#232D39',bd2:'#33404F',tx:'#E7ECF2',tx2:'#AAB6C4',tx3:'#8696A8',ac:'#8FB6DE',ach:'#A9C7E6',acs:'#1C2B3B',onac:'#0E131A',or:'#FF9550',orf:'#FF8A3D',orf2:'#FFB547',ors:'#2E1E14',gr:'#4CC68A',grf:'#3DB57A',grs:'#15291F',rd:'#F27A72',rds:'#2E1A1B',yl:'#F0B44C',yls:'#2B2314',ink:'#1A0F08',sh1:'0 1px 2px rgba(0,0,0,.4)',sh2:'0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35)',ov:'rgba(0,0,0,.6)'}};
+const IC={home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',flame:'M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z',wallet:'M3 7a2 2 0 0 1 2-2h12v4M3 7v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2zM16 14h.01',plus:'M12 5v14M5 12h14',check:'M5 12.5l4.5 4.5L19 7.5',user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0'};
+class Component extends DCLogic {
+  renderVals() {
+    const t = TK[this.props.dark ? 'dark' : 'light'];
+    const W = [['MIÉ','21','miss'],['JUE','22','miss'],['VIE','23','done'],['SÁB','24','rest'],['DOM','25','rest'],['LUN','26','done'],['HOY','27','today']];
+    const ST = {
+      miss: { style: 'background: var(--sf); color: var(--tx3)', aria: 'sin cumplir' },
+      done: { style: 'background: var(--orf); color: var(--ink)', aria: 'cumplido', text: '✓' },
+      rest: { style: 'border: 2px dashed var(--bd2); color: var(--tx3)', aria: 'descanso', text: '–' },
+      today: { style: 'background: var(--sf); box-shadow: inset 0 0 0 2.5px var(--orf); color: var(--tx)', aria: 'hoy, 4 de 6' }
+    };
+    const week = W.map(([label, num, s]) => ({ label, text: ST[s].text || num, style: ST[s].style, aria: label + ' ' + num + ': ' + ST[s].aria, labelColor: s === 'today' ? 'var(--or)' : 'var(--tx2)' }));
+    const done = 'background: var(--grs); box-shadow: inset 0 0 0 1px var(--grf)';
+    const todo = 'background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd)';
+    const mk = (title, meta, at) => ({ title, done: !!at, todo: !at, card: at ? done : todo, meta: at ? 'Hecho a las ' + at + ' · +10 XP' : meta, metaColor: at ? 'var(--gr)' : 'var(--tx2)', metaWeight: at ? 500 : 400 });
+    const groups = [
+      { name: 'Mañana', count: '2 de 3', items: [mk('Celular lejos al despertar','7:00','08:00'), mk('LeetCode','7:40 – 8:40','10:58'), mk('Grabarme explicando','8:40 · 1 a 3 min')] },
+      { name: 'Durante el día', count: '2 de 3', items: [mk('Revisar grabación de ayer','Huecos del trabajo'), mk('Lecturas (2 o 3)','8:40 y huecos','21:29'), mk('Vocabulario de inglés','Huecos del trabajo','17:34')] },
+      { name: 'Noche', count: '0 de 3', items: [mk('Leer en voz alta','19:00 · 10 a 15 min'), mk('Proyecto o curso','21:00 – 22:30'), mk('Reto con gente','Cuando surja')] }
+    ];
+    return { vars: Object.keys(t).map((k) => '--' + k + ':' + t[k]).join(';'), ic: IC, week, groups };
+  }
+}
+</script>
+</body>
+</html>

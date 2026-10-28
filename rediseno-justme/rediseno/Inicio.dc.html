@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio — Hoy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; {{vars}}; background: var(--bg); color: var(--tx); font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+  <div style="padding: 56px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 13px; color: var(--tx2); font-weight: 500">Martes 27 de octubre</span>
+        <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em">Buenas noches</h1>
+      </div>
+      <a href="Racha.dc.html" aria-label="Racha de 2 días" style="display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 999px; background: var(--ors); color: var(--or); text-decoration: none; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ic.flame}}" style="fill: var(--orf)"></path></svg>2
+      </a>
+    </header>
+
+    <section aria-labelledby="hoy-racha" style="display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: 24px; background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd)">
+      <div style="display: flex; align-items: center; gap: 16px">
+        <div style="position: relative; width: 80px; height: 80px; flex-shrink: 0">
+          <svg width="80" height="80" viewBox="0 0 80 80" aria-hidden="true">
+            <circle cx="40" cy="40" r="34" fill="none" stroke-width="8" style="stroke: var(--s2)"></circle>
+            <circle cx="40" cy="40" r="34" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="142.4 213.6" transform="rotate(-90 40 40)" style="stroke: var(--orf)"></circle>
+          </svg>
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums">4/6</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+          <h2 id="hoy-racha" style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 700">Te faltan 2 misiones</h2>
+          <span style="font-size: 14px; line-height: 20px; color: var(--tx2)">Complétalas antes de medianoche para llegar a 3 días de racha.</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--s2)">
+        <button aria-label="Completar Proyecto o curso" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 14px; background: var(--sf); box-shadow: inset 0 0 0 2px var(--bd2)"></button>
+        <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--or)">Ahora</span>
+          <span style="font-size: 15px; font-weight: 600">Proyecto o curso</span>
+          <span style="font-size: 13px; color: var(--tx2)">21:00 – 22:30</span>
+        </div>
+        <a href="Racha.dc.html" aria-label="Ver todas las misiones" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--tx2)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.chevR}}"></path></svg>
+        </a>
+      </div>
+    </section>
+
+    <section aria-labelledby="hoy-mes" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 14px; background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd)">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="hoy-mes" style="margin: 0; font-size: 14px; font-weight: 600; color: var(--tx2)">Te sobra en octubre</h2>
+        <a href="Finanzas.dc.html" style="font-size: 14px; font-weight: 600; color: var(--ac); text-decoration: none">Ver finanzas</a>
+      </div>
+      <span style="font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.025em; font-variant-numeric: tabular-nums">$1,311.82</span>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 8px; border-radius: 999px; background: var(--s2); overflow: hidden"><div style="width: 91%; height: 100%; border-radius: 999px; background: var(--ac)"></div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--tx2); font-variant-numeric: tabular-nums">
+          <span>Gastado $13,688.18</span><span>de $15,000.00</span>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="hoy-cortes" style="display: flex; flex-direction: column; gap: 4px">
+      <h2 id="hoy-cortes" style="margin: 0 0 6px; padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tx3)">Próximos cortes</h2>
+      <div style="display: flex; flex-direction: column; border-radius: 14px; background: var(--sf); box-shadow: inset 0 0 0 1px var(--bd)">
+        <a href="Tarjeta.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-decoration: none; color: inherit; min-height: 44px">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--s2); color: var(--tx2); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.card}}"></path></svg></div>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span style="font-size: 15px; font-weight: 600">Santander</span><span style="font-size: 13px; color: var(--yl); font-weight: 500">Corte en 16 días · 12 nov</span></div>
+          <span style="font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">$7,047.18</span>
+        </a>
+        <div style="height: 1px; background: var(--bd); margin-left: 68px"></div>
+        <a href="Tarjeta.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-decoration: none; color: inherit; min-height: 44px">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--s2); color: var(--tx2); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.card}}"></path></svg></div>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span style="font-size: 15px; font-weight: 600">BBVA</span><span style="font-size: 13px; color: var(--tx2)">Corte en 28 días · 24 nov</span></div>
+          <span style="font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">$2,486.00</span>
+        </a>
+      </div>
+    </section>
+
+    <a href="PorCobrar.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--sf); box-shadow: inset 0 0 0 1px var(--bd); text-decoration: none; color: inherit">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--acs); color: var(--ac); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.users}}"></path></svg></div>
+      <div style="display: flex; flex-direction: column; flex: 1"><span style="font-size: 15px; font-weight: 600">Te deben</span><span style="font-size: 13px; color: var(--tx2)">7 personas</span></div>
+      <span style="font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">$12,340.00</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--tx3)"><path d="{{ic.chevR}}"></path></svg>
+    </a>
+  </div>
+
+  <nav aria-label="Principal" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 12px 26px; background: var(--sf); box-shadow: 0 -1px 0 var(--bd); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center">
+    <a href="Inicio.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--ac); font-size: 11px; font-weight: 700"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.home}}"></path></svg>Hoy</a>
+    <a href="Racha.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--tx2); font-size: 11px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.flame}}"></path></svg>Racha</a>
+    <div style="display: flex; justify-content: center"><a href="NuevoGasto.dc.html" aria-label="Agregar" style="width: 52px; height: 52px; border-radius: 18px; background: var(--ac); color: var(--onac); display: flex; align-items: center; justify-content: center; box-shadow: var(--sh2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.plus}}"></path></svg></a></div>
+    <a href="Finanzas.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--tx2); font-size: 11px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.wallet}}"></path></svg>Finanzas</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--tx2); font-size: 11px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.user}}"></path></svg>Perfil</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+const TK={
+light:{bg:'#F3F5F8',sf:'#FFFFFF',s2:'#EBEFF4',s3:'#DFE5EC',bd:'#E1E6EC',bd2:'#C7D0DA',tx:'#141C26',tx2:'#475567',tx3:'#5B6A7C',ac:'#2E5781',ach:'#24476B',acs:'#E4ECF5',onac:'#FFFFFF',or:'#B5440A',orf:'#F47B2A',orf2:'#FFB547',ors:'#FFF0E5',gr:'#17794A',grf:'#22A06B',grs:'#E3F3EA',rd:'#C0362F',rds:'#FBEAE8',yl:'#8F5B00',yls:'#FFF3D6',ink:'#141C26',sh1:'0 1px 2px rgba(20,28,38,.06)',sh2:'0 1px 2px rgba(20,28,38,.05), 0 8px 24px rgba(20,28,38,.10)',ov:'rgba(14,19,26,.45)'},
+dark:{bg:'#0E131A',sf:'#161D26',s2:'#1E2732',s3:'#273240',bd:'#232D39',bd2:'#33404F',tx:'#E7ECF2',tx2:'#AAB6C4',tx3:'#8696A8',ac:'#8FB6DE',ach:'#A9C7E6',acs:'#1C2B3B',onac:'#0E131A',or:'#FF9550',orf:'#FF8A3D',orf2:'#FFB547',ors:'#2E1E14',gr:'#4CC68A',grf:'#3DB57A',grs:'#15291F',rd:'#F27A72',rds:'#2E1A1B',yl:'#F0B44C',yls:'#2B2314',ink:'#1A0F08',sh1:'0 1px 2px rgba(0,0,0,.4)',sh2:'0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35)',ov:'rgba(0,0,0,.6)'}};
+const IC={home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',flame:'M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z',wallet:'M3 7a2 2 0 0 1 2-2h12v4M3 7v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2zM16 14h.01',plus:'M12 5v14M5 12h14',check:'M5 12.5l4.5 4.5L19 7.5',card:'M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5zM3 10h18M7 15h3',users:'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6.5 6.5 0 0 1 3.5 5.5',user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0',chevR:'M9 6l6 6-6 6'};
+class Component extends DCLogic {
+  renderVals() {
+    const t = TK[this.props.dark ? 'dark' : 'light'];
+    return { vars: Object.keys(t).map((k) => '--' + k + ':' + t[k]).join(';'), ic: IC };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Racha — Misiones de hoy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; {{vars}}; background: var(--bg); color: var(--tx); font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+  <div style="padding: 56px 16px 140px; display: flex; flex-direction: column; gap: 16px">
+
+    <header style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em">Racha</h1>
+      <div style="display: flex; padding: 4px; gap: 4px; border-radius: 999px; background: var(--s2)">
+        <a href="Racha.dc.html" aria-current="page" style="height: 36px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: var(--sf); color: var(--tx); font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: var(--sh1)">Hoy</a>
+        <a href="Logros.dc.html" style="height: 36px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; color: var(--tx2); font-size: 14px; font-weight: 500; text-decoration: none">Logros</a>
+      </div>
+    </header>
+
+    <section aria-label="Tu racha" style="display: flex; flex-direction: column; gap: 18px; padding: 20px; border-radius: 24px; background: var(--ors)">
+      <div style="display: flex; align-items: center; gap: 16px">
+        <svg width="60" height="60" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1.2 3.8 6 6 6 11a6 6 0 0 1-12 0c0-2.5 1.2-4.2 2.4-5.4 0 2.4 1.2 3.6 2.4 3.6 0-3.6-1.2-6 1.2-9.2z" style="fill: var(--orf)"></path><path d="M12 12c.8 1.6 2.6 2.4 2.6 4.4a2.6 2.6 0 0 1-5.2 0c0-1.6 1.2-2.4 2.6-4.4z" style="fill: var(--orf2)"></path></svg>
+        <div style="display: flex; flex-direction: column; flex: 1">
+          <div style="display: flex; align-items: baseline; gap: 8px">
+            <span style="font-size: 48px; line-height: 48px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums">2</span>
+            <span style="font-size: 17px; font-weight: 600">días de racha</span>
+          </div>
+          <span style="font-size: 13px; color: var(--or); font-weight: 600">Récord: 2 días · ¡estás en tu mejor marca!</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+        <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: {{d.labelColor}}">{{d.label}}</span>
+            <sc-if value="{{d.done}}" hint-placeholder-val="{{false}}">
+              <div aria-label="{{d.aria}}" style="width: 36px; height: 36px; border-radius: 999px; background: var(--orf); color: var(--ink); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.check}}"></path></svg></div>
+            </sc-if>
+            <sc-if value="{{d.rest}}" hint-placeholder-val="{{false}}">
+              <div aria-label="{{d.aria}}" style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 999px; border: 2px dashed var(--bd2); color: var(--tx3); display: flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.moon}}"></path></svg></div>
+            </sc-if>
+            <sc-if value="{{d.miss}}" hint-placeholder-val="{{true}}">
+              <div aria-label="{{d.aria}}" style="width: 36px; height: 36px; border-radius: 999px; background: var(--sf); color: var(--tx3); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums">{{d.num}}</div>
+            </sc-if>
+            <sc-if value="{{d.today}}" hint-placeholder-val="{{false}}">
+              <div aria-label="{{d.aria}}" style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 999px; background: var(--sf); box-shadow: inset 0 0 0 2.5px var(--orf); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums">{{d.num}}</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-labelledby="mis-h" style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="mis-h" style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 700">Misiones de hoy</h2>
+        <span style="font-size: 14px; color: var(--tx2); font-variant-numeric: tabular-nums"><strong style="color: var(--tx)">{{doneCount}}</strong> de 6 para tu racha</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px" role="img" aria-label="{{doneCount}} de 6 misiones">
+        <sc-for list="{{segs}}" as="s" hint-placeholder-count="6">
+          <div style="height: 8px; border-radius: 999px; background: {{s.bg}}"></div>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); padding: 0 4px">{{g.name}}</span>
+          <sc-for list="{{g.items}}" as="m" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 20px; background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd)">
+              <button onClick="{{m.toggle}}" aria-label="Completar {{m.title}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 14px; background: var(--s2); box-shadow: inset 0 0 0 2px var(--bd2); cursor: pointer"></button>
+              <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+                <span style="font-size: 15px; font-weight: 600">{{m.title}}</span>
+                <span style="font-size: 13px; color: var(--tx2)">{{m.meta}}</span>
+              </div>
+              <span style="font-size: 12px; font-weight: 700; color: var(--or); font-variant-numeric: tabular-nums">+10</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px">
+        <button onClick="{{toggleDone}}" aria-expanded="{{showDone}}" style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 4px; border: 0; background: transparent; color: var(--tx2); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer">
+          <span>Completadas · {{doneCount}}</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{chevRot}}"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <sc-if value="{{showDone}}" hint-placeholder-val="{{true}}">
+          <sc-for list="{{done}}" as="m" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 20px; background: var(--grs); box-shadow: inset 0 0 0 1px var(--grf)">
+              <button onClick="{{m.toggle}}" aria-label="Desmarcar {{m.title}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 14px; background: var(--grf); color: var(--onac); display: flex; align-items: center; justify-content: center; cursor: pointer">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.check}}"></path></svg>
+              </button>
+              <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+                <span style="font-size: 15px; font-weight: 600">{{m.title}}</span>
+                <span style="font-size: 13px; color: var(--gr); font-weight: 500">Hecho a las {{m.at}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </sc-if>
+      </div>
+    </section>
+  </div>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{true}}">
+    <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 104px; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: var(--tx); color: var(--bg); box-shadow: var(--sh2)">
+      <div style="width: 36px; height: 36px; border-radius: 12px; background: var(--orf); color: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ic.bolt}}" fill="currentColor"></path></svg></div>
+      <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+        <span style="font-size: 14px; font-weight: 700">+10 XP · {{toast}}</span>
+        <span style="font-size: 13px; opacity: .8">{{toastSub}}</span>
+      </div>
+      <button onClick="{{undo}}" style="height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer">Deshacer</button>
+    </div>
+  </sc-if>
+
+  <nav aria-label="Principal" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 12px 26px; background: var(--sf); box-shadow: 0 -1px 0 var(--bd); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center">
+    <a href="Inicio.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--tx2); font-size: 11px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.home}}"></path></svg>Hoy</a>
+    <a href="Racha.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--or); font-size: 11px; font-weight: 700"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ic.flame}}" style="fill: var(--orf)"></path></svg>Racha</a>
+    <div style="display: flex; justify-content: center"><a href="NuevoGasto.dc.html" aria-label="Agregar" style="width: 52px; height: 52px; border-radius: 18px; background: var(--ac); color: var(--onac); display: flex; align-items: center; justify-content: center; box-shadow: var(--sh2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.plus}}"></path></svg></a></div>
+    <a href="Finanzas.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--tx2); font-size: 11px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.wallet}}"></path></svg>Finanzas</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-height: 44px; text-decoration: none; color: var(--tx2); font-size: 11px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.user}}"></path></svg>Perfil</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+const TK={
+light:{bg:'#F3F5F8',sf:'#FFFFFF',s2:'#EBEFF4',s3:'#DFE5EC',bd:'#E1E6EC',bd2:'#C7D0DA',tx:'#141C26',tx2:'#475567',tx3:'#5B6A7C',ac:'#2E5781',ach:'#24476B',acs:'#E4ECF5',onac:'#FFFFFF',or:'#B5440A',orf:'#F47B2A',orf2:'#FFB547',ors:'#FFF0E5',gr:'#17794A',grf:'#22A06B',grs:'#E3F3EA',rd:'#C0362F',rds:'#FBEAE8',yl:'#8F5B00',yls:'#FFF3D6',ink:'#141C26',sh1:'0 1px 2px rgba(20,28,38,.06)',sh2:'0 1px 2px rgba(20,28,38,.05), 0 8px 24px rgba(20,28,38,.10)',ov:'rgba(14,19,26,.45)'},
+dark:{bg:'#0E131A',sf:'#161D26',s2:'#1E2732',s3:'#273240',bd:'#232D39',bd2:'#33404F',tx:'#E7ECF2',tx2:'#AAB6C4',tx3:'#8696A8',ac:'#8FB6DE',ach:'#A9C7E6',acs:'#1C2B3B',onac:'#0E131A',or:'#FF9550',orf:'#FF8A3D',orf2:'#FFB547',ors:'#2E1E14',gr:'#4CC68A',grf:'#3DB57A',grs:'#15291F',rd:'#F27A72',rds:'#2E1A1B',yl:'#F0B44C',yls:'#2B2314',ink:'#1A0F08',sh1:'0 1px 2px rgba(0,0,0,.4)',sh2:'0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35)',ov:'rgba(0,0,0,.6)'}};
+const IC={home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',flame:'M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z',wallet:'M3 7a2 2 0 0 1 2-2h12v4M3 7v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2zM16 14h.01',plus:'M12 5v14M5 12h14',check:'M5 12.5l4.5 4.5L19 7.5',user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0',moon:'M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z',bolt:'M13 3 5 13.5h6L10 21l8-10.5h-6z'};
+const MISSIONS=[
+  {id:'cel',title:'Celular lejos al despertar',meta:'7:00',g:'Mañana',done:true,at:'08:00'},
+  {id:'lc',title:'LeetCode',meta:'7:40 – 8:40',g:'Mañana',done:true,at:'10:58'},
+  {id:'grab',title:'Grabarme explicando',meta:'8:40 · 1 a 3 min',g:'Mañana',done:false},
+  {id:'rev',title:'Revisar grabación de ayer',meta:'Huecos del trabajo',g:'Durante el día',done:false},
+  {id:'lec',title:'Lecturas (2 o 3)',meta:'8:40 y huecos del trabajo',g:'Durante el día',done:true,at:'21:29'},
+  {id:'voc',title:'Vocabulario de inglés',meta:'Huecos del trabajo',g:'Durante el día',done:true,at:'17:34'},
+  {id:'voz',title:'Leer en voz alta',meta:'19:00 · 10 a 15 min',g:'Noche',done:false},
+  {id:'proy',title:'Proyecto o curso',meta:'21:00 – 22:30',g:'Noche',done:false},
+  {id:'reto',title:'Reto con gente',meta:'Cuando surja',g:'Noche',done:false}
+];
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { done: {cel:'08:00',lc:'10:58',lec:'21:29',voc:'17:34'}, showDone: false, toast: 'Vocabulario de inglés', last: null }; }
+  renderVals() {
+    const t = TK[this.props.dark ? 'dark' : 'light'];
+    const st = this.state;
+    const doneCount = Object.keys(st.done).length;
+    const toggle = (m) => () => {
+      const d = Object.assign({}, st.done);
+      if (d[m.id]) { delete d[m.id]; this.setState({ done: d, toast: null }); }
+      else { d[m.id] = '23:19'; this.setState({ done: d, toast: m.title, last: m.id }); }
+    };
+    const pending = MISSIONS.filter((m) => !st.done[m.id]);
+    const groups = ['Mañana','Durante el día','Noche'].map((name) => ({ name, items: pending.filter((m) => m.g === name).map((m) => Object.assign({}, m, { toggle: toggle(m) })) })).filter((g) => g.items.length);
+    const done = MISSIONS.filter((m) => st.done[m.id]).map((m) => Object.assign({}, m, { at: st.done[m.id], toggle: toggle(m) }));
+    const segs = [0,1,2,3,4,5].map((i) => ({ bg: i < doneCount ? 'var(--orf)' : 'var(--s3)' }));
+    const W = [['MIÉ','21','miss'],['JUE','22','miss'],['VIE','23','done'],['SÁB','24','rest'],['DOM','25','rest'],['LUN','26','done'],['HOY','27','today']];
+    const names = { miss: 'sin cumplir', done: 'cumplido', rest: 'descanso', today: 'hoy, en progreso' };
+    const week = W.map(([label,num,s]) => ({ label, num, done: s==='done', rest: s==='rest', miss: s==='miss', today: s==='today', aria: label + ' ' + num + ': ' + names[s], labelColor: s==='today' ? 'var(--or)' : 'var(--tx2)' }));
+    const left = Math.max(0, 6 - doneCount);
+    return {
+      vars: Object.keys(t).map((k) => '--' + k + ':' + t[k]).join(';'), ic: IC, week, segs, groups, done, doneCount,
+      showDone: st.showDone, chevRot: st.showDone ? 'rotate(180deg)' : 'none',
+      toggleDone: () => this.setState({ showDone: !st.showDone }),
+      toast: st.toast, toastSub: left === 0 ? '¡Racha asegurada por hoy!' : 'Te faltan ' + left + ' para asegurar la racha',
+      undo: () => { const d = Object.assign({}, st.done); const k = st.last || 'voc'; delete d[k]; this.setState({ done: d, toast: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Session } from '@supabase/supabase-js';
 import { ConfigService } from './config.service';
 import { FinanzasService } from './finanzas/finanzas.service';
+import { HabitsStore } from './habits/habits.store';
 import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
@@ -9,6 +10,7 @@ export class AuthService {
   private readonly auth = inject(SupabaseService).client.auth;
   private readonly config = inject(ConfigService);
   private readonly finanzas = inject(FinanzasService);
+  private readonly habits = inject(HabitsStore);
 
   readonly session = signal<Session | null>(null);
   readonly user = computed(() => this.session()?.user ?? null);
@@ -23,6 +25,7 @@ export class AuthService {
       if (event === 'SIGNED_OUT') {
         this.config.reset();
         this.finanzas.reset();
+        this.habits.reset();
       }
       this.session.set(session);
     });

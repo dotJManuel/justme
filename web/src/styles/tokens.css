@@ -1,0 +1,75 @@
+/* Sistema de diseño JustMe: solo variables. El tema oscuro cambia los valores, nunca los componentes.
+   Oscuro: lo pide el sistema (si no se eligió claro a mano) o se eligió a mano (data-theme="dark"). */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Neutros */
+  --bg: #f3f5f8; --sf: #ffffff; --s2: #ebeff4; --s3: #dfe5ec;
+  --bd: #e1e6ec; --bd2: #c7d0da;
+  --tx: #141c26; --tx2: #475567; --tx3: #5b6a7c;
+  /* Acento gris azulado */
+  --ac: #2e5781; --ach: #24476b; --acs: #e4ecf5; --onac: #ffffff;
+  /* Racha: energía naranja */
+  --orf: #f47b2a; --orf2: #ffb547; --or: #b5440a; --ors: #fff0e5; --ink: #141c26;
+  /* Semánticos */
+  --gr: #17794a; --grf: #22a06b; --grs: #e3f3ea;
+  --rd: #c0362f; --rds: #fbeae8;
+  --yl: #8f5b00; --yls: #fff3d6;
+  /* Racha congelada (día protegido por una congelación) */
+  --ice: #dff2ff; --ice-ink: #2a8ac4;
+  /* Capas */
+  --ov: rgba(14, 19, 26, 0.45);
+  --sh1: 0 1px 2px rgba(20, 28, 38, 0.06);
+  --sh2: 0 1px 2px rgba(20, 28, 38, 0.05), 0 8px 24px rgba(20, 28, 38, 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0e131a; --sf: #161d26; --s2: #1e2732; --s3: #273240;
+    --bd: #232d39; --bd2: #33404f;
+    --tx: #e7ecf2; --tx2: #aab6c4; --tx3: #8696a8;
+    --ac: #8fb6de; --ach: #a9c7e6; --acs: #1c2b3b; --onac: #0e131a;
+    --orf: #ff8a3d; --orf2: #ffb547; --or: #ff9550; --ors: #2e1e14; --ink: #1a0f08;
+    --gr: #4cc68a; --grf: #3db57a; --grs: #15291f;
+    --rd: #f27a72; --rds: #2e1a1b;
+    --yl: #f0b44c; --yls: #2b2314;
+    --ice: #1b3347; --ice-ink: #6cc0f5;
+    --ov: rgba(0, 0, 0, 0.6);
+    --sh1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0e131a; --sf: #161d26; --s2: #1e2732; --s3: #273240;
+  --bd: #232d39; --bd2: #33404f;
+  --tx: #e7ecf2; --tx2: #aab6c4; --tx3: #8696a8;
+  --ac: #8fb6de; --ach: #a9c7e6; --acs: #1c2b3b; --onac: #0e131a;
+  --orf: #ff8a3d; --orf2: #ffb547; --or: #ff9550; --ors: #2e1e14; --ink: #1a0f08;
+  --gr: #4cc68a; --grf: #3db57a; --grs: #15291f;
+  --rd: #f27a72; --rds: #2e1a1b;
+  --yl: #f0b44c; --yls: #2b2314;
+  --ice: #1b3347; --ice-ink: #6cc0f5;
+  --ov: rgba(0, 0, 0, 0.6);
+  --sh1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Lo que no cambia con el tema */
+:root {
+  --font: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Espaciado en base 4 (margen lateral móvil: --sp-4) */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+  /* Radios: Racha redondo, Finanzas sobrio */
+  --rr-1: 14px; --rr-2: 20px; --rr-pill: 999px;
+  --rf-1: 6px; --rf-2: 10px; --rf-3: 12px;
+
+  --touch: 44px;
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--ac);
+  --nav-h: 64px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}

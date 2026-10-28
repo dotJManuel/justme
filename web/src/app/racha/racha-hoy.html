@@ -1,0 +1,136 @@
+<ng-template #flame let-size>
+  <svg [attr.width]="size" [attr.height]="size" viewBox="0 0 24 24" aria-hidden="true" class="flame" [class.cold]="cold()" [class.iced]="iced()">
+    <path class="f1" d="M12 2c1.2 3.8 6 6 6 11a6 6 0 0 1-12 0c0-2.5 1.2-4.2 2.4-5.4 0 2.4 1.2 3.6 2.4 3.6 0-3.6-1.2-6 1.2-9.2z" />
+    <path class="f2" d="M12 12c.8 1.6 2.6 2.4 2.6 4.4a2.6 2.6 0 0 1-5.2 0c0-1.6 1.2-2.4 2.6-4.4z" />
+  </svg>
+</ng-template>
+
+<ng-template #mission let-m let-on="on">
+  @if (on) {
+    <div class="m done">
+      <button type="button" class="chk on" [disabled]="!canEdit()" [attr.aria-label]="'Desmarcar ' + m.name" (click)="toggle(m, true)">
+        <app-icon name="check" [size]="22" [stroke]="2.6" />
+      </button>
+      <span class="mt">
+        <span class="mn">{{ m.name }}</span>
+        <span class="ms ok">{{ m.at ? (m.at.length === 5 ? 'Hecho a las ' + m.at : 'Hecho ' + m.at) : 'Hecho' }}</span>
+      </span>
+    </div>
+  } @else {
+    <div class="m">
+      <button type="button" class="chk" [disabled]="!canEdit()" [attr.aria-label]="'Completar ' + m.name" (click)="toggle(m, false)"></button>
+      <span class="mt">
+        <span class="mn">{{ m.name }}</span>
+        @if (m.when) {
+          <span class="ms">{{ m.when }}</span>
+        }
+      </span>
+      <span class="xp num">+{{ xpPer }}</span>
+    </div>
+  }
+</ng-template>
+
+@if (failed()) {
+  <ui-error-state message="No se pudieron cargar tus datos" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" />
+} @else if (!store.loaded()) {
+  <div class="skel" aria-busy="true" aria-label="Cargando">
+    <ui-skeleton height="190px" radius="24px" />
+    <ui-skeleton width="45%" height="24px" />
+    <ui-skeleton height="8px" radius="999px" />
+    <ui-skeleton height="64px" radius="20px" />
+    <ui-skeleton height="64px" radius="20px" />
+    <ui-skeleton height="64px" radius="20px" />
+  </div>
+} @else {
+  <div class="top">
+    <section class="hero" aria-label="Tu racha" aria-live="polite">
+      <div class="hl">
+        <span class="fl"><ng-container *ngTemplateOutlet="flame; context: { $implicit: 64 }" /></span>
+        <div class="hn">
+          <div class="count">
+            <span class="big num">{{ streaks().cur }}</span>
+            <span class="unit">{{ streaks().cur === 1 ? 'día de racha' : 'días de racha' }}</span>
+          </div>
+          <span class="best">Mejor racha: {{ streaks().best }} {{ streaks().best === 1 ? 'día' : 'días' }}{{ atBest() ? ' · ¡estás en tu mejor marca!' : '' }}</span>
+          @if (streaks().recovering) {
+            <span class="freeze"><app-icon name="snowflake" [size]="14" /> Racha congelada: cumple {{ config.goal() }} misiones para recuperarla</span>
+          } @else if (streaks().freezeReady) {
+            <span class="freeze"><app-icon name="snowflake" [size]="14" /> Tienes una congelación lista por si falla un día</span>
+          }
+        </div>
+      </div>
+      <div class="week" role="group" aria-label="Últimos 7 días">
+        @for (w of week(); track w.k) {
+          <button type="button" class="day" [class.sel]="w.k === sel()" [attr.aria-pressed]="w.k === sel()" [attr.aria-label]="w.aria" (click)="select(w.k)">
+            <span class="dl" [class.today]="w.today">{{ w.label }}</span>
+            <span class="dc {{ w.state }}" [class.today]="w.today">
+              @switch (w.state) {
+                @case ('ok') { <app-icon name="check" [size]="20" [stroke]="2.6" /> }
+                @case ('frozen') { <app-icon name="snowflake" [size]="18" /> }
+                @case ('rest') { <app-icon name="moon" [size]="16" /> }
+                @default { {{ w.num }} }
+              }
+            </span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="lvl" aria-label="Nivel">
+      <div class="lh"><span class="ln">{{ level().name }}</span><span class="lx num">{{ level().xp }} / {{ level().lvl * XP_LEVEL }} XP</span></div>
+      <ui-progress-bar tone="orange" [height]="10" [value]="level().into" [max]="XP_LEVEL" [label]="'Progreso del nivel ' + level().lvl" />
+      <span class="ll">{{ level().left }} XP para nivel {{ level().lvl + 1 }} · {{ level().earned }} {{ level().earned === 1 ? 'insignia ganada' : 'insignias ganadas' }}</span>
+    </section>
+  </div>
+
+  <section aria-labelledby="mis-h" class="missions">
+    <div class="mh">
+      <h2 id="mis-h">{{ dayTitle() }}</h2>
+      <span class="gt num">{{ goalText() }}</span>
+    </div>
+    <ui-progress-bar tone="orange" [segments]="segments()" [value]="selCount()" [max]="config.goal()" [label]="selCount() + ' de ' + config.goal() + ' misiones'" />
+    @if (!canEdit()) {
+      <p class="readonly">Día anterior: solo lectura. Únicamente se puede marcar el día de hoy.</p>
+    }
+
+    <!-- Móvil: pendientes por momento del día y, plegadas, las completadas -->
+    <div class="by-time">
+      @for (g of groups(); track g.name) {
+        <div class="grp">
+          <span class="label">{{ g.name }}</span>
+          @for (m of g.items; track m.k) {
+            <ng-container *ngTemplateOutlet="mission; context: { $implicit: m, on: false }" />
+          }
+        </div>
+      }
+      @if (completed().length) {
+        <div class="grp">
+          <button type="button" class="fold" [attr.aria-expanded]="doneOpen()" (click)="showDone.set(!showDone())" [disabled]="!canEdit()">
+            <span>Completadas · {{ completed().length }}</span>
+            <app-icon [name]="doneOpen() ? 'chevron-up' : 'chevron-down'" [size]="20" />
+          </button>
+          @if (doneOpen()) {
+            @for (m of completed(); track m.k) {
+              <ng-container *ngTemplateOutlet="mission; context: { $implicit: m, on: true }" />
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Escritorio: todas las misiones, en columnas por momento del día -->
+    <div class="cols">
+      @for (g of allGroups(); track g.name) {
+        <div class="grp">
+          <div class="gh"><span class="label">{{ g.name }}</span><span class="gc num">{{ g.done }} de {{ g.items.length }}</span></div>
+          @for (m of g.items; track m.k) {
+            <ng-container *ngTemplateOutlet="mission; context: { $implicit: m, on: m.on }" />
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <p class="note">{{ rule() }}</p>
+  <a uiBtn variant="secondary" class="edit" routerLink="/perfil/misiones">Editar misiones</a>
+}
