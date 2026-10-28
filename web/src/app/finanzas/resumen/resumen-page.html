@@ -1,0 +1,175 @@
+@if (results(); as list) {
+  <section aria-labelledby="res-h">
+    <div class="sec"><h2 id="res-h">Resultados · {{ list.length }}</h2></div>
+    @if (list.length) {
+      <div class="panel scroll">
+        @for (r of list; track r.key) {
+          <a class="row" [routerLink]="r.link" [queryParams]="r.q">
+            <span class="ico"><app-icon [name]="r.icon" [size]="18" /></span>
+            <span class="lt"><span class="ln">{{ r.title }}</span><span class="ls">{{ r.sub }}</span></span>
+            <span class="la num" [class.inc]="r.amount > 0" [class.exp]="r.amount < 0">{{ money(r.amount, true) }}</span>
+          </a>
+        }
+      </div>
+    } @else {
+      <div class="panel"><ui-empty-state icon="search" title="Sin resultados" text="Prueba con otra palabra o cambia el mes." /></div>
+    }
+  </section>
+} @else {
+  <!-- Escritorio: los cuatro indicadores -->
+  <section class="kpis" aria-label="Indicadores del mes">
+    <div class="card kpi">
+      <span class="k">{{ balance().label }}</span>
+      <span class="kv num">{{ money(balance().value) }}</span>
+      <span class="sub">Ingreso {{ money(balance().income) }}</span>
+    </div>
+    <div class="card kpi">
+      <span class="k">Gastos del mes</span>
+      <span class="kv num exp">{{ money(-balance().gran, true) }}</span>
+      <span class="sub">{{ balance().pct }}% del ingreso</span>
+    </div>
+    <div class="card kpi">
+      <span class="k">Por pagar en tarjetas</span>
+      <span class="kv num">{{ money(summary().tarjetas) }}</span>
+      <span class="sub">Por quincena {{ money(quincena()) }}</span>
+    </div>
+    <div class="card kpi">
+      <span class="k">Te deben</span>
+      <span class="kv num">{{ money(owed().total.pending) }}</span>
+      <span class="sub">{{ owed().total.lent > 0 ? ((owed().total.ratio * 100) | number: '1.0-0') + '% cobrado de ' + money(owed().total.lent) : 'Sin préstamos' }}</span>
+    </div>
+  </section>
+
+  <!-- Móvil: balance -->
+  <section class="card bal" aria-label="Balance del mes">
+    <div class="b1">
+      <span class="k">{{ balance().label }}</span>
+      <span class="big num">{{ money(balance().value) }}</span>
+    </div>
+    <div class="b2">
+      <button type="button" class="line" aria-label="Editar ingreso mensual" (click)="editingIncome.set(true)">
+        <span class="sub"><app-icon name="arrow-down" [size]="12" /> Ingreso</span>
+        <span class="mid num inc">{{ money(balance().income, true) }}</span>
+      </button>
+      <div class="line">
+        <span class="sub"><app-icon name="arrow-up" [size]="12" /> Gastos</span>
+        <span class="mid num exp">{{ money(-balance().gran, true) }}</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="cols">
+    <div class="stack">
+      <section class="card" aria-labelledby="dist-h">
+        <div class="dh">
+          <h2 id="dist-h">¿A dónde va?</h2>
+          @if (balance().income > 0) {
+            <span class="sub">{{ balance().pct }}% del ingreso</span>
+          } @else {
+            <button type="button" class="link" (click)="editingIncome.set(true)">Definir ingreso</button>
+          }
+        </div>
+        @if (parts().length) {
+          <div class="seg" role="img" [attr.aria-label]="distLabel()">
+            @for (p of parts(); track p.id) {
+              <i [style.width.%]="p.w" [style.opacity]="p.op"></i>
+            }
+          </div>
+          <div class="legend">
+            @for (p of parts(); track p.id) {
+              <a class="lg" routerLink="/finanzas/tarjetas" [queryParams]="{ card: p.link }">
+                <span class="sw" [style.opacity]="p.op"></span>
+                <span class="ln2">{{ p.name }}</span>
+                <span class="pc num">{{ p.pct }}%</span>
+                <span class="am num">{{ money(p.amount) }}</span>
+              </a>
+            }
+          </div>
+        } @else {
+          <ui-empty-state icon="wallet" title="Aún no hay gastos" text="Agrega el primero para ver a dónde se va tu dinero."><button uiBtn small type="button" (click)="add.show({ tab: 'gasto' })"><app-icon name="plus" [size]="16" />Agregar gasto</button></ui-empty-state>
+        }
+      </section>
+
+      <section aria-labelledby="pp-h">
+        <div class="sec"><h2 id="pp-h">Por pagar</h2><span class="aside num">Quincena {{ money(quincena()) }}</span></div>
+        <div class="panel">
+          @for (c of payables(); track c.id) {
+            <a class="row" routerLink="/finanzas/tarjetas" [queryParams]="{ card: c.id }">
+              <span class="ico"><app-icon name="card" [size]="20" /></span>
+              <span class="lt"><span class="ln">{{ c.name }}{{ c.last4 ? ' ·· ' + c.last4 : '' }}</span><span class="ls" [class.warn]="c.alert">{{ c.text }} · {{ shortCut(c.end) }}</span></span>
+              <span class="la num">{{ money(c.amount) }}</span>
+            </a>
+          }
+          <a class="row" routerLink="/finanzas/tarjetas" [queryParams]="{ card: 'fijos' }">
+            <span class="ico"><app-icon name="home" [size]="20" /></span>
+            <span class="lt"><span class="ln">Gastos fijos</span><span class="ls">Cada mes</span></span>
+            <span class="la num">{{ money(summary().fijos) }}</span>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Escritorio: Por cobrar y Meses sin intereses -->
+    <div class="stack side">
+      <section aria-labelledby="pc-h">
+        <div class="sec"><h2 id="pc-h">Por cobrar</h2><a routerLink="/finanzas/por-cobrar">Ver todo</a></div>
+        <div class="panel">
+          @for (p of owed().open.slice(0, 4); track p.personId) {
+            <a class="row" [routerLink]="['/finanzas/por-cobrar', p.personId]">
+              <span class="av" aria-hidden="true">{{ initials(p.person) }}</span>
+              <span class="lt">
+                <span class="ln">{{ p.person }}</span>
+                <ui-progress-bar tone="green" [height]="4" [value]="p.ratio * 100" [label]="'Pagado ' + (p.ratio * 100 | number: '1.0-0') + '%'" />
+              </span>
+              <span class="la num">{{ money(p.pending) }}</span>
+            </a>
+          } @empty {
+            <p class="empty">Nadie te debe por ahora.</p>
+          }
+        </div>
+      </section>
+      <section aria-labelledby="ms-h">
+        <div class="sec"><h2 id="ms-h">Meses sin intereses</h2></div>
+        <div class="panel">
+          @for (m of msi(); track m.id) {
+            <a class="msi" routerLink="/finanzas/tarjetas">
+              <span class="mh"><span class="ln">{{ m.name }}</span><span class="la num">{{ money(m.monthly) }} <small>/mes</small></span></span>
+              <ui-progress-bar [segments]="m.n" [value]="m.k" [height]="6" [label]="'Pago ' + m.k + ' de ' + m.n" />
+              <span class="sub num">Pago {{ m.k }} de {{ m.n }}</span>
+            </a>
+          } @empty {
+            <p class="empty">No hay compras a meses.</p>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Escritorio: movimientos recientes -->
+  <section class="movs" aria-labelledby="mv-h">
+    <div class="sec">
+      <h2 id="mv-h">Movimientos recientes</h2>
+      <div class="chips">
+        <ui-chip [interactive]="true" [selected]="movFilter() === 'todo'" (click)="movFilter.set('todo')">Todo</ui-chip>
+        <ui-chip [interactive]="true" [selected]="movFilter() === 'cargo'" (click)="movFilter.set('cargo')">Cargos</ui-chip>
+        <ui-chip [interactive]="true" [selected]="movFilter() === 'abono'" (click)="movFilter.set('abono')">Abonos</ui-chip>
+      </div>
+    </div>
+    <div class="panel scroll">
+      @for (r of movements(); track r.id) {
+        <a class="mrow" [routerLink]="['/finanzas/por-cobrar', r.personId]">
+          <span class="av" aria-hidden="true">{{ initials(r.personName) }}</span>
+          <span class="mc">{{ r.conceptName || (r.kind === 'cargo' ? 'Préstamo' : 'Abono') }}</span>
+          <span class="mw">{{ r.personName }}</span>
+          <span class="mt"><ui-chip>{{ r.kind === 'cargo' ? 'Préstamo' : 'Abono' }}</ui-chip></span>
+          <span class="md">{{ r.when }}</span>
+          <span class="la num" [class.inc]="r.signed > 0" [class.exp]="r.signed < 0">{{ money(r.signed, true) }}</span>
+        </a>
+      } @empty {
+        <ui-empty-state icon="users" title="Sin movimientos" text="Aquí verás lo que prestas y lo que te pagan." />
+      }
+    </div>
+  </section>
+}
+
+<app-edit-income [(open)]="editingIncome" />

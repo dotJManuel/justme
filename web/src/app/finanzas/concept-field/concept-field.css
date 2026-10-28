@@ -1,5 +1,0 @@
-:host{display:block;min-width:0}
-.panel{position:fixed;z-index:50;margin:0;padding:4px;list-style:none;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.panel li{padding:10px 12px;border-radius:8px;font-size:.92rem;font-weight:600;color:var(--ink);cursor:pointer;overflow-wrap:anywhere}
-.panel li:hover,.panel li.on{background:color-mix(in srgb,var(--sec,var(--accent)) 20%,var(--surface))}
-@media (max-width:760px){.panel li{padding:12px}}

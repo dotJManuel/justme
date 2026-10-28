@@ -1,7 +1,8 @@
-<app-paid-list />
+<div class="page">
+  <ui-page-header title="Historial de cambios">
+    <button uiBtn variant="secondary" small type="button" [disabled]="busy()" aria-label="Exportar a Excel" (click)="exportExcel()"><app-icon name="download" [size]="16" />Exportar</button>
+  </ui-page-header>
 
-<section class="card" [class]="tone()">
-  <h2>Historial</h2>
   <p class="hint">
     Cada cambio queda registrado con su fecha y hora: lo agregado, lo editado y lo eliminado. Lo que ya borraste se sigue
     viendo aquí, así que sirve para revisar pagos y cobros y aclarar cualquier duda.
@@ -9,9 +10,7 @@
 
   <div class="chips" role="group" aria-label="Qué historial ver">
     @for (a of areas; track a.key) {
-      <button type="button" class="chip" [class.on]="a.key === area()" [attr.aria-pressed]="a.key === area()" (click)="pick(a.key)">
-        {{ a.label }}
-      </button>
+      <ui-chip [interactive]="true" [selected]="a.key === area()" (click)="pick(a.key)">{{ a.label }}</ui-chip>
     }
   </div>
 
@@ -61,10 +60,7 @@
   </div>
 
   @if (error()) {
-    <p class="msg" role="alert">{{ error() }}</p>
-  }
-  @if (notice()) {
-    <p class="ok" role="status">{{ notice() }}</p>
+    <ui-error-state [inline]="true" [message]="error()" (retry)="retry()" />
   }
 
   <div class="bar">
@@ -72,14 +68,17 @@
       <input type="checkbox" [checked]="allSelected()" [indeterminate]="someSelected()" [disabled]="!visible().length || busy()" (change)="toggleAll()" />
       Seleccionar todo lo que se ve ({{ visible().length }})
     </label>
-    <app-export-button label="Exportar a Excel" [busy]="busy()" (click)="exportExcel()" />
+    @if (filtered) {
+      <button type="button" class="link" (click)="clearFilters()">Quitar filtros</button>
+    }
   </div>
 
   @if (selected().length) {
     <div class="selbar" role="status">
       <b>{{ selected().length }} {{ selected().length === 1 ? 'seleccionado' : 'seleccionados' }}</b>
-      <button type="button" class="danger" [disabled]="busy()" (click)="deleteSelected()">Eliminar del historial</button>
-      <button type="button" class="ghost" [disabled]="busy()" (click)="clearSelection()">Quitar selección</button>
+      <span class="grow"></span>
+      <button uiBtn variant="secondary" small type="button" [disabled]="busy()" (click)="clearSelection()">Quitar selección</button>
+      <button uiBtn variant="danger" small type="button" [disabled]="busy()" (click)="asking.set(true)">Eliminar del historial</button>
     </div>
   }
 
@@ -89,46 +88,46 @@
       <li class="ev" [class.del]="l.action === 'delete'" [class.upd]="l.action === 'update'" [class.sel]="isItemMarked(it)">
         <input type="checkbox" class="pick" [checked]="isItemMarked(it)" [disabled]="busy()" aria-label="Seleccionar este registro del historial" (change)="toggleItem(it)" />
         <div class="body">
-        <div class="top">
-          <span class="badge" [class.cargo]="l.badge === 'Cargo'" [class.abono]="l.badge === 'Abono'">{{ l.badge }}</span>
-          <b class="who">{{ l.who }}</b>
-          <span class="what">{{ l.what }}</span>
-          @if (it.total !== null) {
-            <b class="amt">{{ money(it.total) }}</b>
+          <div class="top">
+            <span class="badge" [class.cargo]="l.badge === 'Cargo'" [class.abono]="l.badge === 'Abono'">{{ l.badge }}</span>
+            <b class="who">{{ l.who }}</b>
+            <span class="what">{{ l.what }}</span>
+            @if (it.total !== null) {
+              <b class="amt num">{{ money(it.total) }}</b>
+            }
+          </div>
+          <div class="meta">
+            <span class="act">{{ actions[l.action] }}</span>
+            <span>{{ when(l.at) }}</span>
+            @if (l.when) {
+              <span>· Fecha del movimiento: {{ l.when }}</span>
+            }
+          </div>
+          @if (it.parts) {
+            <button type="button" class="link sm" [attr.aria-expanded]="expanded().has(it.key)" (click)="toggleParts(it.key)">
+              Pago repartido en {{ it.parts.length }} cargos <app-icon [name]="expanded().has(it.key) ? 'chevron-up' : 'chevron-down'" />
+            </button>
+            @if (expanded().has(it.key)) {
+              <ul class="chg">
+                @for (p of it.parts; track p.id) {
+                  <li><b>{{ cargoName(p.appliesTo) }}:</b> {{ p.amount === null ? '—' : money(p.amount) }}</li>
+                }
+              </ul>
+            }
           }
-        </div>
-        <div class="meta">
-          <span class="act">{{ actions[l.action] }}</span>
-          <span>{{ when(l.at) }}</span>
-          @if (l.when) {
-            <span>· Fecha del movimiento: {{ l.when }}</span>
-          }
-        </div>
-        @if (it.parts) {
-          <button type="button" class="linkbtn" [attr.aria-expanded]="expanded().has(it.key)" (click)="toggleParts(it.key)">
-            Pago repartido en {{ it.parts.length }} cargos <app-icon [name]="expanded().has(it.key) ? 'chevron-up' : 'chevron-down'" />
-          </button>
-          @if (expanded().has(it.key)) {
+          @if (l.changes.length) {
             <ul class="chg">
-              @for (p of it.parts; track p.id) {
-                <li><b>{{ cargoName(p.appliesTo) }}:</b> {{ p.amount === null ? '—' : money(p.amount) }}</li>
+              @for (c of l.changes; track c.label) {
+                <li><b>{{ c.label }}:</b> <s>{{ c.from }}</s> → {{ c.to }}</li>
               }
             </ul>
           }
-        }
-        @if (l.changes.length) {
-          <ul class="chg">
-            @for (c of l.changes; track c.label) {
-              <li><b>{{ c.label }}:</b> <s>{{ c.from }}</s> → {{ c.to }}</li>
-            }
-          </ul>
-        }
         </div>
       </li>
     } @empty {
-      <li class="hint">
+      <li class="empty">
         @if (loading()) {
-          Cargando…
+          <span class="skel" aria-busy="true" aria-label="Cargando"><ui-skeleton height="64px" radius="12px" /><ui-skeleton height="64px" radius="12px" /><ui-skeleton height="64px" radius="12px" /></span>
         } @else if (filtered) {
           Nada coincide con esos filtros.
         } @else {
@@ -139,14 +138,15 @@
   </ul>
 
   @if (more()) {
-    <button type="button" class="ghost" [disabled]="loading()" (click)="loadMore()">
-      {{ loading() ? 'Cargando…' : 'Cargar más' }}
-    </button>
+    <button uiBtn variant="secondary" type="button" [disabled]="loading()" (click)="loadMore()">{{ loading() ? 'Cargando…' : 'Cargar más' }}</button>
     @if (filtered) {
       <p class="hint">Los filtros se aplican a lo ya cargado. Carga más para buscar más atrás.</p>
     }
   }
-  @if (filtered) {
-    <button type="button" class="ghost" (click)="clearFilters()">Quitar filtros</button>
-  }
-</section>
+</div>
+
+<ui-confirm-dialog
+  [(open)]="asking" [title]="'¿Eliminar ' + selected().length + (selected().length === 1 ? ' registro' : ' registros') + ' del historial?'"
+  message="Se borran definitivamente de la base de datos y no se pueden recuperar. Los movimientos, gastos y demás registros reales no se borran: solo su historial. Si ese historial era la prueba de un pago o cobro, ya no podrás consultarla aquí."
+  confirmLabel="Eliminar del historial" [busy]="busy()" (confirmed)="deleteSelected()"
+/>

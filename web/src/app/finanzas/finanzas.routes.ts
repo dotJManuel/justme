@@ -1,20 +1,27 @@
 import { Routes } from '@angular/router';
-import { FinanzasPage } from './finanzas-page';
-import { FinanzasAdminPage } from './admin/finanzas-admin-page';
-import { GastosPage } from './gastos/gastos-page';
-import { HistorialPage } from './historial/historial-page';
-import { PendientePage } from './pendiente/pendiente-page';
+import { FamiliaPage } from './familia/familia-page';
+import { FinanzasShell } from './finanzas-shell';
+import { PersonaPage } from './por-cobrar/persona-page';
+import { PorCobrarPage } from './por-cobrar/por-cobrar-page';
+import { ResumenPage } from './resumen/resumen-page';
+import { TarjetasPage } from './tarjetas/tarjetas-page';
 
 export const FINANZAS_ROUTES: Routes = [
   {
     path: '',
-    component: FinanzasPage,
+    component: FinanzasShell,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'gastos' },
-      { path: 'gastos', component: GastosPage },
-      { path: 'pendiente', component: PendientePage },
-      { path: 'historial', component: HistorialPage },
-      { path: 'admin', component: FinanzasAdminPage },
+      { path: '', pathMatch: 'full', redirectTo: 'resumen' },
+      { path: 'resumen', component: ResumenPage },
+      { path: 'tarjetas', component: TarjetasPage },
+      { path: 'por-cobrar', component: PorCobrarPage },
+      { path: 'por-cobrar/:id', component: PersonaPage },
+      { path: 'familia', component: FamiliaPage },
     ],
   },
+  // Rutas de la navegación anterior
+  { path: 'gastos', redirectTo: 'resumen' },
+  { path: 'pendiente', redirectTo: 'por-cobrar' },
+  { path: 'historial', redirectTo: '/perfil/historial' },
+  { path: 'admin', redirectTo: '/perfil/catalogos' },
 ];

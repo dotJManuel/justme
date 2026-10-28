@@ -1,37 +1,28 @@
 <main class="login">
-  <h1>JustMe</h1>
-  <p class="sub">{{ registering() ? 'Crea tu cuenta' : 'Inicia sesión para ver tus días' }}</p>
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><app-icon name="check" [size]="22" [stroke]="2.4" /></span>
+    <span class="name">JustMe</span>
+  </div>
+  <div class="head">
+    <h1>{{ registering() ? 'Crea tu cuenta' : 'Bienvenido' }}</h1>
+    <p class="sub">{{ registering() ? 'Con tu correo y una contraseña de al menos 6 caracteres.' : 'Inicia sesión para ver tus días.' }}</p>
+  </div>
 
-  <form (ngSubmit)="submit()">
-    <label>
-      Correo
-      <input type="email" name="email" autocomplete="email" required [(ngModel)]="email" />
-    </label>
-    <label>
-      Contraseña
-      <input
-        type="password"
-        name="password"
-        minlength="6"
-        required
-        [autocomplete]="registering() ? 'new-password' : 'current-password'"
-        [(ngModel)]="password"
-      />
-    </label>
+  <form (submit)="$event.preventDefault(); submit()" novalidate>
+    <ui-input label="Correo" type="email" inputmode="email" autocomplete="email" [(value)]="email" />
+    <ui-input label="Contraseña" type="password" [autocomplete]="registering() ? 'new-password' : 'current-password'" [(value)]="password" />
 
     @if (error()) {
-      <p class="msg error" role="alert">{{ error() }}</p>
+      <p class="msg error" role="alert"><app-icon name="alert" [size]="18" />{{ error() }}</p>
     }
     @if (info()) {
-      <p class="msg info" role="status">{{ info() }}</p>
+      <p class="msg info" role="status"><app-icon name="check" [size]="18" />{{ info() }}</p>
     }
 
-    <button type="submit" class="primary" [disabled]="busy()">
-      {{ busy() ? 'Un momento…' : registering() ? 'Crear cuenta' : 'Entrar' }}
-    </button>
+    <button uiBtn block type="submit" [disabled]="busy()">{{ busy() ? 'Un momento…' : registering() ? 'Crear cuenta' : 'Entrar' }}</button>
   </form>
 
-  <button type="button" class="link" (click)="toggleMode()">
+  <button uiBtn variant="ghost" block type="button" (click)="toggleMode()">
     {{ registering() ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
   </button>
 </main>

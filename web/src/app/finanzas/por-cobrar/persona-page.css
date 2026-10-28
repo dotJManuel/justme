@@ -1,0 +1,17 @@
+.layout { display: grid; gap: var(--sp-4); }
+@media (min-width: 1024px) { .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; } }
+.head { display: flex; align-items: center; gap: 4px; }
+.head h2 { font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.back { display: grid; place-items: center; width: var(--touch); height: var(--touch); margin-left: -8px; border-radius: var(--rf-2); color: var(--tx); }
+.back:hover { background: var(--s2); }
+.b1 { display: flex; flex-direction: column; gap: 4px; }
+.legend { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--tx2); }
+.legend strong { font-weight: 600; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.sortb { display: flex; align-items: center; gap: 4px; min-height: var(--touch); padding: 0 4px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.paid { gap: 10px; padding: 16px; }
+.ptop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 20px; color: var(--tx2); }
+.more { padding: 0 0 0 6px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
+.paid button[uiBtn] { align-self: flex-start; }

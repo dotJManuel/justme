@@ -1,0 +1,62 @@
+:host { display: block; }
+.page { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 640px; margin: 0 auto; padding: var(--sp-5) var(--sp-4) var(--sp-6); }
+@media (min-width: 1024px) { .page { padding-top: var(--sp-6); } }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hd { display: flex; flex-direction: column; gap: 2px; }
+.date { font-size: 13px; line-height: 16px; color: var(--tx2); font-weight: 500; }
+h1 { font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; }
+.streak {
+  display: flex; align-items: center; gap: 6px; height: var(--touch); padding: 0 14px; border-radius: var(--rr-pill);
+  background: var(--ors); color: var(--or); text-decoration: none; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums;
+}
+
+.card { display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd); }
+.racha { border-radius: 24px; }
+.mes { border-radius: var(--rr-1); gap: 14px; }
+
+.top { display: flex; align-items: center; gap: 16px; }
+.ring { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+h2 { font-size: 18px; line-height: 24px; font-weight: 700; }
+.txt p { font-size: 14px; line-height: 20px; color: var(--tx2); }
+
+.next { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--s2); }
+.chk {
+  flex: none; width: 44px; height: 44px; border: 0; border-radius: var(--rr-1); background: var(--sf);
+  box-shadow: inset 0 0 0 2px var(--bd2); cursor: pointer; transition: transform 0.1s;
+}
+.chk:hover { box-shadow: inset 0 0 0 2px var(--orf); }
+.chk:active { transform: scale(0.92); }
+.nt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.tag { color: var(--or); }
+.nm { font-size: 15px; line-height: 20px; font-weight: 600; }
+.wh { font-size: 13px; line-height: 18px; color: var(--tx2); }
+.go { display: grid; place-items: center; flex: none; width: 44px; height: 44px; color: var(--tx2); }
+
+.mh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.mh h2 { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--tx2); }
+.mh a, .hint a { display: inline-flex; align-items: center; min-height: var(--touch); margin-block: -12px; font-size: 14px; font-weight: 600; color: var(--ac); text-decoration: none; }
+.big { font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.025em; text-align: left; }
+.bar { display: flex; flex-direction: column; gap: 8px; }
+.legend { display: flex; justify-content: space-between; font-size: 13px; line-height: 18px; color: var(--tx2); }
+.hint { font-size: 14px; line-height: 20px; color: var(--tx2); }
+
+.sec { margin: 0 0 6px; padding: 0 4px; font-size: 13px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tx3); }
+.list { border-radius: var(--rr-1); }
+.line { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 16px; min-height: var(--touch); color: inherit; text-decoration: none; border-radius: inherit; }
+.line + .line::before { content: ''; position: absolute; top: 0; right: 0; left: 68px; height: 1px; background: var(--bd); }
+.line:hover, .owed:hover { background: var(--s2); }
+.ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--rf-2); background: var(--s2); color: var(--tx2); }
+.ico.acc { background: var(--acs); color: var(--ac); }
+.lt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.ln { font-size: 15px; line-height: 20px; font-weight: 600; }
+.ls { font-size: 13px; line-height: 18px; color: var(--tx2); }
+.ls.warn { color: var(--yl); font-weight: 500; }
+.la { font-size: 15px; font-weight: 600; }
+.owed { flex-direction: row; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--rr-1); text-decoration: none; color: inherit; box-shadow: inset 0 0 0 1px var(--bd); }
+.chev { color: var(--tx3); }
+
+.skel { display: flex; flex-direction: column; gap: var(--sp-4); }
+.skel .row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.skel .col { display: flex; flex-direction: column; gap: 10px; flex: 1; }

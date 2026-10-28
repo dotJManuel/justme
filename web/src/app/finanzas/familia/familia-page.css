@@ -1,0 +1,7 @@
+.layout { display: flex; flex-direction: column; gap: var(--sp-4); }
+.b1 { display: flex; flex-direction: column; gap: 4px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--bd); }
+.line { display: flex; flex-direction: column; gap: 2px; }
+.card button[uiBtn] { align-self: flex-start; }
+.cols { display: grid; gap: var(--sp-4); }
+@media (min-width: 1024px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }

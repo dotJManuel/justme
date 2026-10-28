@@ -1,0 +1,49 @@
+<div class="layout">
+  <section class="card" aria-label="Total por cobrar">
+    <div class="b1">
+      <span class="k">Te deben</span>
+      <span class="big num">{{ money(total().pending) }}</span>
+    </div>
+    <ui-progress-bar tone="green" [height]="6" [value]="total().ratio * 100" label="Porcentaje cobrado del total prestado" />
+    <div class="legend num">
+      <span>Cobrado <strong class="inc">{{ money(total().paid) }}</strong></span>
+      <span>de {{ money(total().lent) }} prestado</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="pp-h">
+    <div class="sec">
+      <h2 id="pp-h">Personas · {{ people().length }}</h2>
+      <button type="button" (click)="toggleOrder()" [attr.aria-label]="'Orden: ' + (order() === 'saldo' ? 'mayor saldo' : 'alfabético') + '. Cambiar'">
+        {{ order() === 'saldo' ? 'Mayor saldo' : 'A – Z' }} <app-icon name="sort" [size]="14" />
+      </button>
+    </div>
+    <div class="panel scroll">
+      @for (p of people(); track p.personId) {
+        <a class="row" [routerLink]="[p.personId]">
+          <span class="av" aria-hidden="true">{{ initials(p.person) }}</span>
+          <span class="lt">
+            <span class="top">
+              <span class="ln">{{ p.person }}@if (!p.active) { <small> · inactiva</small> }</span>
+              <span class="la num">{{ money(p.pending) }}</span>
+            </span>
+            <span class="pg">
+              <ui-progress-bar tone="green" [height]="4" [value]="p.ratio * 100" [label]="'Pagado ' + (p.ratio * 100).toFixed(0) + '%'" />
+              <span class="pc num">{{ (p.ratio * 100).toFixed(0) }}% pagado</span>
+            </span>
+          </span>
+        </a>
+      } @empty {
+        <ui-empty-state
+          icon="users"
+          [title]="view.query() ? 'Sin resultados' : 'Aún no hay préstamos'"
+          [text]="view.query() ? 'Prueba con otro nombre o concepto.' : 'Registra lo que prestas para llevar la cuenta de quién te debe.'"
+        >
+          @if (!view.query()) {
+            <button uiBtn small type="button" (click)="add.show({ tab: 'prestamo', kind: 'cargo' })"><app-icon name="plus" [size]="16" />Registrar préstamo</button>
+          }
+        </ui-empty-state>
+      }
+    </div>
+  </section>
+</div>

@@ -1,8 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { dateKey } from '../../habits/streaks';
-import { ExportButton } from '../export-button/export-button';
 import { Icon } from '../../icons/icon';
-import { PaidList } from './paid-list';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { ConfirmDialog } from '../../ui/confirm-dialog';
+import { PageHeader } from '../../ui/page-header';
+import { ErrorState, Skeleton } from '../../ui/states';
+import { ToastService } from '../../ui/toast';
 import { conceptLabel, fmtMoney } from '../finanzas.calc';
 import { historySheet, today } from '../finanzas.export';
 import {
@@ -16,7 +20,7 @@ import {
   fmtDateTime,
 } from '../finanzas.history';
 import { FinanzasService } from '../finanzas.service';
-import { deleteHistoryMessage, plural } from '../finanzas.warn';
+import { plural } from '../finanzas.warn';
 import { downloadXlsx } from '../xlsx';
 
 interface HistItem {
@@ -38,12 +42,15 @@ const ACTIONS: Record<AuditAction, string> = { insert: 'Agregado', update: 'Edit
  */
 @Component({
   selector: 'app-historial-page',
-  imports: [ExportButton, PaidList, Icon],
+  imports: [Button, Chip, ConfirmDialog, ErrorState, Icon, PageHeader, Skeleton],
   templateUrl: './historial-page.html',
-  styleUrls: ['../finanzas.shared.css', './historial-page.css'],
+  styleUrl: './historial-page.css',
 })
 export class HistorialPage implements OnInit {
   private readonly fin = inject(FinanzasService);
+  private readonly toasts = inject(ToastService);
+  /** Pregunta antes de borrar líneas del historial. */
+  protected readonly asking = signal(false);
 
   protected readonly areas = HISTORY_AREAS;
   protected readonly actions = ACTIONS;
@@ -95,15 +102,18 @@ export class HistorialPage implements OnInit {
 
   protected readonly visible = computed<HistoryLine[]>(() => {
     const q = this.query().trim().toLowerCase();
-    return this.lines().filter(
-      (l) =>
-        (!this.person() || l.who === this.person()) &&
-        (!this.kind() || l.kind === this.kind()) &&
-        (!this.action() || l.action === this.action()) &&
-        (!this.from() || dateKey(new Date(l.at)) >= this.from()) &&
-        (!this.to() || dateKey(new Date(l.at)) <= this.to()) &&
-        (!q || `${l.who} ${l.what} ${l.badge}`.toLowerCase().includes(q)),
-    );
+    return this.lines()
+      .filter(
+        (l) =>
+          (!this.person() || l.who === this.person()) &&
+          (!this.kind() || l.kind === this.kind()) &&
+          (!this.action() || l.action === this.action()) &&
+          (!this.from() || dateKey(new Date(l.at)) >= this.from()) &&
+          (!this.to() || dateKey(new Date(l.at)) <= this.to()) &&
+          (!q || `${l.who} ${l.what} ${l.badge}`.toLowerCase().includes(q)),
+      )
+      // Lo más reciente, hasta arriba.
+      .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime() || b.id - a.id);
   });
 
   /** Concepto de un cargo, por su id: del historial cargado o, si no, de lo que hay ahora. */
@@ -166,6 +176,8 @@ export class HistorialPage implements OnInit {
   protected readonly someSelected = computed(() => this.selected().length > 0 && !this.allSelected());
 
   async ngOnInit() {
+    // Los nombres de tarjetas, personas y conceptos vienen de Finanzas.
+    await this.fin.load().catch(() => undefined);
     try {
       this.catalog.set(await this.fin.loadAuditNames());
     } catch {
@@ -229,16 +241,17 @@ export class HistorialPage implements OnInit {
   /** Borra por completo de la base de datos las líneas marcadas (solo las que se ven). */
   protected async deleteSelected() {
     const ids = this.selected().map((l) => l.id);
-    if (!ids.length || this.busy() || !confirm(deleteHistoryMessage(ids.length))) return;
+    if (!ids.length || this.busy()) return;
     this.busy.set(true);
     this.error.set('');
     this.notice.set('');
     const ok = await this.fin.deleteAudit(ids);
+    this.asking.set(false);
     if (ok) {
       const gone = new Set(ids);
       this.entries.update((l) => l.filter((e) => !gone.has(e.id)));
       this.clearSelection();
-      this.notice.set(`✓ ${plural(ids.length, 'registro eliminado', 'registros eliminados')} del historial.`);
+      this.toasts.show({ message: `${plural(ids.length, 'registro eliminado', 'registros eliminados')} del historial` });
     } else {
       // Pudo borrarse una parte: se vuelve a leer para mostrar lo que de verdad queda.
       this.error.set('No se pudo eliminar del historial. Revisa tu conexión e intenta de nuevo.');
@@ -257,6 +270,10 @@ export class HistorialPage implements OnInit {
     if (this.error()) return;
     const label = HISTORY_AREAS.find((a) => a.key === this.area())?.label ?? 'Historial';
     downloadXlsx(`Historial ${label} - ${today()}`, [historySheet(label, this.visible())]);
+  }
+
+  protected retry() {
+    return this.entries().length ? this.fetch(this.entries().length) : this.reload();
   }
 
   private async reload() {

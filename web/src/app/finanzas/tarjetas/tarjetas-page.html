@@ -1,0 +1,88 @@
+<div class="chips" role="group" aria-label="Tarjeta">
+  @for (c of cards(); track c.id) {
+    <ui-chip [interactive]="true" [selected]="selected() === c.id" (click)="pick(c.id)">{{ c.name }}</ui-chip>
+  }
+  <ui-chip [interactive]="true" [selected]="isFixed()" (click)="pick('fijos')">Gastos fijos</ui-chip>
+</div>
+
+<div class="layout">
+  <div class="stack">
+    <section class="card" [attr.aria-label]="isFixed() ? 'Gastos fijos' : 'Resumen de la tarjeta'">
+      @if (card(); as c) {
+        <div class="th"><h2>{{ c.name }}</h2>@if (c.last4) { <span class="sub num">Termina en {{ c.last4 }}</span> }</div>
+      } @else {
+        <div class="th"><h2>Gastos fijos</h2><span class="sub">Cada mes</span></div>
+      }
+      <div class="t1">
+        <div class="tl"><span class="k">{{ isFixed() ? 'Por pagar al mes' : 'Por pagar este corte' }}</span><span class="b num">{{ money(totals().amount) }}</span></div>
+        <div class="tr"><span class="sub">Por quincena</span><span class="mid2 num">{{ money(totals().quincena) }}</span></div>
+      </div>
+      @if (cut(); as k) {
+        <div class="cutbar">
+          <ui-progress-bar [value]="k.pct" [height]="6" [label]="'Periodo de corte: ' + k.pct + '% transcurrido'" />
+          <div class="cl num"><span class="sub">{{ k.start }}</span><span [class.warn]="k.alert" [class.sub]="!k.alert">{{ k.text }}</span><span class="sub">{{ k.end }}</span></div>
+        </div>
+        <div class="foot"><span class="sub">Monto total de las compras</span><b class="num">{{ money(totals().total) }}</b></div>
+      }
+    </section>
+
+    @if (cut(); as k) {
+      <section aria-labelledby="cu-h">
+        <div class="sec"><h2 id="cu-h">Corte actual</h2><button type="button" (click)="cutOpen.set(true)">Editar</button></div>
+        <button type="button" class="panel cutcard" (click)="cutOpen.set(true)" [attr.aria-label]="'Corte ' + k.label + '. Editar monto y pagado'">
+          <span class="cp">{{ k.label }}</span>
+          <span class="cg">
+            <span><span class="sub">Monto del corte</span><b class="num">{{ money(k.amount) }}</b></span>
+            <span><span class="sub">Pagado</span><b class="num">{{ money(k.paid) }}</b></span>
+            <span><span class="sub">Pendiente</span><b class="num" [class.exp]="k.pending > 0" [class.inc]="k.pending <= 0 && k.amount > 0">{{ money(k.pending) }}</b></span>
+          </span>
+        </button>
+      </section>
+    }
+  </div>
+
+  <div class="stack">
+    @if (!isFixed() && msi().length) {
+      <section aria-labelledby="msi-h">
+        <div class="sec"><h2 id="msi-h">Meses sin intereses</h2></div>
+        <div class="panel scroll">
+          @for (m of msi(); track m.e.id) {
+            <button type="button" class="msi" (click)="edit(m.e)">
+              <span class="mh"><span class="ln">{{ m.name }}</span><span class="la num">{{ money(m.amount) }}<small> /mes</small></span></span>
+              <ui-progress-bar [segments]="m.n" [value]="m.k" [height]="6" [label]="'Pago ' + m.k + ' de ' + m.n" />
+              <span class="mf num"><span>Pago {{ m.k }} de {{ m.n }}</span><span>Total {{ money(m.total) }}</span></span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    <section aria-labelledby="co-h">
+      <div class="sec">
+        <h2 id="co-h">{{ isFixed() ? 'Gastos fijos' : 'Compras de contado' }}</h2>
+        @if (buyCount() > buys().length || showAll()) {
+          <button type="button" (click)="showAll.set(!showAll())">{{ showAll() ? 'Ver menos' : 'Ver las ' + buyCount() }}</button>
+        }
+      </div>
+      <div class="panel scroll">
+        @for (b of buys(); track b.e.id) {
+          <button type="button" class="row" (click)="edit(b.e)">
+            <span class="ico"><app-icon [name]="isFixed() ? 'home' : 'card'" [size]="18" /></span>
+            <span class="lt"><span class="ln">{{ b.name }}</span>@if (b.sub) { <span class="ls">{{ b.sub }}</span> }</span>
+            <span class="la num exp">{{ money(-b.amount, true) }}</span>
+            <app-icon class="chev" name="chevron-right" [size]="16" />
+          </button>
+        } @empty {
+          <ui-empty-state [icon]="isFixed() ? 'home' : 'wallet'" [title]="isFixed() ? 'Sin gastos fijos' : 'Sin compras'" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Agrega uno para empezar a llevar tu corte.'">
+            @if (!view.query() && !view.month()) {
+              <button uiBtn small type="button" (click)="add.show({ tab: 'gasto' })"><app-icon name="plus" [size]="16" />Agregar gasto</button>
+            }
+          </ui-empty-state>
+        }
+      </div>
+    </section>
+  </div>
+</div>
+
+<app-edit-expense [expense]="editing()" [(open)]="editOpen" />
+<app-edit-cut [card]="card()" [(open)]="cutOpen" />
