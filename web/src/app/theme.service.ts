@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, signal } from '@angular/core';
 
 export type Theme = 'light' | 'dark';
 /** Lo que elige la persona: un modo fijo o seguir al sistema. */
