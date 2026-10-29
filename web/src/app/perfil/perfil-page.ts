@@ -5,6 +5,7 @@ import { EditIncome } from '../finanzas/edit/edit-simple';
 import { exportTodo } from '../finanzas/export-gastos';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { Icon, IconName } from '../icons/icon';
+import { EnlacesSection } from './enlaces-section';
 import { ThemeMode, ThemeService } from '../theme.service';
 import { Button } from '../ui/button';
 import { money } from '../ui/money';
@@ -21,7 +22,7 @@ interface Entry {
 /** Perfil: ingreso mensual, tema y accesos a lo que se configura una vez (misiones, catálogos, historial). */
 @Component({
   selector: 'app-perfil-page',
-  imports: [Button, EditIncome, Icon, RouterLink, Segmented],
+  imports: [Button, EditIncome, EnlacesSection, Icon, RouterLink, Segmented],
   template: `
     <div class="page">
       <header>
@@ -62,16 +63,7 @@ interface Entry {
       </section>
 
       <section>
-        <h2 class="sec">Enlaces</h2>
-        <div class="panel">
-          @for (l of links; track l.url) {
-            <a class="row" [href]="l.url" target="_blank" rel="noopener noreferrer">
-              <span class="ico"><app-icon [name]="l.icon" [size]="18" /></span>
-              <span class="lt"><span class="ln">{{ l.title }}</span><span class="ls">{{ l.sub }}</span></span>
-              <app-icon class="chev" name="external" [size]="16" />
-            </a>
-          }
-        </div>
+        <app-enlaces />
       </section>
 
       <section class="acts">
@@ -123,10 +115,6 @@ export class PerfilPage implements OnInit {
     { icon: 'flame', title: 'Misiones y meta diaria', sub: 'Lista, horarios, días de descanso y congelación', link: '/perfil/misiones' },
     { icon: 'sliders', title: 'Catálogos', sub: 'Tarjetas, conceptos y personas', link: '/perfil/catalogos' },
     { icon: 'history', title: 'Historial de cambios', sub: 'Lo que se agregó, editó o eliminó', link: '/perfil/historial' },
-  ];
-
-  protected readonly links: { icon: IconName; title: string; sub: string; url: string }[] = [
-    { icon: 'languages', title: 'Prep de entrevistas', sub: 'Preguntas y respuestas para repasar', url: 'https://interview-prepjm.netlify.app/' },
   ];
 
   ngOnInit() {
