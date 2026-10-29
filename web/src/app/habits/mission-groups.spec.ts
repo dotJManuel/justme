@@ -14,6 +14,7 @@ describe('missionGroup', () => {
     expect(missionGroup('19:00 · 10 a 15 min')).toBe('Noche');
     expect(missionGroup('21:00 – 22:30')).toBe('Noche');
     expect(missionGroup('Cuando surja')).toBe('Noche');
+    expect(missionGroup('30 min · huecos del día')).toBe('Durante el día');
   });
 
   it('de 12 a 18 es durante el día', () => {

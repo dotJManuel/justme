@@ -42,7 +42,7 @@ export interface BadgeDef {
   active: boolean;
 }
 
-/** Las seis de siempre: lo que recibe cada persona al empezar (igual que en la base de datos). */
+/** Las siete de siempre: lo que recibe cada persona al empezar (igual que en la base de datos). */
 export const DEFAULT_BADGES: Omit<BadgeDef, 'id' | 'active'>[] = [
   { name: 'Primer paso', icon: 'check', kind: 'misiones', target: 1, habitKey: null },
   { name: 'Doble racha', icon: 'flame', kind: 'racha', target: 2, habitKey: null },
@@ -50,6 +50,7 @@ export const DEFAULT_BADGES: Omit<BadgeDef, 'id' | 'active'>[] = [
   { name: 'Madrugador', icon: 'sun-dim', kind: 'mision', target: 7, habitKey: 'celular' },
   { name: 'Políglota', icon: 'languages', kind: 'mision', target: 10, habitKey: 'ingles' },
   { name: 'Mes imparable', icon: 'trophy', kind: 'racha', target: 30, habitKey: null },
+  { name: 'En movimiento', icon: 'bolt', kind: 'mision', target: 7, habitKey: 'ejercicio' },
 ];
 
 /** Días en que se marcó una misión concreta (por su clave). */
