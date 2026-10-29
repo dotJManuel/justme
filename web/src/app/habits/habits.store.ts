@@ -4,7 +4,8 @@ import { SupabaseService } from '../supabase.service';
 import { ToastService } from '../ui/toast';
 import { nextMission } from './mission-groups';
 import { Days, computeStreaks, countDone, dateKey } from './streaks';
-import { XP_LEVEL, XP_PER } from './habits.config';
+import { XP_PER } from './habits.config';
+import { levelInfo } from './levels';
 
 /**
  * Estado compartido de la racha: los días marcados, lo que se hizo hoy y la siguiente misión. Lo usan Hoy y Racha
@@ -28,7 +29,9 @@ export class HabitsStore {
   readonly goal = this.config.goal;
   readonly streaks = computed(() => computeStreaks(this.days(), this.today(), this.config.racha()));
   readonly xp = computed(() => Object.keys(this.days()).reduce((s, k) => s + this.count(k) * XP_PER, 0));
-  readonly level = computed(() => Math.floor(this.xp() / XP_LEVEL) + 1);
+  /** Nivel, lo que lleva y lo que falta para el siguiente, según el plan de niveles (ver levels.ts). */
+  readonly levelInfo = computed(() => levelInfo(this.config.levels(), this.xp()));
+  readonly level = computed(() => this.levelInfo().level);
 
   readonly doneToday = computed(() => this.count(this.todayKey()));
   readonly missing = computed(() => Math.max(0, this.goal() - this.doneToday()));

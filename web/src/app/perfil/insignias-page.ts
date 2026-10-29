@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { ConfigService } from '../config.service';
 import { Icon } from '../icons/icon';
 import { BadgesService } from '../racha/badges.service';
-import { BADGE_ICONS, BADGE_KINDS, BadgeDef, BadgeKind, badgeRule } from '../racha/logros.config';
+import { BADGE_ICONS, BADGE_KINDS, BadgeDef, BadgeKind, TIERS, TIER_PRESETS, badgeRule, targetsError } from '../racha/logros.config';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
@@ -13,9 +13,8 @@ import { EmptyState, ErrorState, Skeleton } from '../ui/states';
 import { ToastService } from '../ui/toast';
 
 const SAVE_ERROR = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
-const MAX_TARGET = 100000;
 
-/** Agregar, editar o quitar una insignia: nombre, ícono, qué se mide y cuánto hay que juntar. */
+/** Agregar, editar o quitar una insignia: nombre, ícono, qué se mide y la meta de cada nivel (Bronce a Platino). */
 @Component({
   selector: 'app-edit-badge',
   imports: [BottomSheet, Button, Choice, ConfirmDialog, Icon, Input, Select],
@@ -44,7 +43,20 @@ const MAX_TARGET = 100000;
             <p class="err" role="alert">{{ habitError() }}</p>
           }
         }
-        <ui-input [label]="targetLabel()" type="number" inputmode="numeric" [(value)]="target" [error]="targetError()" />
+        <fieldset>
+          <legend>Meta de cada nivel ({{ unitLabel() }})</legend>
+          <div class="tiers">
+            @for (t of tiers; track t; let i = $index) {
+              <div class="tier">
+                <span class="dot" [class]="'p' + (i + 1)" aria-hidden="true"></span>
+                <ui-input [label]="t" type="number" inputmode="numeric" [value]="targets()[i]" (valueChange)="setTarget(i, $event)" />
+              </div>
+            }
+          </div>
+          @if (targetError()) {
+            <p class="err tierr" role="alert">{{ targetError() }}</p>
+          }
+        </fieldset>
 
         <div class="actions" [class.one]="!badge()">
           @if (badge()) {
@@ -70,8 +82,17 @@ const MAX_TARGET = 100000;
       color: var(--tx2); box-shadow: inset 0 0 0 1px var(--bd2); cursor: pointer;
     }
     .icons button.on { background: var(--orf); color: var(--ink); box-shadow: none; }
+    .tiers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .tier { display: flex; align-items: flex-end; gap: 8px; }
+    .tier ui-input { flex: 1; min-width: 0; }
+    .dot { flex: none; width: 12px; height: 12px; margin-bottom: 18px; border-radius: 50%; }
+    .dot.p1 { background: var(--tier-1g); }
+    .dot.p2 { background: var(--tier-2g); }
+    .dot.p3 { background: var(--tier-3g); }
+    .dot.p4 { background: var(--tier-4g); }
     .hint { margin-top: -8px; font-size: 13px; line-height: 18px; color: var(--tx2); }
     .err { margin-top: -10px; font-size: 12px; color: var(--rd); font-weight: 500; }
+    .tierr { margin-top: 8px; }
     .actions { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
     .actions.one { grid-template-columns: 1fr; }
   `,
@@ -91,7 +112,11 @@ export class EditBadge {
   protected readonly icon = signal<(typeof BADGE_ICONS)[number]>('trophy');
   protected readonly kind = signal<string>('racha');
   protected readonly habitKey = signal('');
-  protected readonly target = signal('');
+  protected readonly tiers = TIERS;
+  /** La meta de cada nivel, tal como se escribe. */
+  protected readonly targets = signal<string[]>(['', '', '', '']);
+  /** Último tipo visto: al cambiarlo, si las metas son las sugeridas del anterior, pasan a las del nuevo. */
+  private lastKind: BadgeKind = 'racha';
   protected readonly busy = signal(false);
   protected readonly asking = signal(false);
   private readonly tried = signal(false);
@@ -99,13 +124,11 @@ export class EditBadge {
   /** Todas las misiones, también las desactivadas: sus marcas pasadas siguen contando. */
   protected readonly habits = computed<Option[]>(() => this.config.habits().map((h) => ({ value: h.k, label: h.active ? h.name : `${h.name} (inactiva)` })));
   protected readonly kindHint = computed(() => BADGE_KINDS.find((k) => k.value === this.kind())?.hint ?? '');
-  protected readonly targetLabel = computed(() => ({ racha: 'Días de racha', misiones: 'Misiones', xp: 'Puntos de XP', mision: 'Días' })[this.kind() as BadgeKind] ?? 'Meta');
+  protected readonly unitLabel = computed(() => ({ racha: 'días de racha', misiones: 'misiones', xp: 'XP', mision: 'días' })[this.kind() as BadgeKind] ?? '');
 
-  private readonly targetN = computed(() => Number(this.target()));
+  private readonly targetNums = computed(() => this.targets().map((t) => (t.trim() === '' ? null : Number(t))));
   protected readonly nameError = computed(() => (this.tried() && !this.name().trim() ? 'Escribe un nombre' : this.name().trim().length > 40 ? 'Máximo 40 caracteres' : ''));
-  protected readonly targetError = computed(() =>
-    this.tried() && !(Number.isInteger(this.targetN()) && this.targetN() >= 1 && this.targetN() <= MAX_TARGET) ? `Un número entero del 1 al ${MAX_TARGET}` : '',
-  );
+  protected readonly targetError = computed(() => (this.tried() ? targetsError(this.targetNums()) : ''));
   protected readonly habitError = computed(() => (this.tried() && this.kind() === 'mision' && !this.habitKey() ? 'Elige una misión' : ''));
 
   constructor() {
@@ -114,11 +137,26 @@ export class EditBadge {
       const b = this.badge();
       this.name.set(b?.name ?? '');
       this.icon.set(b?.icon && BADGE_ICONS.includes(b.icon) ? b.icon : 'trophy');
-      this.kind.set(b?.kind ?? 'racha');
+      const kind = b?.kind ?? 'racha';
+      this.lastKind = kind;
+      this.kind.set(kind);
       this.habitKey.set(b?.habitKey ?? '');
-      this.target.set(b ? String(b.target) : '');
+      this.targets.set((b?.targets ?? TIER_PRESETS[kind]).map(String));
       this.tried.set(false);
     });
+    // Al cambiar el tipo, las metas sugeridas siguen al tipo (si ya las cambiaste a mano, se respetan).
+    effect(() => {
+      const kind = this.kind() as BadgeKind;
+      untracked(() => {
+        if (kind === this.lastKind || !TIER_PRESETS[kind]) return;
+        if (this.targets().join() === TIER_PRESETS[this.lastKind].join()) this.targets.set(TIER_PRESETS[kind].map(String));
+        this.lastKind = kind;
+      });
+    });
+  }
+
+  protected setTarget(i: number, value: string) {
+    this.targets.update((t) => t.map((v, j) => (j === i ? value : v)));
   }
 
   protected async save() {
@@ -126,7 +164,7 @@ export class EditBadge {
     const name = this.name().trim();
     const kind = this.kind() as BadgeKind;
     if (!name || name.length > 40 || this.targetError() || (kind === 'mision' && !this.habitKey()) || this.busy()) return;
-    const draft = { name, icon: this.icon(), kind, target: this.targetN(), habitKey: kind === 'mision' ? this.habitKey() : null };
+    const draft = { name, icon: this.icon(), kind, targets: this.targetNums() as number[], habitKey: kind === 'mision' ? this.habitKey() : null };
     const b = this.badge();
     this.busy.set(true);
     try {
@@ -184,7 +222,7 @@ export class EditBadge {
       <ui-page-header title="Insignias" back="/racha/logros" backLabel="Logros">
         <button uiBtn small type="button" (click)="edit(null)"><app-icon name="plus" [size]="16" />Agregar</button>
       </ui-page-header>
-      <p class="hint">Se ganan solas al llegar a la meta: se calculan con tus días, sin guardar nada más. Quitar una insignia no toca tu racha.</p>
+      <p class="hint">Cada insignia tiene cuatro niveles, de Bronce a Platino, con su propia meta. Se ganan solos al llegar a ella: se calculan con tus días, sin guardar nada más. Quitar una insignia no toca tu racha.</p>
 
       @if (failed()) {
         <ui-error-state message="No se pudieron cargar tus insignias" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" />
@@ -201,7 +239,7 @@ export class EditBadge {
               <ui-switch [checked]="b.def.active" [label]="(b.def.active ? 'Desactivar ' : 'Activar ') + b.def.name" [disabled]="busy()" (toggled)="setActive(b.def, $event)" />
             </div>
           } @empty {
-            <ui-empty-state icon="trophy" title="Aún no hay insignias" text="Crea una con la meta que quieras: días de racha, misiones, XP o una misión concreta.">
+            <ui-empty-state icon="trophy" title="Aún no hay insignias" text="Crea una con las metas que quieras para Bronce, Plata, Oro y Platino: días de racha, misiones, XP o una misión concreta.">
               <button uiBtn small type="button" (click)="edit(null)"><app-icon name="plus" [size]="16" />Agregar insignia</button>
             </ui-empty-state>
           }
@@ -225,7 +263,7 @@ export class EditBadge {
     .item.off .ico { background: var(--s2); color: var(--tx3); }
     .lt { display: flex; flex-direction: column; min-width: 0; }
     .ln { font-size: 15px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ls { font-size: 13px; line-height: 18px; color: var(--tx2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ls { font-size: 13px; line-height: 18px; color: var(--tx2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .skel { display: flex; flex-direction: column; gap: var(--sp-3); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

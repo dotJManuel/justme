@@ -77,9 +77,9 @@
     </section>
 
     <section class="lvl" aria-label="Nivel">
-      <div class="lh"><span class="ln">{{ level().name }}</span><span class="lx num">{{ level().xp }} / {{ level().lvl * XP_LEVEL }} XP</span></div>
-      <ui-progress-bar tone="orange" [height]="10" [value]="level().into" [max]="XP_LEVEL" [label]="'Progreso del nivel ' + level().lvl" />
-      <span class="ll">{{ level().left }} XP para nivel {{ level().lvl + 1 }} · {{ level().earned }} {{ level().earned === 1 ? 'insignia ganada' : 'insignias ganadas' }}</span>
+      <div class="lh"><span class="ln">{{ level().name }}</span><span class="lx num">{{ level().xp }}{{ level().next === null ? '' : ' / ' + level().next }} XP</span></div>
+      <ui-progress-bar tone="orange" [height]="10" [value]="level().into" [max]="level().size" [label]="'Progreso del nivel ' + level().lvl" />
+      <span class="ll">{{ level().next === null ? 'Nivel máximo' : level().left + ' XP para nivel ' + (level().lvl + 1) }} · {{ level().earned }} {{ level().earned === 1 ? 'insignia ganada' : 'insignias ganadas' }}</span>
     </section>
   </div>
 

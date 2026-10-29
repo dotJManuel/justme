@@ -8,22 +8,22 @@ interface BadgeRow {
   name: string;
   icon: string;
   kind: BadgeKind;
-  target: number;
+  targets: number[];
   habit_key: string | null;
   active: boolean;
 }
 
 /** Lo que se captura de una insignia (la base de datos pone el id y el orden). */
-export type BadgeDraft = Pick<BadgeDef, 'name' | 'icon' | 'kind' | 'target' | 'habitKey'>;
+export type BadgeDraft = Pick<BadgeDef, 'name' | 'icon' | 'kind' | 'targets' | 'habitKey'>;
 
-const COLS = 'id, name, icon, kind, target, habit_key, active';
+const COLS = 'id, name, icon, kind, targets, habit_key, active';
 
 const toDef = (r: BadgeRow): BadgeDef => ({
   id: r.id,
   name: r.name,
   icon: (BADGE_ICONS as string[]).includes(r.icon) ? (r.icon as IconName) : 'trophy',
   kind: r.kind,
-  target: r.target,
+  targets: r.targets,
   habitKey: r.habit_key,
   active: r.active,
 });
@@ -32,7 +32,7 @@ const toRow = (d: BadgeDraft) => ({
   name: d.name,
   icon: d.icon,
   kind: d.kind,
-  target: d.target,
+  targets: d.targets,
   // Solo el tipo "mision" lleva misión (la base lo exige así)
   habit_key: d.kind === 'mision' ? d.habitKey : null,
 });

@@ -33,6 +33,7 @@ export class DevDemo {
     const groups = ['Mañana', 'Durante el día', 'Noche', 'Tarde'].map((name, i) => ({ id: 'g' + i, name }));
     config.groups.set(groups);
     config.groupsReady.set(true);
+    config.planReady.set(true);
     config.habits.set(
       DEFAULT_HABITS.map((h) => {
         const tarde = h.k === 'revisar'; // una misión en un grupo propio
@@ -116,7 +117,17 @@ export class DevDemo {
           ],
     );
     links.loaded.set(true);
-    badges.all.set(DEFAULT_BADGES.map((b, i) => ({ ...b, id: 'b' + i, active: i !== 4 })));
+    // Metas ajustadas a los pocos días de la demo, para ver los cuatro niveles (y uno sin nivel)
+    const demoTargets: Record<number, number[]> = { 0: [1, 5, 20, 25], 1: [1, 3, 7, 14], 3: [1, 2, 3, 30], 5: [5, 20, 40, 80] };
+    badges.all.set(
+      DEFAULT_BADGES.map((b, i) => ({
+        ...b,
+        ...(i === 5 ? { kind: 'misiones' as const, name: 'Imparable' } : {}),
+        targets: demoTargets[i] ?? b.targets,
+        id: 'b' + i,
+        active: i !== 4,
+      })),
+    );
     badges.loaded.set(true);
     (badges as unknown as { loading: Promise<void> }).loading = Promise.resolve();
     (links as unknown as { loading: Promise<void> }).loading = Promise.resolve();

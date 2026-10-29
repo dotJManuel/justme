@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
-import { XP_LEVEL } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
 import { countDone } from '../habits/streaks';
 import { Icon } from '../icons/icon';
@@ -25,14 +24,14 @@ import { badgeStates, levelName } from './logros.config';
       </div>
     } @else {
       <section class="level" aria-label="Nivel">
-        <ui-progress-ring [size]="88" [stroke]="8" tone="orange" [value]="level().into" [max]="XP_LEVEL" [label]="'Progreso del nivel ' + level().n">
+        <ui-progress-ring [size]="88" [stroke]="8" tone="orange" [value]="level().into" [max]="level().size" [label]="'Progreso del nivel ' + level().n">
           <span class="rl">NIVEL</span>
           <span class="rn num">{{ level().n }}</span>
         </ui-progress-ring>
         <div class="lt">
           <span class="ln">{{ level().name }}</span>
-          <span class="lx num"><strong>{{ level().xp }}</strong> / {{ level().n * XP_LEVEL }} XP</span>
-          <span class="ll">{{ level().left }} XP para nivel {{ level().n + 1 }}</span>
+          <span class="lx num"><strong>{{ level().xp }}</strong>{{ level().next === null ? '' : ' / ' + level().next }} XP</span>
+          <span class="ll">{{ level().next === null ? 'Nivel máximo' : level().left + ' XP para nivel ' + (level().n + 1) }}</span>
         </div>
       </section>
 
@@ -59,9 +58,16 @@ import { badgeStates, levelName } from './logros.config';
         }
         <ul class="grid">
           @for (b of badges(); track b.def.id) {
-            <li class="badge" [class.on]="b.earned" [attr.aria-label]="b.def.name + ': ' + (b.earned ? 'ganada' : b.rule + ', ' + b.sub)">
-              <span class="bi"><app-icon [name]="b.def.icon" [size]="26" /></span>
+            <li class="badge" [class]="'t' + b.tier" [attr.aria-label]="b.def.name + ': ' + (b.earned ? 'nivel ' + b.tierName : 'sin nivel') + ', ' + b.sub">
+              <span class="bi"><app-icon [name]="b.def.icon" [size]="28" /></span>
               <span class="bn">{{ b.def.name }}</span>
+              <span class="bt">{{ b.tierName || 'Sin nivel' }}</span>
+              <span class="pips" aria-hidden="true">
+                @for (p of pips; track p) {
+                  <span class="pip" [class]="'p' + p" [class.on]="b.tier >= p"></span>
+                }
+              </span>
+              <span class="bar" aria-hidden="true"><span class="fill" [class]="'p' + (b.tier + 1)" [style.width.%]="b.pct"></span></span>
               <span class="bs num">{{ b.sub }}</span>
             </li>
           }
@@ -94,14 +100,37 @@ import { badgeStates, levelName } from './logros.config';
     .none a { color: var(--ac); font-weight: 600; }
     h2 { font-size: 20px; line-height: 28px; font-weight: 700; }
     .ic { font-size: 14px; color: var(--tx2); }
-    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
-    .badge { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 8px 14px; border-radius: var(--rr-2); background: var(--sf); box-shadow: inset 0 0 0 1px var(--bd); text-align: center; }
-    .bi { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--s2); color: var(--tx3); }
-    .bn { font-size: 13px; line-height: 16px; font-weight: 600; color: var(--tx2); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+    @media (min-width: 640px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .badge { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 12px 14px; border-radius: var(--rr-2); background: var(--sf); box-shadow: inset 0 0 0 1px var(--bd); text-align: center; }
+    .bi { display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 4px; border-radius: 50%; background: var(--s2); color: var(--tx3); }
+    .bn { font-size: 14px; line-height: 18px; font-weight: 600; color: var(--tx2); }
+    .bt { font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tx3); }
     .bs { font-size: 12px; line-height: 16px; color: var(--tx2); text-align: center; }
-    .badge.on .bi { background: var(--orf); color: var(--ink); }
-    .badge.on .bn { color: var(--tx); }
+    .badge:not(.t0) .bn { color: var(--tx); }
+    .badge:not(.t0) .bt { color: var(--tx2); }
+    /* El metal del nivel alcanzado */
+    .badge:not(.t0) .bi { color: var(--ink); box-shadow: inset 0 0 0 3px rgb(255 255 255 / 0.45), inset 0 -3px 6px rgb(0 0 0 / 0.14), var(--sh1); }
+    .badge.t1 .bi { background: var(--tier-1g); }
+    .badge.t2 .bi { background: var(--tier-2g); }
+    .badge.t3 .bi { background: var(--tier-3g); }
+    .badge.t4 .bi { background: var(--tier-4g); }
+    /* Los cuatro niveles, encendidos hasta donde llegó */
+    .pips { display: flex; gap: 6px; margin-top: 2px; }
+    .pip { width: 10px; height: 10px; border-radius: 50%; background: var(--s3); box-shadow: inset 0 0 0 1px var(--bd2); }
+    .pip.on { box-shadow: none; }
+    .pip.p1.on { background: var(--tier-1g); }
+    .pip.p2.on { background: var(--tier-2g); }
+    .pip.p3.on { background: var(--tier-3g); }
+    .pip.p4.on { background: var(--tier-4g); }
+    /* Avance hacia el siguiente nivel, con el color de ese nivel */
+    .bar { width: 100%; height: 6px; border-radius: var(--rr-pill); background: var(--s3); overflow: hidden; }
+    .fill { display: block; height: 100%; border-radius: var(--rr-pill); background: var(--tier-4); transition: width 0.35s ease; }
+    .fill.p1 { background: var(--tier-1); }
+    .fill.p2 { background: var(--tier-2); }
+    .fill.p3 { background: var(--tier-3); }
+    .fill.p5 { background: var(--tier-4); }
     .skel { display: flex; flex-direction: column; gap: var(--sp-3); }
     .skel .stats { display: grid; }
   `,
@@ -112,7 +141,7 @@ export class LogrosPage implements OnInit {
   private readonly config = inject(ConfigService);
   protected readonly badgesSvc = inject(BadgesService);
 
-  protected readonly XP_LEVEL = XP_LEVEL;
+  protected readonly pips = [1, 2, 3, 4];
   protected readonly failed = signal(false);
   protected readonly badgesFailed = signal(false);
 
@@ -143,8 +172,8 @@ export class LogrosPage implements OnInit {
 
   protected readonly level = computed(() => {
     const xp = this.store.xp();
-    const n = this.store.level();
-    return { xp, n, name: levelName(n), into: xp % XP_LEVEL, left: XP_LEVEL - (xp % XP_LEVEL) };
+    const { level: n, next, into, size, left } = this.store.levelInfo();
+    return { xp, n, name: levelName(n), next, into, size, left };
   });
   protected readonly stats = computed(() => [
     { value: this.store.streaks().cur, label: 'Días de racha' },
