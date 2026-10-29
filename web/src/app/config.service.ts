@@ -5,8 +5,9 @@ import {
   DEFAULT_GOAL,
   DEFAULT_HABITS,
 } from './habits/habits.config';
+import { LEVEL_CAP_DEFAULT, levelRatioFor, levelThresholds, yearXpFor } from './habits/levels';
 import { inferGroup, orderGroupNames } from './habits/mission-groups';
-import { RachaConfig } from './habits/streaks';
+import { RachaConfig, dateKey } from './habits/streaks';
 import { SupabaseService } from './supabase.service';
 
 export interface HabitItem {
@@ -33,6 +34,14 @@ interface HabitRow {
   group_id?: string | null;
 }
 
+interface PlanRow {
+  level_cap: number;
+  level_ratio: number | string;
+  /** Fecha aaaa-mm-dd. */
+  level_start: string;
+  level_xp: number[] | null;
+}
+
 interface GroupRow {
   id: string;
   name: string;
@@ -56,8 +65,21 @@ export class ConfigService {
   readonly goal = signal(DEFAULT_GOAL);
   readonly freezeMin = signal(DEFAULT_FREEZE_MIN);
   readonly activeDays = signal<number[]>(DEFAULT_ACTIVE_DAYS);
+  /**
+   * Plan de niveles (supabase/22_plan_de_niveles.sql): nivel máximo, qué parte de las misiones activas se espera cumplir
+   * cada día y desde cuándo cuenta el año.
+   */
+  readonly levelCap = signal(LEVEL_CAP_DEFAULT);
+  readonly levelRatio = signal(levelRatioFor(DEFAULT_GOAL, DEFAULT_HABITS.length));
+  readonly levelStart = signal(dateKey(new Date()));
+  /** ¿Existen esas columnas? Si no, se usa el plan inicial y no se ajusta. */
+  readonly planReady = signal(false);
+  /** Experiencia total que pide cada nivel (el elemento i es la del nivel i + 1). */
+  readonly levels = signal<number[]>(this.initialLevels());
 
   readonly activeHabits = computed(() => this.habits().filter((h) => h.active));
+  /** Misiones al día que se espera cumplir: esa parte de las activas. */
+  readonly expectedPerDay = computed(() => Math.max(1, this.levelRatio() * this.activeHabits().length));
   readonly racha = computed<RachaConfig>(() => ({
     habitKeys: this.habits().map((h) => h.k),
     goal: this.goal(),
@@ -85,18 +107,47 @@ export class ConfigService {
     this.goal.set(DEFAULT_GOAL);
     this.freezeMin.set(DEFAULT_FREEZE_MIN);
     this.activeDays.set(DEFAULT_ACTIVE_DAYS);
+    this.levelCap.set(LEVEL_CAP_DEFAULT);
+    this.levelRatio.set(levelRatioFor(DEFAULT_GOAL, DEFAULT_HABITS.length));
+    this.levelStart.set(dateKey(new Date()));
+    this.levels.set(this.initialLevels());
+    this.planReady.set(false);
+  }
+
+  /** La tabla de niveles de arranque: un año a las misiones al día que se espera cumplir. */
+  private initialLevels(): number[] {
+    const expected = this.habits().length ? this.expectedPerDay() : DEFAULT_GOAL;
+    return levelThresholds(yearXpFor(expected, this.activeDays()), this.levelCap());
+  }
+
+  /** Guarda la tabla de niveles que ajustó el plan (ver LevelsService). */
+  async saveLevels(levels: number[]): Promise<void> {
+    const { error } = await this.client
+      .from('settings')
+      .upsert({ level_xp: levels, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) throw error;
+    this.levels.set(levels);
   }
 
   async saveSettings(goal: number, freezeMin: number, activeDays: number[]): Promise<void> {
     const days = [...activeDays].sort();
+    // Con la meta nueva cambia qué parte de las misiones activas se espera cumplir al día
+    const ratio = levelRatioFor(goal, this.activeHabits().length);
     const { error } = await this.client.from('settings').upsert(
-      { goal, freeze_min: freezeMin, active_days: days, updated_at: new Date().toISOString() },
+      {
+        goal,
+        freeze_min: freezeMin,
+        active_days: days,
+        ...(this.planReady() && { level_ratio: ratio }),
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: 'user_id' },
     );
     if (error) throw error;
     this.goal.set(goal);
     this.freezeMin.set(freezeMin);
     this.activeDays.set(days);
+    if (this.planReady()) this.levelRatio.set(ratio);
   }
 
   // ── Misiones
@@ -208,10 +259,10 @@ export class ConfigService {
   // ── Carga
 
   private async fetch(): Promise<void> {
-    let { settings, habits, groups } = await this.read();
+    let { settings, habits, groups, plan } = await this.read();
     if (!settings) {
       await this.seed();
-      ({ settings, habits, groups } = await this.read());
+      ({ settings, habits, groups, plan } = await this.read());
     }
     if (!settings) throw new Error('No se pudieron crear los ajustes');
     this.goal.set(settings.goal);
@@ -222,12 +273,32 @@ export class ConfigService {
     this.habits.set(
       habits.map((r) => ({ k: r.key, name: r.name, when: r.when_text, active: r.active, groupId: r.group_id ?? null })),
     );
+    this.planReady.set(plan !== null);
+    if (plan) {
+      this.levelCap.set(plan.level_cap);
+      this.levelRatio.set(Number(plan.level_ratio));
+      this.levelStart.set(plan.level_start);
+      const saved = plan.level_xp;
+      if (saved && saved.length === plan.level_cap && saved[0] === 0) {
+        this.levels.set(saved);
+      } else {
+        // Primera vez con el plan: se calcula la tabla y se guarda (si no se puede guardar, se usa igual y se reintenta después)
+        this.levels.set(this.initialLevels());
+        void this.saveLevels(this.levels()).catch(() => undefined);
+      }
+    }
   }
 
   /** Los grupos, o null si todavía no existe la tabla (no se ha corrido supabase/20_grupos_de_misiones.sql). */
   private async readGroups(): Promise<GroupRow[] | null> {
     const g = await this.client.from('mission_groups').select('id, name, position').order('position').order('created_at');
     return g.error ? null : (g.data as GroupRow[]);
+  }
+
+  /** El plan de niveles, o null si todavía no existen sus columnas (no se ha corrido supabase/22_plan_de_niveles.sql). */
+  private async readPlan(): Promise<PlanRow | null> {
+    const p = await this.client.from('settings').select('level_cap, level_ratio, level_start, level_xp').maybeSingle();
+    return p.error || !p.data ? null : (p.data as unknown as PlanRow);
   }
 
   private async read() {
@@ -239,7 +310,7 @@ export class ConfigService {
     ]);
     if (s.error) throw s.error;
     if (h.error) throw h.error;
-    return { settings: s.data, habits: h.data as unknown as HabitRow[], groups };
+    return { settings: s.data, habits: h.data as unknown as HabitRow[], groups, plan: await this.readPlan() };
   }
 
   /** Primera vez del usuario: copia los valores iniciales a la base de datos. */

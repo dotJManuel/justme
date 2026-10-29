@@ -26,6 +26,5 @@ export const DEFAULT_FREEZE_MIN = 15;
 export const DEFAULT_ACTIVE_DAYS = [1, 2, 3, 4, 5];
 
 export const XP_PER = 10;
-export const XP_LEVEL = 200;
 export const DN = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 export const MN = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];

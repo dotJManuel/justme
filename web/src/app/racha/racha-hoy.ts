@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
-import { DN, MN, XP_LEVEL, XP_PER } from '../habits/habits.config';
+import { DN, MN, XP_PER } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
 import { addDays, countDone, dateKey, doneAtLabel, isRestDay, parseKey } from '../habits/streaks';
 import { Icon } from '../icons/icon';
@@ -134,13 +134,12 @@ export class RachaHoy implements OnInit {
   // ── Nivel (en escritorio, junto a la racha)
   protected readonly level = computed(() => {
     const xp = this.store.xp();
-    const lvl = this.store.level();
+    const { level: lvl, next, into, size, left } = this.store.levelInfo();
     const days = this.store.days();
     const totalDone = Object.keys(days).reduce((s, k) => s + this.done(k), 0);
     const earned = badgeStates({ days, streaks: this.streaks(), totalDone, xp }, this.badgesSvc.active()).filter((b) => b.earned).length;
-    return { xp, lvl, name: levelName(lvl), into: xp % XP_LEVEL, left: XP_LEVEL - (xp % XP_LEVEL), earned };
+    return { xp, lvl, name: levelName(lvl), next, into, size, left, earned };
   });
-  protected readonly XP_LEVEL = XP_LEVEL;
 
   protected select(k: string) {
     this.sel.set(k);

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, model, signal } from '@angular/core';
 import { ConfigService, HabitGroup, HabitItem } from '../config.service';
 import { DN } from '../habits/habits.config';
+import { LevelsService } from '../habits/levels.service';
 import { MAX_GROUP_LENGTH } from '../habits/mission-groups';
 import { Icon } from '../icons/icon';
 import { BottomSheet } from '../ui/bottom-sheet';
@@ -54,6 +55,7 @@ function groupNameError(config: ConfigService, raw: string, exceptId?: string, s
 })
 export class EditHabit {
   protected readonly config = inject(ConfigService);
+  private readonly levels = inject(LevelsService);
   private readonly toasts = inject(ToastService);
   readonly habit = input<HabitItem | null>(null);
   readonly open = model(false);
@@ -110,6 +112,7 @@ export class EditHabit {
         if (Object.keys(patch).length) await this.config.updateHabit(h.k, patch);
       } else {
         await this.config.addHabit(name, when, groupId);
+        await this.levels.recalculate();
       }
       this.toasts.show({ message: h ? 'Misión actualizada' : 'Misión agregada' });
       this.open.set(false);
@@ -291,6 +294,9 @@ export class EditGroup {
             }
           </div>
           <p class="hint pad">Desactivar una misión la oculta, pero sus marcas pasadas siguen contando en tu historial.</p>
+          @if (config.planReady()) {
+            <p class="hint pad">Al agregar o quitar misiones, la experiencia de los niveles que te faltan se ajusta sola para llegar al nivel {{ config.levelCap() }} en un año. Los que ya alcanzaste no cambian.</p>
+          }
         </section>
       }
     </div>
@@ -329,6 +335,7 @@ export class EditGroup {
 })
 export class MisionesPage implements OnInit {
   protected readonly config = inject(ConfigService);
+  private readonly levels = inject(LevelsService);
   private readonly toasts = inject(ToastService);
 
   /** Lunes primero; el valor es el número de día de JavaScript (0 = domingo). */
@@ -409,19 +416,21 @@ export class MisionesPage implements OnInit {
   }
 
   protected saveSettings() {
-    return this.run('Ajustes guardados', () => this.config.saveSettings(this.goalN(), this.freezeN(), this.days()));
+    return this.run('Ajustes guardados', () => this.config.saveSettings(this.goalN(), this.freezeN(), this.days()), true);
   }
   protected setActive(k: string, active: boolean) {
-    return this.run('', () => this.config.updateHabit(k, { active }));
+    return this.run('', () => this.config.updateHabit(k, { active }), true);
   }
   protected move(k: string, dir: -1 | 1) {
     return this.run('', () => this.config.move(k, dir));
   }
 
-  private async run(okMessage: string, action: () => Promise<void>) {
+  /** Con `replan`, después del cambio se ajusta el plan de niveles (cambió lo que se espera cumplir al día). */
+  private async run(okMessage: string, action: () => Promise<void>, replan = false) {
     this.busy.set(true);
     try {
       await action();
+      if (replan) await this.levels.recalculate();
       if (okMessage) this.toasts.show({ message: okMessage });
     } catch {
       this.toasts.error(SAVE_ERROR);

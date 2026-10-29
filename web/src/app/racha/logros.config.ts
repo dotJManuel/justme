@@ -31,7 +31,7 @@ export const MAX_TARGET = 100000;
 export const TIER_PRESETS: Record<BadgeKind, number[]> = {
   racha: [7, 30, 100, 365],
   misiones: [10, 100, 500, 2000],
-  xp: [100, 1000, 5000, 20000],
+  xp: [500, 2500, 7500, 15000],
   mision: [7, 30, 100, 365],
 };
 

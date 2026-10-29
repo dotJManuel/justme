@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
-import { XP_LEVEL } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
 import { countDone } from '../habits/streaks';
 import { Icon } from '../icons/icon';
@@ -25,14 +24,14 @@ import { badgeStates, levelName } from './logros.config';
       </div>
     } @else {
       <section class="level" aria-label="Nivel">
-        <ui-progress-ring [size]="88" [stroke]="8" tone="orange" [value]="level().into" [max]="XP_LEVEL" [label]="'Progreso del nivel ' + level().n">
+        <ui-progress-ring [size]="88" [stroke]="8" tone="orange" [value]="level().into" [max]="level().size" [label]="'Progreso del nivel ' + level().n">
           <span class="rl">NIVEL</span>
           <span class="rn num">{{ level().n }}</span>
         </ui-progress-ring>
         <div class="lt">
           <span class="ln">{{ level().name }}</span>
-          <span class="lx num"><strong>{{ level().xp }}</strong> / {{ level().n * XP_LEVEL }} XP</span>
-          <span class="ll">{{ level().left }} XP para nivel {{ level().n + 1 }}</span>
+          <span class="lx num"><strong>{{ level().xp }}</strong>{{ level().next === null ? '' : ' / ' + level().next }} XP</span>
+          <span class="ll">{{ level().next === null ? 'Nivel máximo' : level().left + ' XP para nivel ' + (level().n + 1) }}</span>
         </div>
       </section>
 
@@ -142,7 +141,6 @@ export class LogrosPage implements OnInit {
   private readonly config = inject(ConfigService);
   protected readonly badgesSvc = inject(BadgesService);
 
-  protected readonly XP_LEVEL = XP_LEVEL;
   protected readonly pips = [1, 2, 3, 4];
   protected readonly failed = signal(false);
   protected readonly badgesFailed = signal(false);
@@ -174,8 +172,8 @@ export class LogrosPage implements OnInit {
 
   protected readonly level = computed(() => {
     const xp = this.store.xp();
-    const n = this.store.level();
-    return { xp, n, name: levelName(n), into: xp % XP_LEVEL, left: XP_LEVEL - (xp % XP_LEVEL) };
+    const { level: n, next, into, size, left } = this.store.levelInfo();
+    return { xp, n, name: levelName(n), next, into, size, left };
   });
   protected readonly stats = computed(() => [
     { value: this.store.streaks().cur, label: 'Días de racha' },

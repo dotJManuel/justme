@@ -33,6 +33,7 @@ export class DevDemo {
     const groups = ['Mañana', 'Durante el día', 'Noche', 'Tarde'].map((name, i) => ({ id: 'g' + i, name }));
     config.groups.set(groups);
     config.groupsReady.set(true);
+    config.planReady.set(true);
     config.habits.set(
       DEFAULT_HABITS.map((h) => {
         const tarde = h.k === 'revisar'; // una misión en un grupo propio
