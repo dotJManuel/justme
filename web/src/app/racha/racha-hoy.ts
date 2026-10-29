@@ -10,7 +10,8 @@ import { Icon } from '../icons/icon';
 import { Button } from '../ui/button';
 import { ProgressBar } from '../ui/progress';
 import { ErrorState, Skeleton } from '../ui/states';
-import { BADGES, badgeStates, levelName } from './logros.config';
+import { BadgesService } from './badges.service';
+import { badgeStates, levelName } from './logros.config';
 
 type DayState = 'ok' | 'frozen' | 'part' | 'rest' | 'miss' | '';
 
@@ -37,6 +38,7 @@ interface Mission {
 export class RachaHoy implements OnInit {
   protected readonly store = inject(HabitsStore);
   protected readonly config = inject(ConfigService);
+  private readonly badgesSvc = inject(BadgesService);
 
   protected readonly xpPer = XP_PER;
   protected readonly failed = signal(false);
@@ -46,6 +48,8 @@ export class RachaHoy implements OnInit {
 
   async ngOnInit() {
     await this.load();
+    // Para contar las insignias ganadas (tarjeta de nivel, escritorio); si no cargan, el conteo queda en 0.
+    this.badgesSvc.load().catch(() => undefined);
   }
 
   protected async load() {
@@ -128,7 +132,7 @@ export class RachaHoy implements OnInit {
     const lvl = this.store.level();
     const days = this.store.days();
     const totalDone = Object.keys(days).reduce((s, k) => s + this.done(k), 0);
-    const earned = badgeStates({ days, streaks: this.streaks(), totalDone }, BADGES).filter((b) => b.earned).length;
+    const earned = badgeStates({ days, streaks: this.streaks(), totalDone, xp }, this.badgesSvc.active()).filter((b) => b.earned).length;
     return { xp, lvl, name: levelName(lvl), into: xp % XP_LEVEL, left: XP_LEVEL - (xp % XP_LEVEL), earned };
   });
   protected readonly XP_LEVEL = XP_LEVEL;

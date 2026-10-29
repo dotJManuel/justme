@@ -7,6 +7,8 @@ import { FinanzasService } from '../finanzas/finanzas.service';
 import { DEFAULT_HABITS } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
 import { LinksService } from '../perfil/links.service';
+import { BadgesService } from '../racha/badges.service';
+import { DEFAULT_BADGES } from '../racha/logros.config';
 
 /**
  * Solo en desarrollo (ruta /_demo?to=/racha): llena la app con datos de ejemplo y una sesión falsa para ver las
@@ -20,6 +22,7 @@ export class DevDemo {
     const store = inject(HabitsStore);
     const fin = inject(FinanzasService);
     const links = inject(LinksService);
+    const badges = inject(BadgesService);
     const router = inject(Router);
 
     const now = new Date();
@@ -103,6 +106,9 @@ export class DevDemo {
           ],
     );
     links.loaded.set(true);
+    badges.all.set(DEFAULT_BADGES.map((b, i) => ({ ...b, id: 'b' + i, active: i !== 4 })));
+    badges.loaded.set(true);
+    (badges as unknown as { loading: Promise<void> }).loading = Promise.resolve();
     (links as unknown as { loading: Promise<void> }).loading = Promise.resolve();
 
     auth.session.set({ user: { id: 'demo', email: 'demo@example.test' } } as Session);

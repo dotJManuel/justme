@@ -1,12 +1,14 @@
 import { Routes } from '@angular/router';
 import { HistorialPage } from '../finanzas/historial/historial-page';
 import { CatalogosPage } from './catalogos-page';
+import { InsigniasPage } from './insignias-page';
 import { MisionesPage } from './misiones-page';
 import { PerfilPage } from './perfil-page';
 
 export const PERFIL_ROUTES: Routes = [
   { path: '', component: PerfilPage },
   { path: 'misiones', component: MisionesPage },
+  { path: 'insignias', component: InsigniasPage },
   { path: 'catalogos', component: CatalogosPage },
   { path: 'historial', component: HistorialPage },
 ];

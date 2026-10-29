@@ -4,6 +4,7 @@ import { ConfigService } from './config.service';
 import { FinanzasService } from './finanzas/finanzas.service';
 import { HabitsStore } from './habits/habits.store';
 import { LinksService } from './perfil/links.service';
+import { BadgesService } from './racha/badges.service';
 import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +14,7 @@ export class AuthService {
   private readonly finanzas = inject(FinanzasService);
   private readonly habits = inject(HabitsStore);
   private readonly links = inject(LinksService);
+  private readonly badges = inject(BadgesService);
 
   readonly session = signal<Session | null>(null);
   readonly user = computed(() => this.session()?.user ?? null);
@@ -29,6 +31,7 @@ export class AuthService {
         this.finanzas.reset();
         this.habits.reset();
         this.links.reset();
+        this.badges.reset();
       }
       this.session.set(session);
     });

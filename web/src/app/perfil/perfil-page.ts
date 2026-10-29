@@ -113,6 +113,7 @@ export class PerfilPage implements OnInit {
   ];
   protected readonly entries: Entry[] = [
     { icon: 'flame', title: 'Misiones y meta diaria', sub: 'Lista, horarios, días de descanso y congelación', link: '/perfil/misiones' },
+    { icon: 'trophy', title: 'Insignias', sub: 'Las metas que se ganan en Logros', link: '/perfil/insignias' },
     { icon: 'sliders', title: 'Catálogos', sub: 'Tarjetas, conceptos y personas', link: '/perfil/catalogos' },
     { icon: 'history', title: 'Historial de cambios', sub: 'Lo que se agregó, editó o eliminó', link: '/perfil/historial' },
   ];
