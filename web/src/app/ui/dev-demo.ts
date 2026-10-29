@@ -6,6 +6,7 @@ import { ConfigService } from '../config.service';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { DEFAULT_HABITS } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
+import { inferGroup } from '../habits/mission-groups';
 import { LinksService } from '../perfil/links.service';
 import { BadgesService } from '../racha/badges.service';
 import { DEFAULT_BADGES } from '../racha/logros.config';
@@ -29,7 +30,16 @@ export class DevDemo {
     const at = (h: number, m: number, back = 0) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - back, h, m).toISOString();
     const iso = (back: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - back).toISOString().slice(0, 10);
 
-    config.habits.set(DEFAULT_HABITS.map((h) => ({ ...h, active: true })));
+    const groups = ['Mañana', 'Durante el día', 'Noche', 'Tarde'].map((name, i) => ({ id: 'g' + i, name }));
+    config.groups.set(groups);
+    config.groupsReady.set(true);
+    config.habits.set(
+      DEFAULT_HABITS.map((h) => {
+        const tarde = h.k === 'revisar'; // una misión en un grupo propio
+        const name = tarde ? 'Tarde' : inferGroup(h.when);
+        return { ...h, active: true, when: tarde ? '15:00 · 20 min' : h.when, groupId: groups.find((g) => g.name === name)?.id ?? null };
+      }),
+    );
     (config as unknown as { loading: Promise<void> }).loading = Promise.resolve();
 
     const all = (back: number) => Object.fromEntries(DEFAULT_HABITS.map((h) => [h.k, at(20, 0, back)]));

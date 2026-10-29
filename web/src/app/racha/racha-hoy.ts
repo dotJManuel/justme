@@ -4,7 +4,6 @@ import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
 import { DN, MN, XP_LEVEL, XP_PER } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
-import { MISSION_GROUPS, missionGroup } from '../habits/mission-groups';
 import { addDays, countDone, dateKey, doneAtLabel, isRestDay, parseKey } from '../habits/streaks';
 import { Icon } from '../icons/icon';
 import { Button } from '../ui/button';
@@ -18,7 +17,9 @@ type DayState = 'ok' | 'frozen' | 'part' | 'rest' | 'miss' | '';
 interface Mission {
   k: string;
   name: string;
+  /** Horario o nota de la misión. */
   when: string;
+  group: string;
   /** Hora en que se marcó ("08:15"), vacía si no se guardó. */
   at: string;
   on: boolean;
@@ -109,17 +110,21 @@ export class RachaHoy implements OnInit {
 
   private readonly missions = computed<Mission[]>(() => {
     const marks = this.store.days()[this.sel()] ?? {};
-    return this.config.activeHabits().map((h) => ({ k: h.k, name: h.name, when: h.when, at: doneAtLabel(marks[h.k], this.sel()), on: !!marks[h.k] }));
+    return this.config.activeHabits().map((h) => ({
+      k: h.k, name: h.name, when: h.when, group: this.config.groupName(h), at: doneAtLabel(marks[h.k], this.sel()), on: !!marks[h.k],
+    }));
   });
-  /** Móvil: lo que falta, por momento del día. */
+  /** Los grupos que tienen misiones, en el orden de los grupos. */
+  private readonly groupNames = computed(() => this.config.orderGroups(this.missions().map((m) => m.group)));
+  /** Móvil: lo que falta, por grupo. */
   protected readonly groups = computed(() =>
-    MISSION_GROUPS.map((name) => ({ name, items: this.missions().filter((m) => !m.on && missionGroup(m.when) === name) })).filter((g) => g.items.length),
+    this.groupNames().map((name) => ({ name, items: this.missions().filter((m) => !m.on && m.group === name) })).filter((g) => g.items.length),
   );
   protected readonly completed = computed(() => this.missions().filter((m) => m.on));
-  /** Escritorio: todas, por momento del día, con cuántas van. */
+  /** Escritorio: todas, por grupo, con cuántas van. */
   protected readonly allGroups = computed(() =>
-    MISSION_GROUPS.map((name) => {
-      const items = this.missions().filter((m) => missionGroup(m.when) === name);
+    this.groupNames().map((name) => {
+      const items = this.missions().filter((m) => m.group === name);
       return { name, items, done: items.filter((m) => m.on).length };
     }).filter((g) => g.items.length),
   );

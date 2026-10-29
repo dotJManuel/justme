@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, model, signal } from '@angular/core';
-import { ConfigService, HabitItem } from '../config.service';
+import { ConfigService, HabitGroup, HabitItem } from '../config.service';
 import { DN } from '../habits/habits.config';
+import { MAX_GROUP_LENGTH } from '../habits/mission-groups';
 import { Icon } from '../icons/icon';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { Button } from '../ui/button';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { Chip } from '../ui/chip';
-import { Switch } from '../ui/fields';
+import { Choice, Option, Switch } from '../ui/fields';
 import { Input } from '../ui/input';
 import { PageHeader } from '../ui/page-header';
 import { ErrorState, Skeleton } from '../ui/states';
@@ -13,15 +15,36 @@ import { ToastService } from '../ui/toast';
 
 const SAVE_ERROR = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
 
-/** Agregar o renombrar una misión (nombre y horario o nota). */
+/** Valor de la opción "Nuevo grupo" (un id real es un uuid: nunca coincide). */
+const NEW_GROUP = '__nuevo__';
+
+/** Por qué un nombre de grupo no sirve ('' si sirve). Con `strictUnique`, uno que ya existe tampoco sirve. */
+function groupNameError(config: ConfigService, raw: string, exceptId?: string, strictUnique = false): string {
+  const n = raw.trim();
+  if (!n) return 'Escribe el nombre del grupo';
+  if (n.length > MAX_GROUP_LENGTH) return `Máximo ${MAX_GROUP_LENGTH} caracteres`;
+  if (/[[\]]/.test(n)) return 'No uses corchetes';
+  return strictUnique && config.groupExists(n, exceptId) ? 'Ya tienes un grupo con ese nombre' : '';
+}
+
+/**
+ * Agregar o editar una misión: nombre, en qué momento del día va (un grupo: Mañana, Durante el día, Noche o uno propio,
+ * o uno nuevo en el momento) y, si quieres, el horario o una nota.
+ */
 @Component({
   selector: 'app-edit-habit',
-  imports: [BottomSheet, Button, Input],
+  imports: [BottomSheet, Button, Choice, Input],
   template: `
     <ui-bottom-sheet [title]="habit() ? 'Editar misión' : 'Nueva misión'" [(open)]="open">
       <form (submit)="$event.preventDefault(); save()" novalidate>
         <ui-input label="Nombre" placeholder="Ej. LeetCode" [(value)]="name" [error]="error()" />
-        <ui-input label="Horario o nota (opcional)" placeholder="Ej. 7:40 – 8:40" [(value)]="when" />
+        @if (config.groupsReady()) {
+          <ui-choice label="¿Cuándo?" columns="repeat(2, minmax(0, 1fr))" [options]="groupOptions()" [(value)]="group" />
+          @if (group() === newGroup) {
+            <ui-input label="Nombre del grupo" placeholder="Ej. Tarde" [(value)]="groupName" [error]="groupError()" autocomplete="off" />
+          }
+        }
+        <ui-input label="Horario o nota (opcional)" placeholder="Ej. 7:40 – 8:40" [(value)]="detail" />
         <button uiBtn block type="submit" [disabled]="busy()">{{ busy() ? 'Guardando…' : habit() ? 'Guardar cambios' : 'Agregar misión' }}</button>
       </form>
     </ui-bottom-sheet>
@@ -30,23 +53,39 @@ const SAVE_ERROR = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditHabit {
-  private readonly config = inject(ConfigService);
+  protected readonly config = inject(ConfigService);
   private readonly toasts = inject(ToastService);
   readonly habit = input<HabitItem | null>(null);
   readonly open = model(false);
 
+  protected readonly newGroup = NEW_GROUP;
   protected readonly name = signal('');
-  protected readonly when = signal('');
+  /** Id del grupo elegido, o NEW_GROUP. */
+  protected readonly group = signal('');
+  protected readonly groupName = signal('');
+  protected readonly detail = signal('');
   protected readonly busy = signal(false);
   private readonly tried = signal(false);
+
+  protected readonly groupOptions = computed<Option[]>(() => [
+    ...this.config.groups().map((g) => ({ value: g.id, label: g.name })),
+    { value: NEW_GROUP, label: '+ Nuevo grupo' },
+  ]);
+
   protected readonly error = computed(() => (this.tried() && !this.name().trim() ? 'Escribe el nombre de la misión' : ''));
+  protected readonly groupError = computed(() => (this.tried() && this.group() === NEW_GROUP ? groupNameError(this.config, this.groupName()) : ''));
 
   constructor() {
     effect(() => {
       if (!this.open()) return;
       const h = this.habit();
+      const groups = this.config.groups();
+      // Sin grupo guardado se propone el que dice su hora; una misión nueva empieza en "Durante el día".
+      const wanted = h ? this.config.groupName(h) : 'Durante el día';
       this.name.set(h?.name ?? '');
-      this.when.set(h?.when ?? '');
+      this.group.set(h?.groupId ?? groups.find((g) => g.name === wanted)?.id ?? groups[0]?.id ?? NEW_GROUP);
+      this.groupName.set('');
+      this.detail.set(h?.when ?? '');
       this.tried.set(false);
     });
   }
@@ -54,18 +93,23 @@ export class EditHabit {
   protected async save() {
     this.tried.set(true);
     const name = this.name().trim();
-    const when = this.when().trim();
-    if (!name || this.busy()) return;
+    if (!name || this.groupError() || this.busy()) return;
+    const when = this.detail().trim();
     const h = this.habit();
     this.busy.set(true);
     try {
+      let groupId: string | null = null;
+      if (this.config.groupsReady()) {
+        groupId = this.group() === NEW_GROUP ? await this.groupFor(this.groupName().trim()) : this.group();
+      }
       if (h) {
         const patch: Partial<Omit<HabitItem, 'k'>> = {};
         if (name !== h.name) patch.name = name;
         if (when !== h.when) patch.when = when;
+        if (this.config.groupsReady() && groupId !== h.groupId) patch.groupId = groupId;
         if (Object.keys(patch).length) await this.config.updateHabit(h.k, patch);
       } else {
-        await this.config.addHabit(name, when);
+        await this.config.addHabit(name, when, groupId);
       }
       this.toasts.show({ message: h ? 'Misión actualizada' : 'Misión agregada' });
       this.open.set(false);
@@ -73,6 +117,101 @@ export class EditHabit {
       this.toasts.error(SAVE_ERROR);
     } finally {
       this.busy.set(false);
+    }
+  }
+
+  /** El grupo con ese nombre (si ya existe, sin importar mayúsculas) o uno nuevo. */
+  private async groupFor(name: string): Promise<string> {
+    const n = name.toLowerCase();
+    return this.config.groups().find((g) => g.name.toLowerCase() === n)?.id ?? (await this.config.addGroup(name));
+  }
+}
+
+/** Agregar, renombrar o quitar un grupo ("¿Cuándo?"). Solo se quita uno vacío. */
+@Component({
+  selector: 'app-edit-group',
+  imports: [BottomSheet, Button, ConfirmDialog, Input],
+  template: `
+    <ui-bottom-sheet [title]="group() ? 'Editar grupo' : 'Nuevo grupo'" [(open)]="open">
+      <form (submit)="$event.preventDefault(); save()" novalidate>
+        <ui-input label="Nombre" placeholder="Ej. Tarde" [(value)]="name" [error]="nameError()" autocomplete="off" />
+        @if (size() > 0) {
+          <p class="hint">Tiene {{ size() }} {{ size() === 1 ? 'misión' : 'misiones' }}. Para quitar el grupo, primero pásalas a otro desde su edición.</p>
+        }
+        <div class="actions" [class.one]="!group()">
+          @if (group()) {
+            <button uiBtn variant="danger" type="button" [disabled]="busy() || size() > 0" (click)="asking.set(true)">Quitar</button>
+          }
+          <button uiBtn type="submit" [disabled]="busy()">{{ busy() ? 'Guardando…' : group() ? 'Guardar cambios' : 'Agregar grupo' }}</button>
+        </div>
+      </form>
+    </ui-bottom-sheet>
+    <ui-confirm-dialog
+      [(open)]="asking" [title]="'¿Quitar el grupo «' + (group()?.name ?? '') + '»?'" message="No tiene misiones, así que no se pierde nada."
+      confirmLabel="Quitar" [busy]="busy()" (confirmed)="remove()"
+    />
+  `,
+  styles: `
+    form { display: flex; flex-direction: column; gap: 16px; }
+    .hint { font-size: 13px; line-height: 18px; color: var(--tx2); }
+    .actions { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+    .actions.one { grid-template-columns: 1fr; }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EditGroup {
+  private readonly config = inject(ConfigService);
+  private readonly toasts = inject(ToastService);
+  readonly group = input<HabitGroup | null>(null);
+  readonly open = model(false);
+
+  protected readonly name = signal('');
+  protected readonly busy = signal(false);
+  protected readonly asking = signal(false);
+  private readonly tried = signal(false);
+
+  protected readonly size = computed(() => (this.group() ? this.config.groupSize(this.group()!.id) : 0));
+  protected readonly nameError = computed(() => (this.tried() ? groupNameError(this.config, this.name(), this.group()?.id, true) : ''));
+
+  constructor() {
+    effect(() => {
+      if (!this.open()) return;
+      this.name.set(this.group()?.name ?? '');
+      this.tried.set(false);
+    });
+  }
+
+  protected async save() {
+    this.tried.set(true);
+    const name = this.name().trim();
+    if (groupNameError(this.config, name, this.group()?.id, true) || this.busy()) return;
+    const g = this.group();
+    this.busy.set(true);
+    try {
+      if (!g) await this.config.addGroup(name);
+      else if (name !== g.name) await this.config.renameGroup(g.id, name);
+      this.toasts.show({ message: g ? 'Grupo actualizado' : 'Grupo agregado' });
+      this.open.set(false);
+    } catch {
+      this.toasts.error(SAVE_ERROR);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  protected async remove() {
+    const g = this.group();
+    if (!g) return;
+    this.busy.set(true);
+    try {
+      await this.config.removeGroup(g.id);
+      this.toasts.show({ message: 'Grupo quitado' });
+      this.open.set(false);
+    } catch {
+      this.toasts.error(SAVE_ERROR);
+    } finally {
+      this.busy.set(false);
+      this.asking.set(false);
     }
   }
 }
@@ -83,7 +222,7 @@ export class EditHabit {
  */
 @Component({
   selector: 'app-misiones-page',
-  imports: [Button, Chip, EditHabit, ErrorState, Icon, Input, PageHeader, Skeleton, Switch],
+  imports: [Button, Chip, EditGroup, EditHabit, ErrorState, Icon, Input, PageHeader, Skeleton, Switch],
   template: `
     <div class="page">
       <ui-page-header title="Misiones" />
@@ -117,6 +256,25 @@ export class EditHabit {
           <button uiBtn block type="button" [disabled]="!dirty() || !valid() || busy()" (click)="saveSettings()">Guardar ajustes</button>
         </section>
 
+        @if (config.groupsReady()) {
+          <section aria-labelledby="gr-h">
+            <div class="sec"><h2 id="gr-h" class="l">Grupos · {{ config.groups().length }}</h2><button type="button" class="add" (click)="editGroup(null)"><app-icon name="plus" [size]="16" />Agregar</button></div>
+            <div class="panel scroll">
+              @for (g of config.groups(); track g.id; let first = $first; let last = $last) {
+                <div class="item">
+                  <button type="button" class="txt" (click)="editGroup(g)" [attr.aria-label]="'Editar el grupo ' + g.name">
+                    <span class="ln">{{ g.name }}</span>
+                    <span class="ls">{{ groupCount(g.id) }}</span>
+                  </button>
+                  <button type="button" class="mv" aria-label="Subir" [disabled]="first || busy()" (click)="moveGroup(g.id, -1)"><app-icon name="chevron-up" [size]="18" /></button>
+                  <button type="button" class="mv" aria-label="Bajar" [disabled]="last || busy()" (click)="moveGroup(g.id, 1)"><app-icon name="chevron-down" [size]="18" /></button>
+                </div>
+              }
+            </div>
+            <p class="hint pad">Son los apartados de Racha ("¿Cuándo?"). Su orden aquí es el que se ve allá.</p>
+          </section>
+        }
+
         <section aria-labelledby="ms-h">
           <div class="sec"><h2 id="ms-h" class="l">Misiones · {{ config.habits().length }}</h2><button type="button" class="add" (click)="edit(null)"><app-icon name="plus" [size]="16" />Agregar</button></div>
           <div class="panel scroll">
@@ -124,7 +282,7 @@ export class EditHabit {
               <div class="item" [class.off]="!h.active">
                 <button type="button" class="txt" (click)="edit(h)" [attr.aria-label]="'Editar ' + h.name">
                   <span class="ln">{{ h.name }}</span>
-                  <span class="ls">{{ h.when || 'Sin horario' }}</span>
+                  <span class="ls">{{ whenText(h) }}</span>
                 </button>
                 <button type="button" class="mv" aria-label="Subir" [disabled]="first || busy()" (click)="move(h.k, -1)"><app-icon name="chevron-up" [size]="18" /></button>
                 <button type="button" class="mv" aria-label="Bajar" [disabled]="last || busy()" (click)="move(h.k, 1)"><app-icon name="chevron-down" [size]="18" /></button>
@@ -138,6 +296,7 @@ export class EditHabit {
     </div>
 
     <app-edit-habit [habit]="editing()" [(open)]="editOpen" />
+    <app-edit-group [group]="editingGroup()" [(open)]="groupOpen" />
   `,
   styles: `
     :host { display: block; }
@@ -200,6 +359,8 @@ export class MisionesPage implements OnInit {
 
   protected readonly editing = signal<HabitItem | null>(null);
   protected readonly editOpen = signal(false);
+  protected readonly editingGroup = signal<HabitGroup | null>(null);
+  protected readonly groupOpen = signal(false);
 
   ngOnInit() {
     void this.load();
@@ -220,6 +381,26 @@ export class MisionesPage implements OnInit {
 
   protected toggleDay(n: number) {
     this.days.update((d) => (d.includes(n) ? d.filter((x) => x !== n) : [...d, n]));
+  }
+
+  /** Grupo y horario, para la lista: "Mañana · 7:00" o solo el grupo si no hay horario. */
+  protected whenText(h: HabitItem): string {
+    const group = this.config.groupName(h);
+    return h.when ? `${group} · ${h.when}` : group;
+  }
+
+  protected groupCount(id: string): string {
+    const n = this.config.groupSize(id);
+    return n === 0 ? 'Sin misiones' : n === 1 ? '1 misión' : `${n} misiones`;
+  }
+
+  protected editGroup(g: HabitGroup | null) {
+    this.editingGroup.set(g);
+    this.groupOpen.set(true);
+  }
+
+  protected moveGroup(id: string, dir: -1 | 1) {
+    return this.run('', () => this.config.moveGroup(id, dir));
   }
 
   protected edit(h: HabitItem | null) {
