@@ -6,6 +6,7 @@ import { ConfigService } from '../config.service';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { DEFAULT_HABITS } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
+import { LinksService } from '../perfil/links.service';
 
 /**
  * Solo en desarrollo (ruta /_demo?to=/racha): llena la app con datos de ejemplo y una sesión falsa para ver las
@@ -18,6 +19,7 @@ export class DevDemo {
     const config = inject(ConfigService);
     const store = inject(HabitsStore);
     const fin = inject(FinanzasService);
+    const links = inject(LinksService);
     const router = inject(Router);
 
     const now = new Date();
@@ -92,7 +94,18 @@ export class DevDemo {
     // Después de que Supabase anuncie "sin sesión" (INITIAL_SESSION), para que no la borre.
     void auth.ready.then(() =>
       setTimeout(() => {
-        auth.session.set({ user: { id: 'demo', email: 'demo@example.test' } } as Session);
+        links.links.set(
+      new URLSearchParams(location.search).has('empty')
+        ? []
+        : [
+            { id: 'l1', title: 'Prep de entrevistas', url: 'https://interview-prepjm.netlify.app/', note: 'Preguntas y respuestas para repasar' },
+            { id: 'l2', title: 'Banco', url: 'https://www.ejemplo.com/cuenta', note: '' },
+          ],
+    );
+    links.loaded.set(true);
+    (links as unknown as { loading: Promise<void> }).loading = Promise.resolve();
+
+    auth.session.set({ user: { id: 'demo', email: 'demo@example.test' } } as Session);
         void router.navigateByUrl(new URLSearchParams(location.search).get('to') ?? '/');
       }, 600),
     );
