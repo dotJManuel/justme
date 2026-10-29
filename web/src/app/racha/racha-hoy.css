@@ -49,6 +49,7 @@
 .ln { font-size: 18px; font-weight: 700; }
 .lx { font-size: 14px; color: var(--tx2); }
 .ll { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--or); }
+.all { align-self: flex-start; display: inline-flex; align-items: center; min-height: var(--touch); margin-block: -10px; color: var(--ac); font-size: 14px; font-weight: 600; text-decoration: none; }
 
 /* ── Misiones */
 .missions { display: flex; flex-direction: column; gap: 12px; }
