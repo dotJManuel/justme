@@ -15,6 +15,7 @@ export const DEFAULT_HABITS: HabitDef[] = [
   { k: 'vozalta', name: 'Leer en voz alta', when: '19:00 · 10 a 15 min' },
   { k: 'proyecto', name: 'Proyecto o curso', when: '21:00 – 22:30' },
   { k: 'reto', name: 'Reto con gente', when: 'Cuando surja' },
+  { k: 'ejercicio', name: 'Hacer ejercicio', when: '30 min · huecos del día' },
 ];
 
 /** Misiones por día para sumar a la racha. */

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
 import { XP_LEVEL } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
@@ -6,12 +7,13 @@ import { countDone } from '../habits/streaks';
 import { Icon } from '../icons/icon';
 import { ProgressRing } from '../ui/progress';
 import { ErrorState, Skeleton } from '../ui/states';
-import { BADGES, badgeStates, levelName } from './logros.config';
+import { BadgesService } from './badges.service';
+import { badgeStates, levelName } from './logros.config';
 
 /** Racha › Logros: nivel y XP, estadísticas y las insignias (ganadas en naranja, bloqueadas con su progreso). */
 @Component({
   selector: 'app-logros-page',
-  imports: [ErrorState, Icon, ProgressRing, Skeleton],
+  imports: [ErrorState, Icon, ProgressRing, RouterLink, Skeleton],
   template: `
     @if (failed()) {
       <ui-error-state message="No se pudieron cargar tus datos" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" />
@@ -41,10 +43,23 @@ import { BADGES, badgeStates, levelName } from './logros.config';
       </section>
 
       <section aria-labelledby="ins-h" class="ins">
-        <div class="ih"><h2 id="ins-h">Insignias</h2><span class="ic">{{ earned() }} de {{ badges().length }}</span></div>
+        <div class="ih">
+          <h2 id="ins-h">Insignias</h2>
+          <span class="ic">{{ earned() }} de {{ badges().length }}</span>
+          <a class="mng" routerLink="/perfil/insignias">Administrar</a>
+        </div>
+        @if (badgesFailed()) {
+          <ui-error-state [inline]="true" message="No se pudieron cargar tus insignias" (retry)="loadBadges()" />
+        } @else if (!badgesSvc.loaded()) {
+          <div class="grid" aria-busy="true" aria-label="Cargando insignias">
+            <ui-skeleton height="120px" radius="20px" /><ui-skeleton height="120px" radius="20px" /><ui-skeleton height="120px" radius="20px" />
+          </div>
+        } @else if (!badges().length) {
+          <p class="none">No tienes insignias activas. <a routerLink="/perfil/insignias">Agrega o activa una</a>.</p>
+        }
         <ul class="grid">
           @for (b of badges(); track b.def.id) {
-            <li class="badge" [class.on]="b.earned" [attr.aria-label]="b.def.name + ': ' + (b.earned ? 'ganada' : b.def.rule + ', ' + b.sub)">
+            <li class="badge" [class.on]="b.earned" [attr.aria-label]="b.def.name + ': ' + (b.earned ? 'ganada' : b.rule + ', ' + b.sub)">
               <span class="bi"><app-icon [name]="b.def.icon" [size]="26" /></span>
               <span class="bn">{{ b.def.name }}</span>
               <span class="bs num">{{ b.sub }}</span>
@@ -72,7 +87,11 @@ import { BADGES, badgeStates, levelName } from './logros.config';
     .sl { font-size: 13px; color: var(--tx2); }
 
     .ins { display: flex; flex-direction: column; gap: 12px; }
-    .ih { display: flex; justify-content: space-between; align-items: baseline; }
+    .ih { display: flex; align-items: baseline; gap: 12px; }
+    .ih h2 { flex: 1; }
+    .mng { display: inline-flex; align-items: center; min-height: var(--touch); margin-block: -12px; color: var(--ac); font-size: 14px; font-weight: 600; text-decoration: none; }
+    .none { font-size: 14px; color: var(--tx2); }
+    .none a { color: var(--ac); font-weight: 600; }
     h2 { font-size: 20px; line-height: 28px; font-weight: 700; }
     .ic { font-size: 14px; color: var(--tx2); }
     .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -91,9 +110,11 @@ import { BADGES, badgeStates, levelName } from './logros.config';
 export class LogrosPage implements OnInit {
   protected readonly store = inject(HabitsStore);
   private readonly config = inject(ConfigService);
+  protected readonly badgesSvc = inject(BadgesService);
 
   protected readonly XP_LEVEL = XP_LEVEL;
   protected readonly failed = signal(false);
+  protected readonly badgesFailed = signal(false);
 
   async ngOnInit() {
     await this.load();
@@ -106,6 +127,13 @@ export class LogrosPage implements OnInit {
     } catch {
       this.failed.set(true);
     }
+    this.loadBadges();
+  }
+
+  /** Las insignias se cargan aparte: si fallan, el resto de Logros se sigue viendo. */
+  protected loadBadges() {
+    this.badgesFailed.set(false);
+    this.badgesSvc.load().catch(() => this.badgesFailed.set(true));
   }
 
   private readonly totalDone = computed(() => {
@@ -125,7 +153,11 @@ export class LogrosPage implements OnInit {
     { value: this.store.xp(), label: 'XP totales' },
   ]);
   protected readonly badges = computed(() =>
-    badgeStates({ days: this.store.days(), streaks: this.store.streaks(), totalDone: this.totalDone() }, BADGES),
+    badgeStates(
+      { days: this.store.days(), streaks: this.store.streaks(), totalDone: this.totalDone(), xp: this.store.xp() },
+      this.badgesSvc.active(),
+      (key) => this.config.habits().find((h) => h.k === key)?.name ?? key,
+    ),
   );
   protected readonly earned = computed(() => this.badges().filter((b) => b.earned).length);
 }
