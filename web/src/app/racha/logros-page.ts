@@ -32,6 +32,7 @@ import { badgeStates, levelName } from './logros.config';
           <span class="ln">{{ level().name }}</span>
           <span class="lx num"><strong>{{ level().xp }}</strong>{{ level().next === null ? '' : ' / ' + level().next }} XP</span>
           <span class="ll">{{ level().next === null ? 'Nivel máximo' : level().left + ' XP para nivel ' + (level().n + 1) }}</span>
+          <a class="all" routerLink="/racha/niveles">Ver todos los niveles</a>
         </div>
       </section>
 
@@ -85,6 +86,7 @@ import { badgeStates, levelName } from './logros.config';
     .lx { font-size: 14px; color: var(--tx2); text-align: left; }
     .lx strong { color: var(--tx); }
     .ll { font-size: 13px; font-weight: 600; color: var(--or); }
+    .all { align-self: flex-start; display: inline-flex; align-items: center; min-height: var(--touch); margin-block: -10px; color: var(--ac); font-size: 14px; font-weight: 600; text-decoration: none; }
 
     .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     @media (min-width: 1024px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

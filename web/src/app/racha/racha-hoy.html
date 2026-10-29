@@ -80,6 +80,7 @@
       <div class="lh"><span class="ln">{{ level().name }}</span><span class="lx num">{{ level().xp }}{{ level().next === null ? '' : ' / ' + level().next }} XP</span></div>
       <ui-progress-bar tone="orange" [height]="10" [value]="level().into" [max]="level().size" [label]="'Progreso del nivel ' + level().lvl" />
       <span class="ll">{{ level().next === null ? 'Nivel máximo' : level().left + ' XP para nivel ' + (level().lvl + 1) }} · {{ level().earned }} {{ level().earned === 1 ? 'insignia ganada' : 'insignias ganadas' }}</span>
+      <a class="all" routerLink="/racha/niveles">Ver todos los niveles</a>
     </section>
   </div>
 
