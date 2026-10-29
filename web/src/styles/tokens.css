@@ -68,6 +68,12 @@
   --rr-1: 14px; --rr-2: 20px; --rr-pill: 999px;
   --rf-1: 6px; --rf-2: 10px; --rf-3: 12px;
 
+  /* Niveles de las insignias: metales (el ícono encima va en --ink) */
+  --tier-1: #c9834a; --tier-1g: linear-gradient(145deg, #e8b184, #b06a32);
+  --tier-2: #a4afbc; --tier-2g: linear-gradient(145deg, #f2f5f8, #a2adb9);
+  --tier-3: #e0a410; --tier-3g: linear-gradient(145deg, #ffe58a, #e0a410);
+  --tier-4: #6ec4dc; --tier-4g: linear-gradient(145deg, #f0fdff, #7ccce3 55%, #b8a7f2);
+
   --touch: 44px;
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--ac);
   --nav-h: 64px;
