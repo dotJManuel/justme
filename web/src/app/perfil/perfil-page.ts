@@ -126,7 +126,7 @@ export class PerfilPage implements OnInit {
   ];
 
   protected readonly links: { icon: IconName; title: string; sub: string; url: string }[] = [
-    { icon: 'languages', title: 'Prep de entrevistas', sub: 'Preguntas y respuestas para repasar', url: 'https://bucolic-pithivier-f53701.netlify.app/' },
+    { icon: 'languages', title: 'Prep de entrevistas', sub: 'Preguntas y respuestas para repasar', url: 'https://interview-prepjm.netlify.app/' },
   ];
 
   ngOnInit() {
