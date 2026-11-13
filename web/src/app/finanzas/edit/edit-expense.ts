@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { ConceptInput } from '../../add/concept-input';
 import { Button } from '../../ui/button';
-import { Amount } from '../../ui/fields';
+import { Amount, Switch } from '../../ui/fields';
 import { Input } from '../../ui/input';
 import { BottomSheet } from '../../ui/bottom-sheet';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
@@ -14,7 +14,7 @@ import { FinanzasService } from '../finanzas.service';
 /** Editar o eliminar un gasto (de una tarjeta o fijo). Los mismos campos y reglas que la tabla de siempre. */
 @Component({
   selector: 'app-edit-expense',
-  imports: [Amount, BottomSheet, Button, ConceptInput, ConfirmDialog, ErrorState, Input],
+  imports: [Amount, Switch, BottomSheet, Button, ConceptInput, ConfirmDialog, ErrorState, Input],
   template: `
     <ui-bottom-sheet [title]="e()?.section === 'fijos' ? 'Gasto fijo' : 'Gasto'" [(open)]="open">
       <form (submit)="$event.preventDefault(); save()" novalidate>
@@ -26,6 +26,12 @@ import { FinanzasService } from '../finanzas.service';
             <ui-input label="Monto total" inputmode="decimal" placeholder="0.00" [(value)]="total" [error]="totalError()" />
           </div>
           <ui-input label="Fecha y hora" type="datetime-local" [(value)]="purchased" />
+        }
+        @if (isCard()) {
+          <div class="pinrow">
+            <span class="pt">Fijar compra<small>Recurrente: se queda al terminar el corte</small></span>
+            <ui-switch label="Fijar compra" [checked]="pinned()" (toggled)="pinned.set($event)" />
+          </div>
         }
         @if (fin.error()) {
           <ui-error-state [inline]="true" [message]="fin.error()" (retry)="save()" />
@@ -43,6 +49,9 @@ import { FinanzasService } from '../finanzas.service';
   `,
   styles: `
     form { display: flex; flex-direction: column; gap: 16px; }
+    .pinrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .pt { display: flex; flex-direction: column; font-size: 15px; font-weight: 600; }
+    .pt small { font-size: 13px; font-weight: 400; color: var(--tx2); }
     .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
     .actions { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
   `,
@@ -65,6 +74,7 @@ export class EditExpense {
   protected readonly installment = signal('');
   protected readonly total = signal('');
   protected readonly purchased = signal('');
+  protected readonly pinned = signal(false);
   protected readonly busy = signal(false);
   protected readonly asking = signal(false);
   private readonly tried = signal(false);
@@ -78,6 +88,7 @@ export class EditExpense {
       this.installment.set(e.installment);
       this.total.set(e.total === null ? '' : String(e.total));
       this.purchased.set(isoToLocalInput(e.purchasedAt));
+      this.pinned.set(!!e.pinned);
       this.tried.set(false);
       this.fin.error.set('');
     });
@@ -103,6 +114,7 @@ export class EditExpense {
       if (this.installment().trim() !== e.installment) patch.installment = this.installment().trim();
       if (total !== e.total) patch.total = total;
       if (this.purchased() !== isoToLocalInput(e.purchasedAt)) patch.purchasedAt = localInputToIso(this.purchased());
+      if (this.pinned() !== !!e.pinned) patch.pinned = this.pinned();
     }
     if (!Object.keys(patch).length) return void this.open.set(false);
     this.busy.set(true);

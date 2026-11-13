@@ -50,6 +50,8 @@ export interface Expense {
   amount: number;
   /** Fecha y hora de la compra (ISO); solo en tarjetas. */
   purchasedAt: string | null;
+  /** Compra recurrente: se queda al terminar el corte (las demás compras de contado se limpian). */
+  pinned?: boolean;
 }
 
 export interface Cut {

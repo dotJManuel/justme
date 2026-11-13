@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cutProgress, cutText, daysUntil, initials, parseInstallment, percent } from './finanzas.view-calc';
+import { Expense } from './finanzas.models';
+import { cutProgress, cutText, daysUntil, endedPurchases, initials, parseInstallment, percent } from './finanzas.view-calc';
 
 describe('parseInstallment', () => {
   it('lee "pago K de N"', () => {
@@ -48,5 +49,31 @@ describe('percent', () => {
   it('redondea y no divide entre cero', () => {
     expect(percent(7047.18, 13688.18)).toBe(51);
     expect(percent(5, 0)).toBe(0);
+  });
+});
+
+describe('endedPurchases', () => {
+  const e = (p: Partial<Expense>): Expense => ({
+    id: 'x', section: 'tarjeta', cardId: 'c', conceptId: null, conceptText: 'Algo', installment: '', total: 10, amount: 10,
+    purchasedAt: '2026-10-20T12:00:00', ...p,
+  });
+  const rows = [
+    e({ id: 'vieja' }),
+    e({ id: 'fijada', pinned: true }),
+    e({ id: 'meses', installment: '02/06' }),
+    e({ id: 'actual', purchasedAt: '2026-11-15T12:00:00' }),
+    e({ id: 'sinfecha', purchasedAt: null }),
+    e({ id: 'fijo', section: 'fijos', cardId: null, purchasedAt: null }),
+  ];
+
+  it('solo limpia compras de contado de cortes anteriores', () => {
+    expect(endedPurchases(rows, '2026-11-13').map((x) => x.id)).toEqual(['vieja', 'sinfecha']);
+  });
+
+  it('no toca las fijadas, las de meses ni los gastos fijos', () => {
+    const ids = endedPurchases(rows, '2030-01-01').map((x) => x.id);
+    expect(ids).not.toContain('fijada');
+    expect(ids).not.toContain('meses');
+    expect(ids).not.toContain('fijo');
   });
 });

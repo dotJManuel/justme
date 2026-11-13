@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, output, signal } 
 import { localInputToIso, nowLocalInput, parseMoney, resolveConcept } from '../finanzas/finanzas.calc';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { Button } from '../ui/button';
-import { Amount, Choice, Option } from '../ui/fields';
+import { Amount, Choice, Option, Switch } from '../ui/fields';
 import { Input } from '../ui/input';
 import { ErrorState } from '../ui/states';
 import { ToastService } from '../ui/toast';
@@ -20,7 +20,7 @@ let lastDest = '';
  */
 @Component({
   selector: 'app-add-expense',
-  imports: [Amount, Button, Choice, ConceptInput, ErrorState, Input],
+  imports: [Amount, Switch, Button, Choice, ConceptInput, ErrorState, Input],
   template: `
     <form (submit)="$event.preventDefault(); save()" novalidate>
       <ui-amount [label]="isCard() ? 'Por pagar' : 'Monto mensual'" [(value)]="amount" [error]="amountError()" />
@@ -42,6 +42,12 @@ let lastDest = '';
         </div>
       }
 
+      @if (isCard()) {
+        <div class="pinrow">
+          <span class="pt">Fijar compra<small>Recurrente: se queda al terminar el corte</small></span>
+          <ui-switch label="Fijar compra" [checked]="pinned()" (toggled)="pinned.set($event)" />
+        </div>
+      }
       @if (fin.error()) {
         <ui-error-state [inline]="true" [message]="fin.error()" (retry)="save()" />
       }
@@ -51,6 +57,9 @@ let lastDest = '';
   styles: `
     :host { display: block; }
     form { display: flex; flex-direction: column; gap: 16px; }
+    .pinrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .pt { display: flex; flex-direction: column; font-size: 15px; font-weight: 600; }
+    .pt small { font-size: 13px; font-weight: 400; color: var(--tx2); }
     .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
     .when { display: flex; align-items: center; gap: 10px; min-height: var(--touch); font-size: 14px; color: var(--tx2); }
     .when ui-input { flex: 1; }
@@ -74,6 +83,7 @@ export class AddExpense {
   protected readonly total = signal('');
   protected readonly purchased = signal(nowLocalInput());
   protected readonly editDate = signal(false);
+  protected readonly pinned = signal(false);
   protected readonly busy = signal(false);
   protected readonly tried = signal(false);
 
@@ -128,6 +138,7 @@ export class AddExpense {
       total: card ? (this.draftTotal() ?? amount) : null,
       amount,
       purchasedAt: card ? localInputToIso(this.purchasedTouched ? this.purchased() : nowLocalInput()) : null,
+      pinned: card && this.pinned(),
     });
     this.busy.set(false);
     if (!ok) return; // el error queda a la vista y lo capturado, intacto

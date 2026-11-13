@@ -63,7 +63,7 @@ export class FinanzasView {
 
   /** Una compra de contado se filtra por su fecha; los gastos fijos y los meses sin intereses siempre cuentan. */
   expenseInMonth(e: Expense): boolean {
-    return e.section === 'fijos' || !!e.installment || !e.purchasedAt || this.inMonth(dateKey(new Date(e.purchasedAt)));
+    return e.section === 'fijos' || !!e.pinned || !!e.installment || !e.purchasedAt || this.inMonth(dateKey(new Date(e.purchasedAt)));
   }
   debtInMonth(d: Debt): boolean {
     return this.inMonth(d.date);

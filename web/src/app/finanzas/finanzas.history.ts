@@ -88,6 +88,7 @@ const LABELS: Record<string, string> = {
   name: 'Nombre',
   cut_day: 'Día de corte',
   active: 'Activo',
+  pinned: 'Fijada',
   monthly_income: 'Ingreso mensual',
   scope: 'Lista',
 };
@@ -134,7 +135,7 @@ function show(key: string, value: unknown, nameOf: NameOf): string {
   if (key === 'applies_to') return 'un cargo';
   if (key === 'kind' || key === 'direction' || key === 'section') return TYPE[String(value)] ?? String(value);
   if (key === 'scope') return SCOPE[String(value)] ?? String(value);
-  if (key === 'active') return value ? 'Sí' : 'No';
+  if (key === 'active' || key === 'pinned') return value ? 'Sí' : 'No';
   return String(value);
 }
 

@@ -7,6 +7,8 @@ import { AddSheetService } from '../../add/add-sheet.service';
 import { Icon } from '../../icons/icon';
 import { Button } from '../../ui/button';
 import { Chip } from '../../ui/chip';
+import { ConfirmDialog } from '../../ui/confirm-dialog';
+import { ToastService } from '../../ui/toast';
 import { money } from '../../ui/money';
 import { ProgressBar } from '../../ui/progress';
 import { EmptyState } from '../../ui/states';
@@ -17,7 +19,7 @@ import { FinanzasView } from '../finanzas-view';
 import { conceptLabel, currentCutPeriod, cutPending, expenseTotals } from '../finanzas.calc';
 import { Expense } from '../finanzas.models';
 import { FinanzasService } from '../finanzas.service';
-import { cutProgress, cutText, daysUntil, isMsi, parseInstallment, shortDate } from '../finanzas.view-calc';
+import { cutProgress, cutText, daysUntil, endedPurchases, isMsi, parseInstallment, shortDate } from '../finanzas.view-calc';
 
 const FIXED = 'fijos';
 /** Cuántas compras de contado se ven antes de "Ver todas". */
@@ -27,7 +29,7 @@ const CUT_ALERT_DAYS = 7;
 /** Finanzas › Tarjetas: una tarjeta (o los gastos fijos) con su corte, sus meses sin intereses y sus compras. */
 @Component({
   selector: 'app-tarjetas-page',
-  imports: [Button, Chip, EditCut, EditExpense, EmptyState, Icon, ProgressBar],
+  imports: [Button, Chip, ConfirmDialog, EditCut, EditExpense, EmptyState, Icon, ProgressBar],
   templateUrl: './tarjetas-page.html',
   styleUrls: ['../fin-pages.css', './tarjetas-page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +40,7 @@ export class TarjetasPage {
   protected readonly add = inject(AddSheetService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toasts = inject(ToastService);
 
   protected readonly money = money;
   protected readonly shortDate = shortDate;
@@ -75,7 +78,8 @@ export class TarjetasPage {
   }
   private line(e: Expense) {
     const d = e.purchasedAt ? shortDate(dateKey(new Date(e.purchasedAt))) : '';
-    return { e, name: this.label(e), amount: e.amount, sub: [d, e.installment && !parseInstallment(e.installment) ? e.installment : ''].filter(Boolean).join(' · ') };
+    const sub = [e.pinned ? 'Fijada' : '', d, e.installment && !parseInstallment(e.installment) ? e.installment : ''].filter(Boolean).join(' · ');
+    return { e, name: this.label(e), amount: e.amount, sub, pinned: !!e.pinned };
   }
 
   protected readonly msi = computed(() =>
@@ -87,12 +91,28 @@ export class TarjetasPage {
   private readonly plain = computed(() =>
     this.rows()
       .filter((e) => !isMsi(e) && this.view.expenseInMonth(e) && this.view.matches(this.label(e)))
-      .sort((a, b) => (b.purchasedAt ?? '').localeCompare(a.purchasedAt ?? ''))
+      // Las fijadas (recurrentes) primero; luego, las más recientes.
+      .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || (b.purchasedAt ?? '').localeCompare(a.purchasedAt ?? ''))
       .map((e) => this.line(e)),
   );
   protected readonly showAll = signal(false);
   protected readonly buys = computed(() => (this.showAll() ? this.plain() : this.plain().slice(0, SHOWN)));
   protected readonly buyCount = computed(() => this.plain().length);
+
+  // Selección para borrar varias compras a la vez
+  protected readonly selecting = signal(false);
+  protected readonly picked = signal<ReadonlySet<string>>(new Set());
+  protected readonly allPicked = computed(() => this.buys().length > 0 && this.buys().every((b) => this.picked().has(b.e.id)));
+  protected readonly asking = signal(false);
+  protected readonly busy = signal(false);
+  protected readonly pickedDetails = computed(() => {
+    const pinned = this.buys().filter((b) => this.picked().has(b.e.id) && b.pinned).length;
+    return pinned ? [pinned === 1 ? '1 compra fijada (recurrente)' : `${pinned} compras fijadas (recurrentes)`] : [];
+  });
+
+  // Limpieza al terminar el corte: las compras de contado de cortes anteriores, sin las fijadas
+  protected readonly ended = computed(() => (this.card() && this.period() ? endedPurchases(this.rows(), this.period()!.start) : []));
+  protected readonly cleaning = signal(false);
 
   protected readonly editing = signal<Expense | null>(null);
   protected readonly editOpen = signal(false);
@@ -105,6 +125,45 @@ export class TarjetasPage {
   protected pick(id: string) {
     this.showAll.set(false);
     void this.router.navigate([], { queryParams: { card: id }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  protected toggleSelect() {
+    this.selecting.update((v) => !v);
+    this.picked.set(new Set());
+  }
+
+  protected pickAll() {
+    this.picked.set(this.allPicked() ? new Set() : new Set(this.buys().map((b) => b.e.id)));
+  }
+
+  protected rowClick(e: Expense) {
+    if (!this.selecting()) return this.edit(e);
+    this.picked.update((s) => {
+      const n = new Set(s);
+      if (!n.delete(e.id)) n.add(e.id);
+      return n;
+    });
+  }
+
+  protected async removePicked() {
+    const ids = [...this.picked()];
+    this.busy.set(true);
+    const ok = await this.fin.removeExpenses(ids);
+    this.busy.set(false);
+    this.asking.set(false);
+    if (!ok) return;
+    this.toasts.show({ message: ids.length === 1 ? 'Compra eliminada' : `${ids.length} compras eliminadas` });
+    this.selecting.set(false);
+    this.picked.set(new Set());
+  }
+
+  protected async cleanEnded() {
+    const ids = this.ended().map((e) => e.id);
+    this.busy.set(true);
+    const ok = await this.fin.removeExpenses(ids);
+    this.busy.set(false);
+    this.cleaning.set(false);
+    if (ok) this.toasts.show({ message: ids.length === 1 ? 'Corte limpio: 1 compra eliminada' : `Corte limpio: ${ids.length} compras eliminadas` });
   }
 
   protected edit(e: Expense) {

@@ -17,6 +17,16 @@ export function parseInstallment(text: string): { k: number; n: number } | null 
 /** Compras a meses con forma de "pago K de N"; el resto de las compras de tarjeta son de contado. */
 export const isMsi = (e: Expense): boolean => e.section === 'tarjeta' && parseInstallment(e.installment) !== null;
 
+/**
+ * Compras de contado de cortes que ya terminaron: las de tarjeta con fecha anterior al inicio del corte actual
+ * (o sin fecha), sin las fijadas ni las compras a meses. Eso es lo que se limpia al terminar un corte.
+ */
+export function endedPurchases(rows: Expense[], startKey: string): Expense[] {
+  return rows.filter(
+    (e) => e.section === 'tarjeta' && !e.pinned && !isMsi(e) && (!e.purchasedAt || dateKey(new Date(e.purchasedAt)) < startKey),
+  );
+}
+
 /** "Ismael Pérez" → "IP"; "YO" → "YO"; "mm" → "MM". */
 export function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);

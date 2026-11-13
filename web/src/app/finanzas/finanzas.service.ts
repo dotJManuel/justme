@@ -34,6 +34,7 @@ interface ExpenseRow {
   total: number | null;
   amount: number;
   purchased_at: string | null;
+  pinned: boolean;
 }
 interface CutRow {
   id: string;
@@ -89,7 +90,7 @@ const toAudit = (r: AuditRow): AuditEntry => ({
 
 const CONCEPT_COLS = 'id, scope, name, active';
 const CARD_COLS = 'id, name, cut_day, last4, active';
-const EXPENSE_COLS = 'id, card_id, section, concept_id, concept_text, installment, total, amount, purchased_at';
+const EXPENSE_COLS = 'id, card_id, section, concept_id, concept_text, installment, total, amount, purchased_at, pinned';
 const CUT_COLS = 'id, card_id, period, period_end, amount, paid';
 const DEBT_COLS = 'id, person_id, kind, concept_id, concept_text, amount, date, applies_to, payment_id, archived';
 const FAMILY_COLS = 'id, direction, concept_id, concept_text, person_id, date, amount';
@@ -107,6 +108,7 @@ const toExpense = (r: ExpenseRow): Expense => ({
   total: r.total,
   amount: r.amount,
   purchasedAt: r.purchased_at,
+  pinned: r.pinned,
 });
 const toCut = (r: CutRow): Cut => ({
   id: r.id,
@@ -126,6 +128,7 @@ const expenseRow = (e: Partial<Omit<Expense, 'id'>>) => ({
   ...(e.total !== undefined && { total: e.total }),
   ...(e.amount !== undefined && { amount: e.amount }),
   ...(e.purchasedAt !== undefined && { purchased_at: e.purchasedAt }),
+  ...(e.pinned !== undefined && { pinned: e.pinned }),
 });
 const toDebt = (r: DebtRow): Debt => ({
   id: r.id,
@@ -335,6 +338,20 @@ export class FinanzasService {
       const { error } = await this.client.from('fin_expenses').delete().eq('id', id);
       if (error) throw error;
       this.expenses.update((l) => l.filter((x) => x.id !== id));
+    });
+  }
+
+  /** Borra varias compras de una sola vez. Si la base no borró todas, falla en vez de aparentar que sí. */
+  removeExpenses(ids: string[]): Promise<boolean> {
+    return this.write(async () => {
+      for (let i = 0; i < ids.length; i += 100) {
+        const chunk = ids.slice(i, i + 100);
+        const { data, error } = await this.client.from('fin_expenses').delete().in('id', chunk).select('id');
+        if (error) throw error;
+        const gone = new Set((data ?? []).map((r: { id: string }) => r.id));
+        this.expenses.update((l) => l.filter((x) => !gone.has(x.id)));
+        if (gone.size !== chunk.length) throw new Error('No se borraron todas las compras');
+      }
     });
   }
 

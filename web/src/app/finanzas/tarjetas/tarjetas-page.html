@@ -57,20 +57,48 @@
       </section>
     }
 
+    @if (ended().length) {
+      <section class="panel clean" aria-labelledby="cl-h">
+        <span class="ico"><app-icon name="refresh" [size]="18" /></span>
+        <span class="lt">
+          <span class="ln" id="cl-h">Tu corte anterior ya terminó</span>
+          <span class="ls">{{ ended().length === 1 ? '1 compra de contado por limpiar' : ended().length + ' compras de contado por limpiar' }}. Las fijadas y los meses sin intereses se quedan.</span>
+        </span>
+        <button uiBtn small type="button" (click)="cleaning.set(true)">Limpiar</button>
+      </section>
+    }
+
     <section aria-labelledby="co-h">
       <div class="sec">
         <h2 id="co-h">{{ isFixed() ? 'Gastos fijos' : 'Compras de contado' }}</h2>
-        @if (buyCount() > buys().length || showAll()) {
-          <button type="button" (click)="showAll.set(!showAll())">{{ showAll() ? 'Ver menos' : 'Ver las ' + buyCount() }}</button>
-        }
+        <span class="acts">
+          @if (buyCount() > buys().length || showAll()) {
+            <button type="button" (click)="showAll.set(!showAll())">{{ showAll() ? 'Ver menos' : 'Ver las ' + buyCount() }}</button>
+          }
+          @if (!isFixed() && buyCount()) {
+            <button type="button" (click)="toggleSelect()">{{ selecting() ? 'Cancelar' : 'Seleccionar' }}</button>
+          }
+        </span>
       </div>
+      @if (selecting()) {
+        <div class="selbar" role="status">
+          <span class="sel-n">{{ picked().size === 1 ? '1 seleccionada' : picked().size + ' seleccionadas' }}</span>
+          <button type="button" class="sel-all" (click)="pickAll()">{{ allPicked() ? 'Ninguna' : 'Todas' }}</button>
+          <button uiBtn small variant="danger" type="button" [disabled]="!picked().size" (click)="asking.set(true)"><app-icon name="trash" [size]="16" />Eliminar</button>
+        </div>
+      }
       <div class="panel scroll">
         @for (b of buys(); track b.e.id) {
-          <button type="button" class="row" (click)="edit(b.e)">
-            <span class="ico"><app-icon [name]="isFixed() ? 'home' : 'card'" [size]="18" /></span>
+          <button type="button" class="row" [attr.aria-pressed]="selecting() ? picked().has(b.e.id) : null" (click)="rowClick(b.e)">
+            @if (selecting()) {
+              <span class="chk" [class.on]="picked().has(b.e.id)"><app-icon name="check" [size]="16" /></span>
+            } @else {
+              <span class="ico"><app-icon [name]="isFixed() ? 'home' : 'card'" [size]="18" /></span>
+            }
             <span class="lt"><span class="ln">{{ b.name }}</span>@if (b.sub) { <span class="ls">{{ b.sub }}</span> }</span>
+            @if (b.pinned) { <app-icon class="pin" name="pin" [size]="15" /> }
             <span class="la num exp">{{ money(-b.amount, true) }}</span>
-            <app-icon class="chev" name="chevron-right" [size]="16" />
+            @if (!selecting()) { <app-icon class="chev" name="chevron-right" [size]="16" /> }
           </button>
         } @empty {
           <ui-empty-state [icon]="isFixed() ? 'home' : 'wallet'" [title]="isFixed() ? 'Sin gastos fijos' : 'Sin compras'" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Agrega uno para empezar a llevar tu corte.'">
@@ -84,5 +112,14 @@
   </div>
 </div>
 
+<ui-confirm-dialog
+  [(open)]="asking" [title]="picked().size === 1 ? '¿Eliminar la compra seleccionada?' : '¿Eliminar las ' + picked().size + ' compras seleccionadas?'"
+  message="Quedan registradas en el historial de cambios." [details]="pickedDetails()" [busy]="busy()" (confirmed)="removePicked()"
+/>
+<ui-confirm-dialog
+  [(open)]="cleaning" title="¿Limpiar el corte anterior?" confirmLabel="Limpiar"
+  [message]="'Se eliminan ' + ended().length + ' compras de contado de cortes anteriores. Las fijadas y los meses sin intereses no se tocan. Quedan registradas en el historial de cambios.'"
+  [busy]="busy()" (confirmed)="cleanEnded()"
+/>
 <app-edit-expense [expense]="editing()" [(open)]="editOpen" />
 <app-edit-cut [card]="card()" [(open)]="cutOpen" />
