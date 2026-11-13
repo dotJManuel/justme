@@ -4,10 +4,11 @@ import { AuthService } from '../auth.service';
 import { Icon } from '../icons/icon';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Logo } from '../ui/logo';
 
 @Component({
   selector: 'app-login',
-  imports: [Button, Icon, Input],
+  imports: [Button, Icon, Input, Logo],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

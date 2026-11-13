@@ -3,16 +3,17 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Icon } from '../icons/icon';
 import { ThemeMode, ThemeService } from '../theme.service';
 import { Button } from './button';
+import { Logo } from './logo';
 import { NAV_AFTER_ADD, NAV_BEFORE_ADD, NavDestination } from './nav.config';
 import { Segmented } from './segmented';
 
 /** Barra lateral de escritorio (≥ 1024 px): logo, "Agregar", destinos, y selector de tema. */
 @Component({
   selector: 'ui-sidebar',
-  imports: [RouterLink, RouterLinkActive, Icon, Button, Segmented],
+  imports: [RouterLink, RouterLinkActive, Icon, Button, Logo, Segmented],
   template: `
     <div class="brand">
-      <span class="logo"><app-icon name="check" [size]="18" [stroke]="2.4" /></span>
+      <ui-logo [size]="32" />
       <span class="name">JustMe</span>
     </div>
     <button uiBtn block type="button" (click)="add.emit()"><app-icon name="plus" [size]="18" [stroke]="2.2" />Agregar</button>
@@ -33,7 +34,6 @@ import { Segmented } from './segmented';
     }
     @media (min-width: 1024px) { :host { display: flex; } }
     .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
-    .logo { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--rf-2); background: var(--ac); color: var(--onac); }
     .name { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
     nav { display: flex; flex-direction: column; gap: 2px; }
     .dest {
