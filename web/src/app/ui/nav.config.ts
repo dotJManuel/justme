@@ -18,10 +18,3 @@ export const NAV_AFTER_ADD: NavDestination[] = [
   { path: '/perfil', label: 'Perfil', icon: 'user' },
 ];
 
-/** Subsecciones de Finanzas (en escritorio cuelgan de la barra lateral). */
-export const FINANZAS_SECTIONS: { path: string; label: string }[] = [
-  { path: '/finanzas/resumen', label: 'Resumen' },
-  { path: '/finanzas/tarjetas', label: 'Tarjetas' },
-  { path: '/finanzas/por-cobrar', label: 'Por cobrar' },
-  { path: '/finanzas/familia', label: 'Familia' },
-];

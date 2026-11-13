@@ -1,11 +1,14 @@
 /* Móvil: una columna. Escritorio (≥ 1024 px): indicadores, dos columnas y la tabla de movimientos. */
-.kpis, .side, .movs { display: none; }
-.bal { gap: 16px; }
-.b1 { display: flex; flex-direction: column; gap: 4px; }
-.b2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--bd); }
-.line { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
-button.line { cursor: pointer; border-radius: 8px; }
-.line .sub { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.side, .movs { display: none; }
+.hero { gap: 16px; }
+.hh { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.hl { display: flex; flex-direction: column; gap: 4px; }
+.inc-btn { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-height: var(--touch); padding: 0 4px; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pct { padding: 1px 7px; border-radius: 999px; background: var(--s2); color: var(--tx2); font-weight: 600; }
+.pct.over { background: var(--ors); color: var(--or); }
+.stats { display: none; }
+.warnico { background: var(--ors); color: var(--or); }
+.chev { color: var(--tx3); }
 
 .dh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .dh h2 { font-size: 15px; line-height: 20px; font-weight: 600; }
@@ -25,12 +28,13 @@ button.line { cursor: pointer; border-radius: 8px; }
 .mh small { font-size: 12px; font-weight: 500; color: var(--tx2); }
 
 @media (min-width: 1024px) {
-  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-4); }
-  .kpi { gap: 4px; padding: 20px; }
-  .kv { font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; text-align: left; }
-  .bal { display: none; }
-  .cols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
-  .side { display: flex; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); padding-top: 16px; border-top: 1px solid var(--bd); }
+  .stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .stat b { font-size: 20px; line-height: 28px; font-weight: 650; text-align: left; }
+  /* Las secciones fluyen en dos columnas que se equilibran solas, sin dejar huecos. */
+  .cols { display: block; column-count: 2; column-gap: var(--sp-4); }
+  .stack, .side { display: contents; }
+  .cols section { break-inside: avoid; margin-bottom: var(--sp-4); }
   .movs { display: block; }
   .movs .sec { align-items: center; }
   .mrow { display: grid; grid-template-columns: 36px minmax(0, 2fr) minmax(0, 1.2fr) 100px 72px 110px; align-items: center; gap: 12px; padding: 10px 16px; min-height: 52px; color: inherit; text-decoration: none; }

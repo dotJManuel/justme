@@ -21,7 +21,12 @@ h1 { font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02
 h2 { font-size: 18px; line-height: 24px; font-weight: 700; }
 .txt p { font-size: 14px; line-height: 20px; color: var(--tx2); }
 
-.next { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--s2); }
+.next { display: flex; flex-direction: column; gap: 4px; padding: 14px 14px 8px; border-radius: 16px; background: var(--s2); }
+.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.todo li { display: flex; align-items: center; gap: 12px; min-height: 52px; }
+.todo li + li { border-top: 1px solid var(--bd); }
+.todo .chk { width: 36px; height: 36px; border-radius: 12px; }
+.go { display: inline-flex; align-items: center; min-height: var(--touch); font-size: 14px; font-weight: 600; color: var(--ac); text-decoration: none; }
 .chk {
   flex: none; width: 44px; height: 44px; border: 0; border-radius: var(--rr-1); background: var(--sf);
   box-shadow: inset 0 0 0 2px var(--bd2); cursor: pointer; transition: transform 0.1s;
@@ -49,6 +54,7 @@ h2 { font-size: 18px; line-height: 24px; font-weight: 700; }
 .line:hover, .owed:hover { background: var(--s2); }
 .ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--rf-2); background: var(--s2); color: var(--tx2); }
 .ico.acc { background: var(--acs); color: var(--ac); }
+.ico.warn { background: var(--ors); color: var(--or); }
 .lt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .ln { font-size: 15px; line-height: 20px; font-weight: 600; }
 .ls { font-size: 13px; line-height: 18px; color: var(--tx2); }

@@ -1,14 +1,27 @@
-.layout { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 720px; width: 100%; }
-@media (min-width: 1024px) { .layout { margin: 0; } }
+/* Móvil: lista o ficha (una a la vez). Escritorio: lista a la izquierda y ficha a la derecha. */
+.split { display: block; }
+.listp { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 720px; }
+.split.has .listp { display: none; }
+.split:not(.has) .detailp { display: none; }
+@media (min-width: 1024px) {
+  .split { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+  .split.has .listp, .split:not(.has) .detailp { display: flex; }
+  .detailp { display: block; min-width: 0; }
+  .listp .scroll { max-height: min(62dvh, 640px); }
+  .row.sel { background: var(--acs); }
+}
 .b1 { display: flex; flex-direction: column; gap: 4px; }
 .legend { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--tx2); }
 .legend strong { font-weight: 600; }
-.row { min-height: 52px; padding: 10px 16px; }
-.row + .row::before { left: 64px; }
-.av { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--acs); color: var(--ac); font-size: 13px; font-weight: 700; }
-.lt { gap: 6px; }
-.top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.sortb { display: flex; align-items: center; gap: 4px; min-height: var(--touch); padding: 0 4px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.row { min-height: 64px; padding: 10px 16px; }
+.row + .row::before { left: 68px; }
+.av { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--acs); color: var(--ac); font-size: 13px; font-weight: 700; }
+.row.sel .av { background: var(--ac); color: var(--onac); }
 .ln small { font-size: 12px; font-weight: 500; color: var(--tx2); }
-.pg { display: flex; align-items: center; gap: 8px; }
-.pg ui-progress-bar { flex: 1; }
-.pc { width: 72px; font-size: 12px; color: var(--tx2); }
+.ls.warn { color: var(--or); font-weight: 500; }
+.amt { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.pc { font-size: 12px; color: var(--tx3); }
+.chev { color: var(--tx3); flex: none; }
+.pick { padding: 24px 0; }

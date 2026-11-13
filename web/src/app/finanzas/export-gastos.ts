@@ -36,6 +36,6 @@ export function exportTodo(fin: FinanzasService): void {
     peopleSheet(personSummaries(fin.debts(), people)),
     movementsSheet(sortDebtRows(rows, []), rows),
     family('recibido', 'Recibido', 'De quién'),
-    family('dado', 'Dado', 'Para quién'),
+    family('dado', 'Entregado', 'Para quién'),
   ]);
 }

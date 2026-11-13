@@ -21,6 +21,11 @@ const SAVE_ERROR = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.'
   template: `
     <ui-bottom-sheet [title]="badge() ? 'Editar insignia' : 'Nueva insignia'" [(open)]="open">
       <form (submit)="$event.preventDefault(); save()" novalidate>
+        <div class="preview" aria-hidden="true">
+          <span class="medal"><app-icon [name]="icon()" [size]="30" /></span>
+          <b>{{ name().trim() || 'Nueva insignia' }}</b>
+          <span class="num">{{ goalText() }}</span>
+        </div>
         <ui-input label="Nombre" placeholder="Ej. Madrugador" [(value)]="name" [error]="nameError()" autocomplete="off" />
 
         <fieldset>
@@ -74,6 +79,10 @@ const SAVE_ERROR = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.'
   `,
   styles: `
     form { display: flex; flex-direction: column; gap: 16px; }
+    .preview { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; border-radius: var(--rf-3); background: var(--s2); }
+    .medal { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--tier-1g); color: var(--ink); box-shadow: var(--sh1); }
+    .preview b { font-size: 17px; font-weight: 650; }
+    .preview .num { font-size: 13px; color: var(--tx2); text-align: center; }
     fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
     legend { padding: 0; margin-bottom: 8px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--tx2); }
     .icons { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
@@ -124,6 +133,11 @@ export class EditBadge {
   /** Todas las misiones, también las desactivadas: sus marcas pasadas siguen contando. */
   protected readonly habits = computed<Option[]>(() => this.config.habits().map((h) => ({ value: h.k, label: h.active ? h.name : `${h.name} (inactiva)` })));
   protected readonly kindHint = computed(() => BADGE_KINDS.find((k) => k.value === this.kind())?.hint ?? '');
+  /** Las metas escritas hasta ahora, para la vista previa: "7 · 30 · 100 · 365 días de racha". */
+  protected readonly goalText = computed(() => {
+    const done = this.targets().map((t) => t.trim()).filter(Boolean);
+    return done.length ? `${done.join(' · ')} ${this.unitLabel()}` : 'Escribe la meta de cada nivel';
+  });
   protected readonly unitLabel = computed(() => ({ racha: 'días de racha', misiones: 'misiones', xp: 'XP', mision: 'días' })[this.kind() as BadgeKind] ?? '');
 
   private readonly targetNums = computed(() => this.targets().map((t) => (t.trim() === '' ? null : Number(t))));

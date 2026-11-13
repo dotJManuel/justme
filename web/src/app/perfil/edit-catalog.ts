@@ -151,11 +151,11 @@ export class EditCatalog {
         return n ? [`${plural(n, 'movimiento', 'movimientos')} (cargos y abonos)`] : [];
       }
       const n = (scope === 'familia' ? this.fin.family().filter((m) => m.conceptId === it.id) : this.fin.expenses().filter((e) => e.conceptId === it.id)).length;
-      return n ? [scope === 'familia' ? plural(n, 'registro de Recibido o Dado', 'registros de Recibido y Dado') : plural(n, 'gasto', 'gastos')] : [];
+      return n ? [scope === 'familia' ? plural(n, 'registro de Recibido o Entregado', 'registros de Recibido y Entregado') : plural(n, 'gasto', 'gastos')] : [];
     }
     if (scope === 'familia') {
       const n = this.fin.family().filter((m) => m.personId === it.id).length;
-      return n ? [plural(n, 'registro de Recibido o Dado', 'registros de Recibido y Dado')] : [];
+      return n ? [plural(n, 'registro de Recibido o Entregado', 'registros de Recibido y Entregado')] : [];
     }
     const n = debtsWithDependents(this.fin.debts(), (d) => d.personId === it.id).length;
     return n ? [`${plural(n, 'movimiento', 'movimientos')} (cargos y abonos)`] : [];

@@ -5,6 +5,10 @@
   <ui-chip [interactive]="true" [selected]="isFixed()" (click)="pick('fijos')">Gastos fijos</ui-chip>
 </div>
 
+@if (!isFixed()) {
+  <ui-segmented class="subtabs" label="Vista de la tarjeta" [options]="subOptions" [value]="sub()" (valueChange)="sub.set($any($event))" />
+}
+
 <div class="layout">
   <div class="stack">
     <section class="card" [attr.aria-label]="isFixed() ? 'Gastos fijos' : 'Resumen de la tarjeta'">
@@ -14,7 +18,7 @@
         <div class="th"><h2>Gastos fijos</h2><span class="sub">Cada mes</span></div>
       }
       <div class="t1">
-        <div class="tl"><span class="k">{{ isFixed() ? 'Por pagar al mes' : 'Por pagar este corte' }}</span><span class="b num">{{ money(totals().amount) }}</span></div>
+        <div class="tl"><span class="k">{{ isFixed() ? 'A pagar al mes' : 'A pagar en este corte' }}</span><span class="b num">{{ money(totals().amount) }}</span></div>
         <div class="tr"><span class="sub">Por quincena</span><span class="mid2 num">{{ money(totals().quincena) }}</span></div>
       </div>
       @if (cut(); as k) {
@@ -27,7 +31,7 @@
     </section>
 
     @if (cut(); as k) {
-      <section aria-labelledby="cu-h">
+      <section class="pane" [class.off]="offCorte()" aria-labelledby="cu-h">
         <div class="sec"><h2 id="cu-h">Corte actual</h2><button type="button" (click)="cutOpen.set(true)">Editar</button></div>
         <button type="button" class="panel cutcard" (click)="cutOpen.set(true)" [attr.aria-label]="'Corte ' + k.label + '. Editar monto y pagado'">
           <span class="cp">{{ k.label }}</span>
@@ -43,7 +47,7 @@
 
   <div class="stack">
     @if (!isFixed() && msi().length) {
-      <section aria-labelledby="msi-h">
+      <section class="pane" [class.off]="offMeses()" aria-labelledby="msi-h">
         <div class="sec"><h2 id="msi-h">Meses sin intereses</h2></div>
         <div class="panel scroll">
           @for (m of msi(); track m.e.id) {
@@ -58,17 +62,17 @@
     }
 
     @if (ended().length) {
-      <section class="panel clean" aria-labelledby="cl-h">
+      <section class="panel clean pane" [class.off]="offCompras()" aria-labelledby="cl-h">
         <span class="ico"><app-icon name="refresh" [size]="18" /></span>
         <span class="lt">
           <span class="ln" id="cl-h">Tu corte anterior ya terminó</span>
-          <span class="ls">{{ ended().length === 1 ? '1 compra de contado por limpiar' : ended().length + ' compras de contado por limpiar' }}. Las fijadas y los meses sin intereses se quedan.</span>
+          <span class="ls">{{ ended().length === 1 ? '1 compra de contado por limpiar' : ended().length + ' compras de contado por limpiar' }}. Las recurrentes y los meses sin intereses se quedan.</span>
         </span>
         <button uiBtn small type="button" (click)="cleaning.set(true)">Limpiar</button>
       </section>
     }
 
-    <section aria-labelledby="co-h">
+    <section class="pane" [class.off]="offCompras()" aria-labelledby="co-h">
       <div class="sec">
         <h2 id="co-h">{{ isFixed() ? 'Gastos fijos' : 'Compras de contado' }}</h2>
         <span class="acts">
@@ -88,18 +92,22 @@
         </div>
       }
       <div class="panel scroll">
-        @for (b of buys(); track b.e.id) {
-          <button type="button" class="row" [attr.aria-pressed]="selecting() ? picked().has(b.e.id) : null" (click)="rowClick(b.e)">
-            @if (selecting()) {
-              <span class="chk" [class.on]="picked().has(b.e.id)"><app-icon name="check" [size]="16" /></span>
-            } @else {
-              <span class="ico"><app-icon [name]="isFixed() ? 'home' : 'card'" [size]="18" /></span>
-            }
-            <span class="lt"><span class="ln">{{ b.name }}</span>@if (b.sub) { <span class="ls">{{ b.sub }}</span> }</span>
-            @if (b.pinned) { <app-icon class="pin" name="pin" [size]="15" /> }
-            <span class="la num exp">{{ money(-b.amount, true) }}</span>
-            @if (!selecting()) { <app-icon class="chev" name="chevron-right" [size]="16" /> }
-          </button>
+        @for (g of groups(); track g.key) {
+          @if (g.label) {
+            <div class="gh"><span class="gl">@if (g.key === 'pin') { <app-icon name="pin" [size]="14" /> }{{ g.label }}</span><span class="num">{{ money(g.total) }}</span></div>
+          }
+          @for (b of g.items; track b.e.id) {
+            <button type="button" class="row" [attr.aria-pressed]="selecting() ? picked().has(b.e.id) : null" (click)="rowClick(b.e)">
+              @if (selecting()) {
+                <span class="chk" [class.on]="picked().has(b.e.id)"><app-icon name="check" [size]="16" /></span>
+              } @else {
+                <span class="ico"><app-icon [name]="isFixed() ? 'home' : 'card'" [size]="18" /></span>
+              }
+              <span class="lt"><span class="ln">{{ b.name }}</span>@if (b.sub) { <span class="ls">{{ b.sub }}</span> }</span>
+              <span class="la num exp">{{ money(-b.amount, true) }}</span>
+              @if (!selecting()) { <app-icon class="chev" name="chevron-right" [size]="16" /> }
+            </button>
+          }
         } @empty {
           <ui-empty-state [icon]="isFixed() ? 'home' : 'wallet'" [title]="isFixed() ? 'Sin gastos fijos' : 'Sin compras'" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Agrega uno para empezar a llevar tu corte.'">
             @if (!view.query() && !view.month()) {
@@ -118,7 +126,7 @@
 />
 <ui-confirm-dialog
   [(open)]="cleaning" title="¿Limpiar el corte anterior?" confirmLabel="Limpiar"
-  [message]="'Se eliminan ' + ended().length + ' compras de contado de cortes anteriores. Las fijadas y los meses sin intereses no se tocan. Quedan registradas en el historial de cambios.'"
+  [message]="'Se eliminan ' + ended().length + ' compras de contado de cortes anteriores. Las recurrentes y los meses sin intereses no se tocan. Quedan registradas en el historial de cambios.'"
   [busy]="busy()" (confirmed)="cleanEnded()"
 />
 <app-edit-expense [expense]="editing()" [(open)]="editOpen" />

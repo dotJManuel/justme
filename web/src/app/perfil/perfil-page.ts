@@ -41,24 +41,37 @@ interface Entry {
             <span class="la num">{{ fin.loaded() ? money(fin.income()) : '—' }}</span>
             <app-icon class="chev" name="chevron-right" [size]="16" />
           </button>
-        </div>
-      </section>
-
-      <section>
-        <h2 class="sec">Tema</h2>
-        <ui-segmented label="Tema" [options]="themes" [value]="theme.mode()" (valueChange)="theme.set($any($event))" />
-      </section>
-
-      <section>
-        <h2 class="sec">Configuración</h2>
-        <div class="panel">
-          @for (e of entries; track e.link) {
+          @for (e of finanzas; track e.link) {
             <a class="row" [routerLink]="e.link">
               <span class="ico"><app-icon [name]="e.icon" [size]="18" /></span>
               <span class="lt"><span class="ln">{{ e.title }}</span><span class="ls">{{ e.sub }}</span></span>
               <app-icon class="chev" name="chevron-right" [size]="16" />
             </a>
           }
+        </div>
+      </section>
+
+      <section>
+        <h2 class="sec">Rutina</h2>
+        <div class="panel">
+          @for (e of rutina; track e.link) {
+            <a class="row" [routerLink]="e.link">
+              <span class="ico"><app-icon [name]="e.icon" [size]="18" /></span>
+              <span class="lt"><span class="ln">{{ e.title }}</span><span class="ls">{{ e.sub }}</span></span>
+              <app-icon class="chev" name="chevron-right" [size]="16" />
+            </a>
+          }
+        </div>
+      </section>
+
+      <section>
+        <h2 class="sec">App</h2>
+        <div class="panel">
+          <div class="row tema">
+            <span class="ico"><app-icon name="moon" [size]="18" /></span>
+            <span class="lt"><span class="ln">Tema</span></span>
+            <ui-segmented class="seg" label="Tema" [options]="themes" [value]="theme.mode()" (valueChange)="theme.set($any($event))" />
+          </div>
         </div>
       </section>
 
@@ -92,6 +105,9 @@ interface Entry {
     .la { font-size: 15px; font-weight: 600; }
     .chev { color: var(--tx3); }
     .acts { display: flex; flex-direction: column; gap: 8px; }
+    .tema { cursor: default; }
+    .tema:hover { background: none; }
+    .seg { width: 210px; flex: none; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -111,11 +127,13 @@ export class PerfilPage implements OnInit {
     { value: 'dark', label: 'Oscuro' },
     { value: 'auto', label: 'Auto' },
   ];
-  protected readonly entries: Entry[] = [
-    { icon: 'flame', title: 'Misiones y meta diaria', sub: 'Lista, horarios, días de descanso y congelación', link: '/perfil/misiones' },
-    { icon: 'trophy', title: 'Insignias', sub: 'Las metas que se ganan en Logros', link: '/perfil/insignias' },
+  protected readonly finanzas: Entry[] = [
     { icon: 'sliders', title: 'Catálogos', sub: 'Tarjetas, conceptos y personas', link: '/perfil/catalogos' },
     { icon: 'history', title: 'Historial de cambios', sub: 'Lo que se agregó, editó o eliminó', link: '/perfil/historial' },
+  ];
+  protected readonly rutina: Entry[] = [
+    { icon: 'flame', title: 'Misiones y meta diaria', sub: 'Lista, horarios, días de descanso y congelación', link: '/perfil/misiones' },
+    { icon: 'trophy', title: 'Insignias', sub: 'Las metas que se ganan en Logros', link: '/perfil/insignias' },
   ];
 
   ngOnInit() {

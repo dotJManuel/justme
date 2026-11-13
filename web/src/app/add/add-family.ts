@@ -12,7 +12,7 @@ import { ConceptInput } from './concept-input';
 
 const DIRECTIONS: Option[] = [
   { value: 'recibido', label: 'Recibí' },
-  { value: 'dado', label: 'Di' },
+  { value: 'dado', label: 'Entregué' },
 ];
 
 /**
@@ -106,7 +106,7 @@ export class AddFamily {
     });
     this.busy.set(false);
     if (!ok) return;
-    this.toasts.show({ message: this.received() ? 'Recibido guardado' : 'Dado guardado' });
+    this.toasts.show({ message: this.received() ? 'Recibido guardado' : 'Entregado guardado' });
     this.saved.emit();
   }
 }

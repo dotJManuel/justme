@@ -34,17 +34,20 @@
           <p>{{ racha().text }}</p>
         </div>
       </div>
-      @if (store.next(); as n) {
+      @if (todo().length) {
         <div class="next">
-          <button type="button" class="chk" [attr.aria-label]="'Completar ' + n.mission.name" (click)="complete(n.mission.k, n.mission.name)"></button>
-          <div class="nt">
-            <span class="label tag">{{ n.inWindow ? 'Ahora' : 'Siguiente' }}</span>
-            <span class="nm">{{ n.mission.name }}</span>
-            @if (n.mission.when) {
-              <span class="wh">{{ n.mission.when }}</span>
+          <span class="label tag">{{ store.secured() ? 'Misiones extra' : 'Pendientes de hoy' }}</span>
+          <ul class="todo">
+            @for (m of todo(); track m.k) {
+              <li>
+                <button type="button" class="chk" [attr.aria-label]="'Completar ' + m.name" (click)="complete(m.k, m.name)"></button>
+                <span class="nt"><span class="nm">{{ m.name }}</span>@if (m.when) { <span class="wh">{{ m.when }}</span> }</span>
+              </li>
             }
-          </div>
-          <a class="go" routerLink="/racha" aria-label="Ver todas las misiones"><app-icon name="chevron-right" [size]="20" /></a>
+          </ul>
+          @if (more() > 0) {
+            <a class="go" routerLink="/racha">Ver {{ more() }} más</a>
+          }
         </div>
       }
     </section>
@@ -65,18 +68,18 @@
       }
     </section>
 
-    @if (cuts().length) {
-      <section aria-labelledby="hoy-cortes">
-        <h2 id="hoy-cortes" class="sec">Próximos cortes</h2>
+    @if (attention().length) {
+      <section aria-labelledby="hoy-atender">
+        <h2 id="hoy-atender" class="sec">Por atender</h2>
         <ui-card [padded]="false" class="list">
-          @for (c of cuts(); track c.id) {
-            <a class="line" routerLink="/finanzas/tarjetas">
-              <span class="ico"><app-icon name="card" [size]="20" /></span>
+          @for (a of attention(); track a.key) {
+            <a class="line" [routerLink]="a.link" [queryParams]="a.query">
+              <span class="ico" [class.warn]="a.warn"><app-icon [name]="a.icon" [size]="20" /></span>
               <span class="lt">
-                <span class="ln">{{ c.name }}{{ c.last4 ? ' ·· ' + c.last4 : '' }}</span>
-                <span class="ls" [class.warn]="c.alert">{{ c.text }}</span>
+                <span class="ln">{{ a.title }}</span>
+                <span class="ls">{{ a.sub }}</span>
               </span>
-              <span class="la num">{{ money(c.amount) }}</span>
+              <app-icon class="chev" name="chevron-right" [size]="18" />
             </a>
           }
         </ui-card>

@@ -76,7 +76,7 @@ export class EditIncome {
         <p class="per">Periodo {{ period()?.label }}</p>
         <ui-amount label="Monto del corte" [(value)]="amount" [error]="aErr()" />
         <ui-amount label="Pagado" [(value)]="paid" [error]="pErr()" />
-        <p class="pend">Pendiente <b class="num">{{ money(pending()) }}</b></p>
+        <p class="pend">Debe <b class="num">{{ money(pending()) }}</b></p>
         @if (fin.error()) {
           <ui-error-state [inline]="true" [message]="fin.error()" (retry)="save()" />
         }
@@ -211,7 +211,7 @@ export class EditDebt {
   protected readonly cargos = computed<Option[]>(() =>
     this.rows()
       .filter((r) => r.kind === 'cargo' && r.personId === this.person() && ((r.balance ?? 0) > 0 || r.id === this.d()?.appliesTo))
-      .map((r) => ({ value: r.id, label: `${r.conceptName || 'Sin concepto'} · ${fmtMoney(r.balance ?? 0)} pendiente` })),
+      .map((r) => ({ value: r.id, label: `${r.conceptName || 'Sin concepto'} · debe ${fmtMoney(r.balance ?? 0)}` })),
   );
   protected readonly amountError = computed(() => (this.tried() && !(parseMoney(this.amount()) ?? 0) ? 'Escribe un monto mayor a cero' : ''));
 
@@ -282,7 +282,7 @@ export class EditDebt {
   selector: 'app-edit-family',
   imports: [Amount, BottomSheet, Button, ConceptInput, ConfirmDialog, ErrorState, Input, Select],
   template: `
-    <ui-bottom-sheet [title]="m()?.direction === 'recibido' ? 'Recibido' : 'Dado'" [(open)]="open">
+    <ui-bottom-sheet [title]="m()?.direction === 'recibido' ? 'Recibido' : 'Entregado'" [(open)]="open">
       <form (submit)="$event.preventDefault(); save()" novalidate>
         <ui-amount [(value)]="amount" [error]="amountError()" />
         <app-concept-input

@@ -6,6 +6,7 @@ import { Amount, Choice, Option, Switch } from '../ui/fields';
 import { Input } from '../ui/input';
 import { ErrorState } from '../ui/states';
 import { ToastService } from '../ui/toast';
+import { AddSheetService } from './add-sheet.service';
 import { ConceptInput } from './concept-input';
 
 /** Valor del destino "Gasto fijo" (los ids de tarjeta son uuid, no chocan). */
@@ -23,15 +24,18 @@ let lastDest = '';
   imports: [Amount, Switch, Button, Choice, ConceptInput, ErrorState, Input],
   template: `
     <form (submit)="$event.preventDefault(); save()" novalidate>
-      <ui-amount [label]="isCard() ? 'Por pagar' : 'Monto mensual'" [(value)]="amount" [error]="amountError()" />
+      <ui-amount [label]="isCard() ? 'Monto' : 'Monto mensual'" [(value)]="amount" [error]="amountError()" />
       <app-concept-input [options]="conceptOptions()" [(text)]="concept" [error]="conceptError()" />
       <ui-choice label="Pagar con" [options]="destinations()" [value]="destValue()" (valueChange)="dest.set($event)" />
 
       @if (isCard()) {
-        <div class="two">
-          <ui-input label="A meses" placeholder="05/09" [(value)]="installment" />
-          <ui-input label="Monto total" inputmode="decimal" placeholder="0.00" hint="Vacío = pago único" [(value)]="total" [error]="totalError()" />
-        </div>
+        @if (msiOpen()) {
+          <div class="two">
+            <ui-input label="A meses" placeholder="05/09" [(value)]="installment" />
+            <ui-input label="Monto total" inputmode="decimal" placeholder="0.00" hint="Vacío = pago único" [(value)]="total" [error]="totalError()" />
+          </div>
+        }
+        <button type="button" class="link opt" [attr.aria-expanded]="msiOpen()" (click)="toggleMsi()">{{ msiOpen() ? 'Quitar compra a meses' : 'Compra a meses' }}</button>
         <div class="when">
           @if (editDate()) {
             <ui-input label="Fecha y hora" type="datetime-local" [value]="purchased()" (valueChange)="onPurchased($event)" />
@@ -44,8 +48,8 @@ let lastDest = '';
 
       @if (isCard()) {
         <div class="pinrow">
-          <span class="pt">Fijar compra<small>Recurrente: se queda al terminar el corte</small></span>
-          <ui-switch label="Fijar compra" [checked]="pinned()" (toggled)="pinned.set($event)" />
+          <span class="pt">Compra recurrente<small>Recurrente: se queda al terminar el corte</small></span>
+          <ui-switch label="Compra recurrente" [checked]="pinned()" (toggled)="pinned.set($event)" />
         </div>
       }
       @if (fin.error()) {
@@ -64,6 +68,7 @@ let lastDest = '';
     .when { display: flex; align-items: center; gap: 10px; min-height: var(--touch); font-size: 14px; color: var(--tx2); }
     .when ui-input { flex: 1; }
     .at { flex: 1; }
+    .link.opt { align-self: flex-start; }
     .link { min-height: var(--touch); padding: 0 4px; border: 0; background: none; color: var(--ac); font: inherit; font-weight: 600; cursor: pointer; }
     button[type='submit'] { min-height: 52px; font-size: 16px; font-weight: 700; border-radius: var(--rf-3); }
   `,
@@ -76,9 +81,12 @@ export class AddExpense {
   /** Se guardó: la hoja se puede cerrar. */
   readonly saved = output<void>();
 
-  protected readonly amount = signal('');
-  protected readonly concept = signal('');
-  protected readonly dest = signal(lastDest);
+  private readonly preset = inject(AddSheetService).preset().expense;
+  protected readonly amount = signal(this.preset ? String(this.preset.amount) : '');
+  protected readonly concept = signal(this.preset?.concept ?? '');
+  protected readonly dest = signal(this.preset?.dest ?? lastDest);
+  /** "A meses" y el monto total solo aparecen si se piden. */
+  protected readonly msiOpen = signal(false);
   protected readonly installment = signal('');
   protected readonly total = signal('');
   protected readonly purchased = signal(nowLocalInput());
@@ -108,6 +116,14 @@ export class AddExpense {
 
   /** Si no la tocas, la fecha y hora se ponen al guardar. */
   private purchasedTouched = false;
+
+  protected toggleMsi() {
+    if (this.msiOpen()) {
+      this.installment.set('');
+      this.total.set('');
+    }
+    this.msiOpen.update((o) => !o);
+  }
 
   protected onPurchased(value: string) {
     this.purchasedTouched = true;

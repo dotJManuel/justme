@@ -91,6 +91,14 @@ const count = (n: number, one: string, many: string) => (n === 0 ? `Sin ${many}`
     .ln { font-size: 15px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ls { font-size: 13px; line-height: 18px; color: var(--tx2); }
     .skel { display: flex; flex-direction: column; gap: var(--sp-3); }
+    /* Escritorio: las listas largas se reparten en dos columnas para no alargar la pantalla. */
+    @media (min-width: 1024px) {
+      .page { max-width: 860px; }
+      .panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--bd); }
+      .item { background: var(--sf); }
+      .item + .item { border-top: 0; }
+      .panel > :not(.item) { grid-column: 1 / -1; background: var(--sf); }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -162,7 +170,7 @@ export class CatalogosPage implements OnInit {
       return [
         this.conceptSection('gasto', 'Conceptos de gastos', 'Son las opciones del campo Concepto al capturar un gasto. Desactivar un concepto deja de ofrecerlo, pero los gastos que ya lo usan se conservan.'),
         this.conceptSection('movimiento', 'Conceptos de movimientos', 'Son las opciones del campo Concepto de un préstamo o abono. Desactivar un concepto deja de ofrecerlo, pero los movimientos que ya lo usan se conservan.'),
-        this.conceptSection('familia', 'Conceptos de familia', 'Son las opciones del campo Concepto en Recibido y Dado. Desactivar un concepto deja de ofrecerlo, pero los registros que ya lo usan se conservan.'),
+        this.conceptSection('familia', 'Conceptos de familia', 'Son las opciones del campo Concepto en Recibido y Entregado. Desactivar un concepto deja de ofrecerlo, pero los registros que ya lo usan se conservan.'),
       ];
     }
     return [

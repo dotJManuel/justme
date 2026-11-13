@@ -14,6 +14,7 @@ import { FinanzasView } from '../finanzas-view';
 import { FinanzasService } from '../finanzas.service';
 import { cutText, daysUntil, initials, isMsi, parseInstallment, percent, shortDate, stackOpacity } from '../finanzas.view-calc';
 import { EditIncome } from '../edit/edit-simple';
+import { buildAttention } from '../finanzas.attention';
 
 type MovFilter = 'todo' | 'cargo' | 'abono';
 /** Desde cuántos días antes del corte se marca como alerta. */
@@ -83,6 +84,10 @@ export class ResumenPage {
     return { total, open };
   });
 
+  protected readonly attention = computed(() =>
+    buildAttention({ today: this.now, cards: this.fin.cards(), expenses: this.fin.expenses(), debts: this.fin.debts(), people: this.fin.people(), concepts: this.fin.concepts() }, 3),
+  );
+
   protected readonly msi = computed(() =>
     this.cardRows()
       .filter(isMsi)
@@ -111,7 +116,7 @@ export class ResumenPage {
       .map((r) => ({ key: 'd' + r.id, icon: 'users' as const, title: r.conceptName || (r.kind === 'cargo' ? 'Préstamo' : 'Abono'), sub: r.personName, amount: r.kind === 'abono' ? r.amount : -r.amount, link: ['/finanzas/por-cobrar', r.personId], q: {} }));
     const family = this.fin.family()
       .filter((m) => this.view.matches(conceptLabel(this.fin.concepts(), m.conceptId, m.conceptText), this.fin.people().find((p) => p.id === m.personId)?.name) && this.view.familyInMonth(m))
-      .map((m) => ({ key: 'f' + m.id, icon: 'heart' as const, title: conceptLabel(this.fin.concepts(), m.conceptId, m.conceptText) || (m.direction === 'recibido' ? 'Recibido' : 'Dado'), sub: this.fin.people().find((p) => p.id === m.personId)?.name ?? 'Familia', amount: m.direction === 'recibido' ? m.amount : -m.amount, link: ['/finanzas/familia'], q: {} }));
+      .map((m) => ({ key: 'f' + m.id, icon: 'heart' as const, title: conceptLabel(this.fin.concepts(), m.conceptId, m.conceptText) || (m.direction === 'recibido' ? 'Recibido' : 'Entregado'), sub: this.fin.people().find((p) => p.id === m.personId)?.name ?? 'Familia', amount: m.direction === 'recibido' ? m.amount : -m.amount, link: ['/finanzas/familia'], q: {} }));
     return [...expenses, ...debts, ...family];
   });
 

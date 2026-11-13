@@ -16,79 +16,60 @@
     }
   </section>
 } @else {
-  <!-- Escritorio: los cuatro indicadores -->
-  <section class="kpis" aria-label="Indicadores del mes">
-    <div class="card kpi">
-      <span class="k">{{ balance().label }}</span>
-      <span class="kv num">{{ money(balance().value) }}</span>
-      <span class="sub">Ingreso {{ money(balance().income) }}</span>
-    </div>
-    <div class="card kpi">
-      <span class="k">Gastos del mes</span>
-      <span class="kv num exp">{{ money(-balance().gran, true) }}</span>
-      <span class="sub">{{ balance().pct }}% del ingreso</span>
-    </div>
-    <div class="card kpi">
-      <span class="k">Por pagar en tarjetas</span>
-      <span class="kv num">{{ money(summary().tarjetas) }}</span>
-      <span class="sub">Por quincena {{ money(quincena()) }}</span>
-    </div>
-    <div class="card kpi">
-      <span class="k">Te deben</span>
-      <span class="kv num">{{ money(owed().total.pending) }}</span>
-      <span class="sub">{{ owed().total.lent > 0 ? ((owed().total.ratio * 100) | number: '1.0-0') + '% cobrado de ' + money(owed().total.lent) : 'Sin préstamos' }}</span>
-    </div>
-  </section>
-
-  <!-- Móvil: balance -->
-  <section class="card bal" aria-label="Balance del mes">
-    <div class="b1">
-      <span class="k">{{ balance().label }}</span>
-      <span class="big num">{{ money(balance().value) }}</span>
-    </div>
-    <div class="b2">
-      <button type="button" class="line" aria-label="Editar ingreso mensual" (click)="editingIncome.set(true)">
-        <span class="sub"><app-icon name="arrow-down" [size]="12" /> Ingreso</span>
-        <span class="mid num inc">{{ money(balance().income, true) }}</span>
-      </button>
-      <div class="line">
-        <span class="sub"><app-icon name="arrow-up" [size]="12" /> Gastos</span>
-        <span class="mid num exp">{{ money(-balance().gran, true) }}</span>
+  <!-- Balance del mes y a dónde va -->
+  <section class="card hero" aria-label="Balance del mes">
+    <div class="hh">
+      <div class="hl">
+        <span class="k">{{ balance().label }}</span>
+        <span class="big num">{{ money(balance().value) }}</span>
       </div>
+      <button type="button" class="inc-btn" aria-label="Editar ingreso mensual" (click)="editingIncome.set(true)">
+        <span class="sub num">Ingreso {{ money(balance().income) }}</span>
+        <span class="sub num"><span class="pct" [class.over]="balance().pct > 100">{{ balance().pct }}%</span> gastado</span>
+      </button>
+    </div>
+    @if (parts().length) {
+      <div class="seg" role="img" [attr.aria-label]="distLabel()">
+        @for (p of parts(); track p.id) {
+          <i [style.width.%]="p.w" [style.opacity]="p.op"></i>
+        }
+      </div>
+      <div class="legend">
+        @for (p of parts(); track p.id) {
+          <a class="lg" routerLink="/finanzas/tarjetas" [queryParams]="{ card: p.link }">
+            <span class="sw" [style.opacity]="p.op"></span>
+            <span class="ln2">{{ p.name }}</span>
+            <span class="pc num">{{ p.pct }}%</span>
+            <span class="am num">{{ money(p.amount) }}</span>
+          </a>
+        }
+      </div>
+    } @else {
+      <ui-empty-state icon="wallet" title="Aún no hay gastos" text="Agrega el primero para ver a dónde se va tu dinero."><button uiBtn small type="button" (click)="add.show({ tab: 'gasto' })"><app-icon name="plus" [size]="16" />Agregar gasto</button></ui-empty-state>
+    }
+    <div class="stats">
+      <div class="stat"><span class="sub">Gastos del mes</span><b class="num exp">{{ money(-balance().gran, true) }}</b></div>
+      <div class="stat"><span class="sub">Por pagar en tarjetas</span><b class="num">{{ money(summary().tarjetas) }}</b><span class="sub num">Quincena {{ money(quincena()) }}</span></div>
+      <div class="stat"><span class="sub">Te deben</span><b class="num">{{ money(owed().total.pending) }}</b><span class="sub num">{{ owed().total.lent > 0 ? ((owed().total.ratio * 100) | number: '1.0-0') + '% cobrado' : 'Sin préstamos' }}</span></div>
     </div>
   </section>
 
   <div class="cols">
     <div class="stack">
-      <section class="card" aria-labelledby="dist-h">
-        <div class="dh">
-          <h2 id="dist-h">¿A dónde va?</h2>
-          @if (balance().income > 0) {
-            <span class="sub">{{ balance().pct }}% del ingreso</span>
-          } @else {
-            <button type="button" class="link" (click)="editingIncome.set(true)">Definir ingreso</button>
+    @if (attention().length) {
+      <section aria-labelledby="at-h">
+        <div class="sec"><h2 id="at-h">Por atender</h2></div>
+        <div class="panel">
+          @for (a of attention(); track a.key) {
+            <a class="row" [routerLink]="a.link" [queryParams]="a.query">
+              <span class="ico" [class.warnico]="a.warn"><app-icon [name]="a.icon" [size]="20" /></span>
+              <span class="lt"><span class="ln">{{ a.title }}</span><span class="ls">{{ a.sub }}</span></span>
+              <app-icon class="chev" name="chevron-right" [size]="16" />
+            </a>
           }
         </div>
-        @if (parts().length) {
-          <div class="seg" role="img" [attr.aria-label]="distLabel()">
-            @for (p of parts(); track p.id) {
-              <i [style.width.%]="p.w" [style.opacity]="p.op"></i>
-            }
-          </div>
-          <div class="legend">
-            @for (p of parts(); track p.id) {
-              <a class="lg" routerLink="/finanzas/tarjetas" [queryParams]="{ card: p.link }">
-                <span class="sw" [style.opacity]="p.op"></span>
-                <span class="ln2">{{ p.name }}</span>
-                <span class="pc num">{{ p.pct }}%</span>
-                <span class="am num">{{ money(p.amount) }}</span>
-              </a>
-            }
-          </div>
-        } @else {
-          <ui-empty-state icon="wallet" title="Aún no hay gastos" text="Agrega el primero para ver a dónde se va tu dinero."><button uiBtn small type="button" (click)="add.show({ tab: 'gasto' })"><app-icon name="plus" [size]="16" />Agregar gasto</button></ui-empty-state>
-        }
       </section>
+    }
 
       <section aria-labelledby="pp-h">
         <div class="sec"><h2 id="pp-h">Por pagar</h2><span class="aside num">Quincena {{ money(quincena()) }}</span></div>

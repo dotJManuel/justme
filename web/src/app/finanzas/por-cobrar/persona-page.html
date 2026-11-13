@@ -4,44 +4,141 @@
   </ui-empty-state></div>
 } @else {
   <div class="layout">
-    <div class="stack">
-      <div class="head">
-        <a class="back" routerLink="/finanzas/por-cobrar" aria-label="Volver a Por cobrar"><app-icon name="chevron-left" [size]="22" /></a>
-        <h2>{{ name() }}</h2>
-      </div>
-
-      <section class="card" aria-label="Resumen de la persona">
-        <div class="b1">
-          <span class="k">Te debe</span>
-          <span class="big num">{{ money(summary()?.pending ?? 0) }}</span>
-        </div>
-        <ui-progress-bar tone="green" [height]="6" [value]="(summary()?.ratio ?? 0) * 100" label="Porcentaje pagado" />
-        <div class="legend num">
-          <span>Pagado <strong class="inc">{{ money(summary()?.paid ?? 0) }}</strong></span>
-          <span>de {{ money(summary()?.lent ?? 0) }} prestado</span>
-        </div>
-        <div class="acts">
-          <button uiBtn small type="button" [disabled]="!person()?.active" (click)="register('abono')"><app-icon name="check" [size]="16" />Registrar pago</button>
-          <button uiBtn small variant="secondary" type="button" [disabled]="!person()?.active" (click)="register('cargo')"><app-icon name="plus" [size]="16" />Préstamo</button>
-          <button uiBtn small variant="secondary" type="button" (click)="statementOpen.set(true)"><app-icon name="download" [size]="16" />Estado de cuenta</button>
-        </div>
-      </section>
+    <div class="head">
+      <a class="back" routerLink="/finanzas/por-cobrar" aria-label="Volver a la lista"><app-icon name="chevron-left" [size]="22" /></a>
+      <h2>{{ name() }}</h2>
+      <button type="button" class="ib" aria-label="Compartir estado de cuenta" title="Estado de cuenta" (click)="statementOpen.set(true)"><app-icon name="share" [size]="20" /></button>
     </div>
 
-    <div class="stack">
-      <ui-segmented label="Movimientos" [options]="tabs" [(value)]="tab" />
+    <section class="card" aria-label="Resumen de la persona">
+      <div class="b1">
+        <span class="k">Te debe</span>
+        <span class="big num">{{ money(summary()?.pending ?? 0) }}</span>
+      </div>
+      <ui-progress-bar tone="green" [height]="6" [value]="(summary()?.ratio ?? 0) * 100" label="Porcentaje pagado" />
+      <div class="legend num">
+        <span>Pagado <strong class="inc">{{ money(summary()?.paid ?? 0) }}</strong></span>
+        <span>de {{ money(summary()?.lent ?? 0) }} prestado</span>
+      </div>
+      <div class="acts">
+        <button uiBtn type="button" [disabled]="!person()?.active" (click)="register('abono')"><app-icon name="check" [size]="18" />Registrar pago</button>
+        <button uiBtn variant="secondary" type="button" [disabled]="!person()?.active" (click)="register('cargo')"><app-icon name="plus" [size]="18" />Préstamo</button>
+      </div>
+    </section>
 
-      @if (tab() === 'pendientes') {
-        <div class="tools">
-          <div class="chips" role="group" aria-label="Tipo de movimiento">
-            <ui-chip [interactive]="true" [selected]="kind() === 'todo'" (click)="kind.set('todo')">Todo</ui-chip>
-            <ui-chip [interactive]="true" [selected]="kind() === 'cargo'" (click)="kind.set('cargo')">Préstamos</ui-chip>
-            <ui-chip [interactive]="true" [selected]="kind() === 'abono'" (click)="kind.set('abono')">Pagos</ui-chip>
-          </div>
-          <button type="button" class="sortb" (click)="cycleSort()">{{ sort() === 'fecha' ? 'Más reciente' : 'Mayor monto' }} <app-icon name="sort" [size]="14" /></button>
-        </div>
+    <div class="chips" role="group" aria-label="Qué ver">
+      <ui-chip [interactive]="true" [selected]="tab() === 'pendientes'" (click)="tab.set('pendientes')">Pendientes · {{ pendingCount() }}</ui-chip>
+      <ui-chip [interactive]="true" [selected]="tab() === 'saldados'" (click)="tab.set('saldados')">Saldados · {{ paid().length }}</ui-chip>
+      <ui-chip [interactive]="true" [selected]="tab() === 'todo'" (click)="tab.set('todo')">Todo</ui-chip>
+    </div>
+
+    @switch (tab()) {
+      @case ('pendientes') {
         <div class="panel scroll">
-          @for (m of open(); track m.row.id) {
+          @for (g of pending(); track g.key) {
+            <div class="gh"><span>{{ g.label }}</span><span class="num">Debe {{ money(g.owed) }}</span></div>
+            @for (c of g.items; track c.row.id) {
+              <div class="debt">
+                <button type="button" class="dh" [attr.aria-label]="'Editar ' + c.title" (click)="edit(c.row)">
+                  <span class="lt"><span class="ln">{{ c.title }}</span><span class="ls">{{ c.sub }}</span></span>
+                  <span class="oa"><b class="num">{{ money(c.owed) }}</b><small class="num">{{ c.pays.length ? 'Debe · de ' + money(c.total) : 'Debe' }}</small></span>
+                </button>
+                @if (c.pays.length) {
+                  <ui-progress-bar tone="green" [height]="6" [value]="c.pct" [label]="'Pagado ' + c.pct + '%'" />
+                  <button type="button" class="pt" [attr.aria-expanded]="isOpen(c.row.id)" (click)="toggle(c.row.id)">
+                    <span class="inc num">Pagado {{ money(c.paid) }} · {{ c.pct }}%</span>
+                    <span class="cnt">{{ c.pays.length }} {{ c.pays.length === 1 ? 'pago' : 'pagos' }} <app-icon [name]="isOpen(c.row.id) ? 'chevron-up' : 'chevron-down'" [size]="14" /></span>
+                  </button>
+                  @if (isOpen(c.row.id)) {
+                    <ul class="pays">
+                      @for (p of c.pays; track p.row.id) {
+                        <li class="pay">
+                          <button type="button" class="pb" [attr.aria-label]="'Editar pago del ' + (p.row.date ? fmtDate(p.row.date) : 'sin fecha')" (click)="edit(p.row)">
+                            <span>{{ p.row.date ? fmtDate(p.row.date) : 'Sin fecha' }}</span>
+                            <b class="num inc">+{{ money(p.row.amount) }}</b>
+                          </button>
+                          @if (p.split; as all) {
+                            <button type="button" class="sp" [attr.aria-expanded]="isOpen('p' + p.row.id)" (click)="toggle('p' + p.row.id)">
+                              <span>Parte de un pago de <b class="num">{{ money(splitTotal(all)) }}</b> repartido en {{ all.length }} cargos</span>
+                              <app-icon [name]="isOpen('p' + p.row.id) ? 'chevron-up' : 'chevron-down'" [size]="14" />
+                            </button>
+                            @if (isOpen('p' + p.row.id)) {
+                              <ul class="parts" [attr.aria-label]="'Cómo se repartió este pago'">
+                                @for (s of all; track s.id) {
+                                  <li [class.cur]="s.appliesTo === c.row.id">
+                                    <span class="pn">{{ target(s) }}@if (s.appliesTo === c.row.id) { <em>este cargo</em> }</span>
+                                    <b class="num">{{ money(s.amount) }}</b>
+                                  </li>
+                                }
+                              </ul>
+                            }
+                          }
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+              </div>
+            }
+          }
+          @if (loose().length) {
+            <div class="gh"><span>Pagos sin asignar</span></div>
+            @for (p of loose(); track p.id) {
+              <button type="button" class="row" (click)="edit(p)">
+                <span class="ico"><app-icon name="check" [size]="18" /></span>
+                <span class="lt"><span class="ln">{{ p.conceptName || 'Pago' }}</span><span class="ls">{{ p.date ? fmtDate(p.date) : 'Sin fecha' }}</span></span>
+                <span class="la num inc">{{ money(p.amount, true) }}</span>
+                <app-icon class="chev" name="chevron-right" [size]="16" />
+              </button>
+            }
+          }
+          @if (!pending().length && !loose().length) {
+            <ui-empty-state icon="wallet" title="Sin movimientos pendientes" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Lo que se salda pasa a Saldados.'" />
+          }
+        </div>
+      }
+      @case ('saldados') {
+        <p class="hint">Cuando un cargo se termina de pagar pasa aquí con sus pagos. Si fue un error, regrésalo a pendiente y corrige sus pagos.</p>
+        <div class="stack scroll">
+          @for (g of paid(); track g.cargo.id) {
+            <article class="card paid">
+              <div class="ptop">
+                <span class="lt"><span class="ln">{{ g.cargo.conceptName || 'Sin concepto' }}</span><span class="ls">Cargo del {{ g.cargo.date ? fmtDate(g.cargo.date) : 'sin fecha' }}</span></span>
+                <span class="la num">{{ money(g.cargo.amount) }}</span>
+              </div>
+              <ul class="pays plain">
+                @for (p of g.payments; track p.id) {
+                  <li class="pay">
+                    <div class="pb static"><span>{{ p.date ? fmtDate(p.date) : 'Sin fecha' }}</span><b class="num inc">+{{ money(p.amount) }}</b></div>
+                    @if (p.split; as all) {
+                      <button type="button" class="sp" [attr.aria-expanded]="isOpen('p' + p.id)" (click)="toggle('p' + p.id)">
+                        <span>Parte de un pago de <b class="num">{{ money(splitTotal(all)) }}</b> repartido en {{ all.length }} cargos</span>
+                        <app-icon [name]="isOpen('p' + p.id) ? 'chevron-up' : 'chevron-down'" [size]="14" />
+                      </button>
+                      @if (isOpen('p' + p.id)) {
+                        <ul class="parts" [attr.aria-label]="'Cómo se repartió este pago'">
+                          @for (s of all; track s.id) {
+                            <li [class.cur]="s.appliesTo === g.cargo.id">
+                              <span class="pn">{{ target(s) }}@if (s.appliesTo === g.cargo.id) { <em>este cargo</em> }</span>
+                              <b class="num">{{ money(s.amount) }}</b>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    }
+                  </li>
+                }
+              </ul>
+              <button uiBtn variant="secondary" small type="button" (click)="askRestore(g.cargo)">Regresar a pendiente</button>
+            </article>
+          } @empty {
+            <div class="panel"><ui-empty-state icon="check" title="Nada saldado todavía" text="Aquí aparecen los cargos pagados por completo." /></div>
+          }
+        </div>
+      }
+      @default {
+        <div class="panel scroll">
+          @for (m of ledger(); track m.row.id) {
             <button type="button" class="row" (click)="edit(m.row)">
               <span class="ico"><app-icon [name]="m.row.kind === 'cargo' ? 'wallet' : 'check'" [size]="18" /></span>
               <span class="lt"><span class="ln">{{ m.title }}</span><span class="ls">{{ m.sub }}</span></span>
@@ -49,43 +146,17 @@
               <app-icon class="chev" name="chevron-right" [size]="16" />
             </button>
           } @empty {
-            <ui-empty-state icon="wallet" title="Sin movimientos pendientes" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Lo que se liquida pasa a la pestaña Liquidados.'" />
+            <ui-empty-state icon="wallet" title="Sin movimientos" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Registra un préstamo para empezar.'" />
           }
         </div>
-      } @else {
-        <p class="hint">Cuando un cargo se termina de pagar pasa aquí con sus abonos. Si fue un error, regrésalo a pendiente y corrige sus pagos.</p>
-        <div class="stack scroll">
-        @for (g of paid(); track g.cargo.id) {
-          <article class="card paid">
-            <div class="ptop">
-              <span class="lt"><span class="ln">{{ g.cargo.conceptName || 'Sin concepto' }}</span><span class="ls">Cargo del {{ g.cargo.date ? fmtDate(g.cargo.date) : 'sin fecha' }}</span></span>
-              <span class="la num">{{ money(g.cargo.amount) }}</span>
-            </div>
-            <ul>
-              @for (p of g.payments; track p.id) {
-                <li>
-                  Pago de {{ money(p.amount) }} · {{ p.date ? fmtDate(p.date) : 'sin fecha' }}
-                  @if (p.split; as all) {
-                    <button type="button" class="more" [attr.aria-expanded]="isOpen(p)" (click)="toggleSplit(p)">parte de un pago de {{ money(splitTotal(all)) }} en {{ all.length }} cargos</button>
-                    @if (isOpen(p)) {
-                      <ul>
-                        @for (s of all; track s.id) {
-                          <li>{{ target(s) }}: {{ money(s.amount) }}</li>
-                        }
-                      </ul>
-                    }
-                  }
-                </li>
-              }
-            </ul>
-            <button uiBtn variant="secondary" small type="button" (click)="askRestore(g.cargo)">Regresar a pendiente</button>
-          </article>
-        } @empty {
-          <div class="panel"><ui-empty-state icon="check" title="Nada liquidado todavía" text="Aquí aparecen los cargos pagados por completo." /></div>
-        }
-        </div>
       }
-    </div>
+    }
+  </div>
+
+  <!-- Móvil: acciones al alcance del pulgar, sobre la barra inferior -->
+  <div class="bar" role="group" aria-label="Acciones">
+    <button uiBtn block type="button" [disabled]="!person()?.active" (click)="register('abono')"><app-icon name="check" [size]="18" />Registrar pago</button>
+    <button uiBtn variant="secondary" type="button" class="plus" aria-label="Nuevo préstamo" [disabled]="!person()?.active" (click)="register('cargo')"><app-icon name="plus" [size]="18" /></button>
   </div>
 }
 

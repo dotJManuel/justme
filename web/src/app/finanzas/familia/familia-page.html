@@ -1,47 +1,38 @@
 <div class="layout">
-  <section class="card" aria-label="Dinero con familia">
+  <section class="card hero" aria-label="Dinero con familia">
     <div class="b1">
-      <span class="k">{{ totals().left >= 0 ? 'Me queda' : 'Me falta' }}</span>
+      <span class="k">{{ totals().left >= 0 ? 'Disponible' : 'Faltante' }}</span>
       <span class="big num" [class.exp]="totals().left < 0">{{ money(totals().left) }}</span>
     </div>
+    <div class="flow" role="img" [attr.aria-label]="'Se ha entregado el ' + givenPct().toFixed(0) + '% de lo recibido'"><i [style.width.%]="givenPct()"></i></div>
     <div class="two">
       <div class="line"><span class="sub">Recibido</span><span class="mid num inc">{{ money(totals().recibido, true) }}</span></div>
-      <div class="line"><span class="sub">Dado</span><span class="mid num exp">{{ money(-totals().dado, true) }}</span></div>
+      <div class="line"><span class="sub">Entregado</span><span class="mid num exp">{{ money(-totals().dado, true) }}</span></div>
     </div>
     <button uiBtn small variant="secondary" type="button" (click)="register()"><app-icon name="plus" [size]="16" />Registrar</button>
   </section>
 
-  <div class="cols">
-    <section aria-labelledby="re-h">
-      <div class="sec"><h2 id="re-h">Recibido · {{ received().length }}</h2></div>
-      <div class="panel scroll">
-        @for (r of received(); track r.m.id) {
-          <button type="button" class="row" (click)="edit(r.m)">
-            <span class="ico"><app-icon name="heart" [size]="18" /></span>
-            <span class="lt"><span class="ln">{{ r.title }}</span><span class="ls">{{ r.sub }}</span></span>
-            <span class="la num inc">{{ money(r.signed, true) }}</span>
-            <app-icon class="chev" name="chevron-right" [size]="16" />
-          </button>
-        } @empty {
-          <ui-empty-state icon="heart" title="Nada recibido" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Registra lo que te dan para ver cuánto te queda.'"><button uiBtn small type="button" (click)="register()"><app-icon name="plus" [size]="16" />Registrar</button></ui-empty-state>
-        }
-      </div>
-    </section>
-    <section aria-labelledby="da-h">
-      <div class="sec"><h2 id="da-h">Dado · {{ given().length }}</h2></div>
-      <div class="panel scroll">
-        @for (r of given(); track r.m.id) {
-          <button type="button" class="row" (click)="edit(r.m)">
-            <span class="ico"><app-icon name="users" [size]="18" /></span>
-            <span class="lt"><span class="ln">{{ r.title }}</span><span class="ls">{{ r.sub }}</span></span>
-            <span class="la num exp">{{ money(r.signed, true) }}</span>
-            <app-icon class="chev" name="chevron-right" [size]="16" />
-          </button>
-        } @empty {
-          <ui-empty-state icon="users" title="Nada dado" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Registra lo que das para ver cuánto te queda.'"><button uiBtn small type="button" (click)="register()"><app-icon name="plus" [size]="16" />Registrar</button></ui-empty-state>
-        }
-      </div>
-    </section>
+  <div class="feed">
+  <div class="chips" role="group" aria-label="Qué ver">
+    <ui-chip [interactive]="true" [selected]="tab() === 'todo'" (click)="tab.set('todo')">Todo · {{ receivedCount() + givenCount() }}</ui-chip>
+    <ui-chip [interactive]="true" [selected]="tab() === 'recibido'" (click)="tab.set('recibido')">Recibido · {{ receivedCount() }}</ui-chip>
+    <ui-chip [interactive]="true" [selected]="tab() === 'dado'" (click)="tab.set('dado')">Entregado · {{ givenCount() }}</ui-chip>
+  </div>
+
+  <div class="panel scroll">
+    @for (g of groups(); track g.key) {
+      <div class="gh"><span>{{ g.label }}</span><span class="num" [class.inc]="g.net > 0" [class.exp]="g.net < 0">{{ tab() === 'todo' ? 'Neto ' : '' }}{{ money(g.net, true) }}</span></div>
+      @for (r of g.items; track r.m.id) {
+        <button type="button" class="row" (click)="edit(r.m)">
+          <span class="ico"><app-icon [name]="r.received ? 'arrow-down' : 'arrow-up'" [size]="18" /></span>
+          <span class="lt"><span class="ln">{{ r.title }}</span><span class="ls">{{ r.sub }}</span></span>
+          <span class="la num" [class.inc]="r.received" [class.exp]="!r.received">{{ money(r.signed, true) }}</span>
+        </button>
+      }
+    } @empty {
+      <ui-empty-state icon="heart" title="Sin movimientos" [text]="view.query() || view.month() ? 'No hay resultados con ese filtro.' : 'Registra lo que recibes y lo que entregas para ver cuánto te queda.'"><button uiBtn small type="button" (click)="register()"><app-icon name="plus" [size]="16" />Registrar</button></ui-empty-state>
+    }
+  </div>
   </div>
 </div>
 

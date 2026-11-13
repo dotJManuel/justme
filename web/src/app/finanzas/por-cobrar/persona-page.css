@@ -1,17 +1,57 @@
-.layout { display: grid; gap: var(--sp-4); }
-@media (min-width: 1024px) { .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; } }
+:host { display: block; }
+.layout { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: 72px; }
+@media (min-width: 1024px) { .layout { padding-bottom: 0; } }
 .head { display: flex; align-items: center; gap: 4px; }
-.head h2 { font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.head h2 { flex: 1; min-width: 0; font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .back { display: grid; place-items: center; width: var(--touch); height: var(--touch); margin-left: -8px; border-radius: var(--rf-2); color: var(--tx); }
 .back:hover { background: var(--s2); }
+@media (min-width: 1024px) { .back { display: none; } }
+.ib { display: grid; place-items: center; width: var(--touch); height: var(--touch); border: 0; border-radius: var(--rf-2); background: none; color: var(--tx2); cursor: pointer; }
+.ib:hover { background: var(--s2); color: var(--tx); }
 .b1 { display: flex; flex-direction: column; gap: 4px; }
 .legend { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--tx2); }
 .legend strong { font-weight: 600; }
-.acts { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
-.tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.sortb { display: flex; align-items: center; gap: 4px; min-height: var(--touch); padding: 0 4px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.acts { display: none; gap: 8px; padding-top: 4px; }
+@media (min-width: 1024px) { .acts { display: flex; } }
+
+/* Barra de acciones fija (móvil), encima de la barra inferior */
+.bar {
+  position: fixed; z-index: 30; left: 0; right: 0; bottom: calc(var(--nav-h) + var(--safe-b)); display: flex; gap: 8px;
+  padding: 12px var(--sp-4); background: var(--sf); box-shadow: 0 -1px 0 var(--bd);
+}
+.bar .plus { flex: none; width: 56px; padding: 0; }
+@media (min-width: 1024px) { .bar { display: none; } }
+
+/* Cargos por mes */
+.gh { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); }
+.gh .num { letter-spacing: 0; text-transform: none; }
+.debt { display: flex; flex-direction: column; gap: 10px; padding: 4px 16px 14px; }
+.debt + .debt { border-top: 1px solid var(--bd); padding-top: 12px; }
+.dh { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; width: 100%; min-height: var(--touch); padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dh .lt { gap: 2px; }
+.oa { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.oa b { font-size: 17px; line-height: 24px; font-weight: 700; }
+.oa small { font-size: 12px; color: var(--tx3); }
+.pt { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 32px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.pt .inc { font-weight: 600; }
+.cnt { display: inline-flex; align-items: center; gap: 4px; color: var(--tx3); }
+.pays { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 2px solid var(--bd); display: flex; flex-direction: column; }
+.pays button { display: flex; justify-content: space-between; gap: 12px; width: 100%; min-height: 36px; padding: 0; border: 0; background: none; color: var(--tx2); font: inherit; font-size: 13px; text-align: left; align-items: center; cursor: pointer; }
+.pays .pay { display: flex; flex-direction: column; }
+.pays .pb { justify-content: space-between; }
+.pb.static { display: flex; justify-content: space-between; align-items: center; min-height: 36px; font-size: 13px; color: var(--tx2); }
+.pays.plain { padding-left: 12px; font-size: 13px; }
+.sp { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 32px; padding: 0 0 0 2px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.sp b { font-weight: 650; }
+.parts { list-style: none; margin: 0 0 6px 8px; padding: 6px 10px; border-radius: 8px; background: var(--s2); display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tx2); }
+.parts li { display: flex; justify-content: space-between; gap: 12px; }
+.parts li.cur { color: var(--tx); font-weight: 650; }
+.parts em { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--acs); color: var(--ac); font-style: normal; font-size: 11px; font-weight: 600; }
+.chev { color: var(--tx3); flex: none; }
+
 .paid { gap: 10px; padding: 16px; }
 .ptop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 20px; color: var(--tx2); }
+ul.pays { padding-left: 12px; }
 .more { padding: 0 0 0 6px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
 .paid button[uiBtn] { align-self: flex-start; }

@@ -3,10 +3,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Icon } from '../icons/icon';
 import { ThemeMode, ThemeService } from '../theme.service';
 import { Button } from './button';
-import { FINANZAS_SECTIONS, NAV_AFTER_ADD, NAV_BEFORE_ADD, NavDestination } from './nav.config';
+import { NAV_AFTER_ADD, NAV_BEFORE_ADD, NavDestination } from './nav.config';
 import { Segmented } from './segmented';
 
-/** Barra lateral de escritorio (≥ 1024 px): logo, "Agregar", destinos, subsecciones de Finanzas y selector de tema. */
+/** Barra lateral de escritorio (≥ 1024 px): logo, "Agregar", destinos, y selector de tema. */
 @Component({
   selector: 'ui-sidebar',
   imports: [RouterLink, RouterLinkActive, Icon, Button, Segmented],
@@ -21,13 +21,6 @@ import { Segmented } from './segmented';
         <a class="dest" [routerLink]="d.path" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: !!d.exact }" ariaCurrentWhenActive="page">
           <app-icon [name]="d.icon" [size]="20" />{{ d.label }}
         </a>
-        @if (d.path === '/finanzas') {
-          <div class="subs">
-            @for (s of sections; track s.path) {
-              <a [routerLink]="s.path" routerLinkActive="on" ariaCurrentWhenActive="page">{{ s.label }}</a>
-            }
-          </div>
-        }
       }
     </nav>
     <span class="grow"></span>
@@ -49,13 +42,6 @@ import { Segmented } from './segmented';
     }
     .dest:hover { background: var(--s2); }
     .dest.on { background: var(--acs); color: var(--ac); font-weight: 700; }
-    .subs { display: flex; flex-direction: column; gap: 2px; padding: 4px 0 4px 44px; }
-    .subs a {
-      display: flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 8px;
-      color: var(--tx2); font-size: 14px; text-decoration: none;
-    }
-    .subs a:hover { background: var(--s2); }
-    .subs a.on { background: var(--s2); color: var(--tx); font-weight: 600; }
     .grow { flex: 1; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,7 +49,6 @@ import { Segmented } from './segmented';
 export class Sidebar {
   protected readonly theme = inject(ThemeService);
   protected readonly destinations: NavDestination[] = [...NAV_BEFORE_ADD, ...NAV_AFTER_ADD];
-  protected readonly sections = FINANZAS_SECTIONS;
   protected readonly themes: { value: ThemeMode; label: string }[] = [
     { value: 'light', label: 'Claro' },
     { value: 'dark', label: 'Oscuro' },

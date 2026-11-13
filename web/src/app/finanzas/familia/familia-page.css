@@ -1,7 +1,17 @@
 .layout { display: flex; flex-direction: column; gap: var(--sp-4); }
+.feed { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+/* Escritorio: el balance a la izquierda y la lista a la derecha, sin dejar la mitad de la pantalla vacía. */
+@media (min-width: 1024px) {
+  .layout { display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+  .hero { position: sticky; top: var(--sp-5); }
+  .feed .scroll { max-height: min(72dvh, 680px); }
+}
 .b1 { display: flex; flex-direction: column; gap: 4px; }
+.flow { height: 6px; border-radius: 999px; background: var(--grf); overflow: hidden; }
+.flow i { display: block; height: 100%; background: var(--rd); border-radius: inherit; }
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--bd); }
 .line { display: flex; flex-direction: column; gap: 2px; }
 .card button[uiBtn] { align-self: flex-start; }
-.cols { display: grid; gap: var(--sp-4); }
-@media (min-width: 1024px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+.gh { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); }
+.gh .num { letter-spacing: 0; text-transform: none; }
+.gh + .row::before { display: none; }

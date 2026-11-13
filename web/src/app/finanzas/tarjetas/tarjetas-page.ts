@@ -7,6 +7,7 @@ import { AddSheetService } from '../../add/add-sheet.service';
 import { Icon } from '../../icons/icon';
 import { Button } from '../../ui/button';
 import { Chip } from '../../ui/chip';
+import { Segmented, SegmentOption } from '../../ui/segmented';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { ToastService } from '../../ui/toast';
 import { money } from '../../ui/money';
@@ -29,7 +30,7 @@ const CUT_ALERT_DAYS = 7;
 /** Finanzas › Tarjetas: una tarjeta (o los gastos fijos) con su corte, sus meses sin intereses y sus compras. */
 @Component({
   selector: 'app-tarjetas-page',
-  imports: [Button, Chip, ConfirmDialog, EditCut, EditExpense, EmptyState, Icon, ProgressBar],
+  imports: [Button, Chip, ConfirmDialog, Segmented, EditCut, EditExpense, EmptyState, Icon, ProgressBar],
   templateUrl: './tarjetas-page.html',
   styleUrls: ['../fin-pages.css', './tarjetas-page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,8 +79,10 @@ export class TarjetasPage {
   }
   private line(e: Expense) {
     const d = e.purchasedAt ? shortDate(dateKey(new Date(e.purchasedAt))) : '';
-    const sub = [e.pinned ? 'Fijada' : '', d, e.installment && !parseInstallment(e.installment) ? e.installment : ''].filter(Boolean).join(' · ');
-    return { e, name: this.label(e), amount: e.amount, sub, pinned: !!e.pinned };
+    // La fecha va en el encabezado del grupo; la recurrente muestra desde cuándo se repite.
+    const note = e.installment && !parseInstallment(e.installment) ? e.installment : '';
+    const sub = e.pinned ? [d ? `Desde ${d}` : 'Cada corte', note].filter(Boolean).join(' · ') : note;
+    return { e, name: this.label(e), amount: e.amount, sub, pinned: !!e.pinned, day: e.purchasedAt ? dateKey(new Date(e.purchasedAt)) : '' };
   }
 
   protected readonly msi = computed(() =>
@@ -91,13 +94,37 @@ export class TarjetasPage {
   private readonly plain = computed(() =>
     this.rows()
       .filter((e) => !isMsi(e) && this.view.expenseInMonth(e) && this.view.matches(this.label(e)))
-      // Las fijadas (recurrentes) primero; luego, las más recientes.
+      // Las recurrentes primero; luego, las más recientes.
       .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || (b.purchasedAt ?? '').localeCompare(a.purchasedAt ?? ''))
       .map((e) => this.line(e)),
   );
   protected readonly showAll = signal(false);
   protected readonly buys = computed(() => (this.showAll() ? this.plain() : this.plain().slice(0, SHOWN)));
   protected readonly buyCount = computed(() => this.plain().length);
+
+  /** En móvil la pantalla se divide en tres vistas; en escritorio se ve todo junto. */
+  protected readonly sub = signal<'compras' | 'meses' | 'corte'>('compras');
+  protected readonly subOptions: SegmentOption[] = [
+    { value: 'compras', label: 'Compras' },
+    { value: 'meses', label: 'Meses' },
+    { value: 'corte', label: 'Corte' },
+  ];
+  protected readonly offCompras = computed(() => !this.isFixed() && this.sub() !== 'compras');
+  protected readonly offMeses = computed(() => this.sub() !== 'meses');
+  protected readonly offCorte = computed(() => this.sub() !== 'corte');
+
+  /** Las compras agrupadas: primero las recurrentes y luego cada día, con su subtotal. Los gastos fijos van sin grupos. */
+  protected readonly groups = computed(() => {
+    const list = this.buys();
+    if (this.isFixed()) return list.length ? [{ key: 'fijos', label: '', total: 0, items: list }] : [];
+    const out: { key: string; label: string; total: number; items: typeof list }[] = [];
+    const pinned = list.filter((b) => b.pinned);
+    if (pinned.length) out.push({ key: 'pin', label: 'Recurrentes', total: pinned.reduce((s, b) => s + b.amount, 0), items: pinned });
+    const days = new Map<string, typeof list>();
+    for (const b of list.filter((x) => !x.pinned)) days.set(b.day, [...(days.get(b.day) ?? []), b]);
+    for (const [day, items] of days) out.push({ key: 'd' + day, label: day ? shortDate(day) : 'Sin fecha', total: items.reduce((s, b) => s + b.amount, 0), items });
+    return out;
+  });
 
   // Selección para borrar varias compras a la vez
   protected readonly selecting = signal(false);
@@ -107,7 +134,7 @@ export class TarjetasPage {
   protected readonly busy = signal(false);
   protected readonly pickedDetails = computed(() => {
     const pinned = this.buys().filter((b) => this.picked().has(b.e.id) && b.pinned).length;
-    return pinned ? [pinned === 1 ? '1 compra fijada (recurrente)' : `${pinned} compras fijadas (recurrentes)`] : [];
+    return pinned ? [pinned === 1 ? '1 compra recurrente' : `${pinned} compras recurrentes`] : [];
   });
 
   // Limpieza al terminar el corte: las compras de contado de cortes anteriores, sin las fijadas

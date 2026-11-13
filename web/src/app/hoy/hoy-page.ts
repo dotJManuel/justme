@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { ConfigService } from '../config.service';
 import { ageDays, currentCutPeriod, monthSummary, personSummaries } from '../finanzas/finanzas.calc';
+import { buildAttention } from '../finanzas/finanzas.attention';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { MN } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
@@ -15,6 +16,8 @@ const DAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', '
 const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 /** Desde cuántos días antes del corte se marca como alerta. */
 const CUT_ALERT_DAYS = 7;
+/** Cuántas misiones pendientes se ven en Hoy antes de "Ver más". */
+const TODO_SHOWN = 4;
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -70,6 +73,10 @@ export class HoyPage implements OnInit {
     };
   });
 
+  /** Las misiones que faltan hoy, en el orden de la lista: se completan en el que quieras. */
+  protected readonly todo = computed(() => this.store.pending().slice(0, TODO_SHOWN));
+  protected readonly more = computed(() => Math.max(0, this.store.pending().length - TODO_SHOWN));
+
   protected complete(habitKey: string, name: string) {
     this.store.complete(habitKey, name);
   }
@@ -104,6 +111,11 @@ export class HoyPage implements OnInit {
       })
       .sort((a, b) => a.days - b.days);
   });
+
+  // ── Por atender: lo que pide una acción, lo más urgente primero
+  protected readonly attention = computed(() =>
+    buildAttention({ today: this.store.today(), cards: this.fin.cards(), expenses: this.fin.expenses(), debts: this.fin.debts(), people: this.fin.people(), concepts: this.fin.concepts() }),
+  );
 
   // ── Te deben
   protected readonly owed = computed(() => {

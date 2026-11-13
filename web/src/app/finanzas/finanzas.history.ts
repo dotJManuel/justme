@@ -56,7 +56,7 @@ export interface HistoryLine {
   appliesTo?: string;
   at: string;
   action: AuditAction;
-  /** Qué es el registro: Cargo, Abono, Recibido, Dado, Gasto, Corte, Tarjeta, Concepto, Persona o Ingreso. */
+  /** Qué es el registro: Cargo, Abono, Recibido, Entregado, Gasto, Corte, Tarjeta, Concepto, Persona o Ingreso. */
   badge: string;
   kind: 'cargo' | 'abono' | null;
   /** Persona, tarjeta o lista a la que pertenece. */
@@ -99,7 +99,7 @@ const TYPE: Record<string, string> = {
   cargo: 'Cargo (préstamo)',
   abono: 'Abono (pago recibido)',
   recibido: 'Recibido',
-  dado: 'Dado',
+  dado: 'Entregado',
   tarjeta: 'Tarjeta',
   fijos: 'Gastos fijos',
 };
@@ -187,7 +187,7 @@ export function describeEntry(e: AuditEntry, nameOf: NameOf): HistoryLine {
       line.appliesTo = str(row['applies_to']);
       break;
     case 'fin_family':
-      line.badge = row['direction'] === 'dado' ? 'Dado' : 'Recibido';
+      line.badge = row['direction'] === 'dado' ? 'Entregado' : 'Recibido';
       line.who = nameOf(str(row['person_id']) || null) || '—';
       line.what = conceptOf(row, nameOf) || 'Sin concepto';
       line.amount = num(row['amount']);

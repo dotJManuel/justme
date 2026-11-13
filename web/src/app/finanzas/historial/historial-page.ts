@@ -7,7 +7,7 @@ import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { PageHeader } from '../../ui/page-header';
 import { ErrorState, Skeleton } from '../../ui/states';
 import { ToastService } from '../../ui/toast';
-import { conceptLabel, fmtMoney } from '../finanzas.calc';
+import { conceptLabel, fmtDate, fmtMoney } from '../finanzas.calc';
 import { historySheet, today } from '../finanzas.export';
 import {
   AuditAction,
@@ -70,6 +70,8 @@ export class HistorialPage implements OnInit {
   protected readonly busy = signal(false);
 
   // Filtros (se aplican a lo ya cargado)
+  /** Los filtros (persona, tipo, acción y fechas) van plegados; la búsqueda siempre a la vista. */
+  protected readonly filtersOpen = signal(false);
   protected readonly person = signal('');
   protected readonly kind = signal<'' | 'abono' | 'cargo'>('');
   protected readonly action = signal<'' | AuditAction>('');
@@ -184,6 +186,36 @@ export class HistorialPage implements OnInit {
       // Sin nombres de lo eliminado, el historial igual se puede leer.
     }
     await this.reload();
+  }
+
+  protected readonly activeFilters = computed(() => [this.person(), this.kind(), this.action(), this.from(), this.to()].filter(Boolean).length);
+
+  private dayKey(at: string): string {
+    return dateKey(new Date(at));
+  }
+  /** "Hoy", "Ayer" o la fecha: encabezado de cada día en la lista. */
+  protected dayLabel(at: string): string {
+    const now = new Date();
+    const k = this.dayKey(at);
+    if (k === dateKey(now)) return 'Hoy';
+    if (k === dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) return 'Ayer';
+    return fmtDate(k);
+  }
+  /** Hora del cambio, por ejemplo "2:37 p. m.". */
+  protected timeOf(at: string): string {
+    return new Date(at).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
+  }
+  /** La fecha del día del cambio con el mismo formato que la fecha del movimiento (para no repetirla). */
+  protected dayFmt(at: string): string {
+    return fmtDate(this.dayKey(at));
+  }
+  protected badgeText(b: string): string {
+    return b === 'Cargo' ? 'Préstamo' : b === 'Abono' ? 'Pago' : b;
+  }
+
+  protected newDay(i: number): boolean {
+    const list = this.items();
+    return i === 0 || this.dayKey(list[i - 1].line.at) !== this.dayKey(list[i].line.at);
   }
 
   protected async pick(area: HistoryArea) {

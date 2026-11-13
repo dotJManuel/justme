@@ -18,7 +18,7 @@ import { FinanzasService } from '../finanzas.service';
   template: `
     <ui-bottom-sheet [title]="e()?.section === 'fijos' ? 'Gasto fijo' : 'Gasto'" [(open)]="open">
       <form (submit)="$event.preventDefault(); save()" novalidate>
-        <ui-amount [label]="isCard() ? 'Por pagar' : 'Monto mensual'" [(value)]="amount" [error]="amountError()" />
+        <ui-amount [label]="isCard() ? 'Monto' : 'Monto mensual'" [(value)]="amount" [error]="amountError()" />
         <app-concept-input [options]="conceptOptions()" [(text)]="concept" [error]="conceptError()" />
         @if (isCard()) {
           <div class="two">
@@ -29,8 +29,8 @@ import { FinanzasService } from '../finanzas.service';
         }
         @if (isCard()) {
           <div class="pinrow">
-            <span class="pt">Fijar compra<small>Recurrente: se queda al terminar el corte</small></span>
-            <ui-switch label="Fijar compra" [checked]="pinned()" (toggled)="pinned.set($event)" />
+            <span class="pt">Compra recurrente<small>Recurrente: se queda al terminar el corte</small></span>
+            <ui-switch label="Compra recurrente" [checked]="pinned()" (toggled)="pinned.set($event)" />
           </div>
         }
         @if (fin.error()) {

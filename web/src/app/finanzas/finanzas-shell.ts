@@ -7,8 +7,8 @@ import { FinanzasView } from './finanzas-view';
 import { FinanzasService } from './finanzas.service';
 
 /**
- * Marco de Finanzas: título, mes, búsqueda, "Exportar" y las cuatro secciones (Resumen · Tarjetas · Por cobrar ·
- * Familia). En escritorio las secciones están en la barra lateral y aquí no se repiten.
+ * Marco de Finanzas: título, mes, búsqueda, "Exportar" y las cuatro secciones como pestañas (Resumen · Tarjetas ·
+ * Por cobrar · Familia), iguales en móvil y escritorio.
  */
 @Component({
   selector: 'app-finanzas-shell',

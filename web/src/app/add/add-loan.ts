@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { dateKey } from '../habits/streaks';
+import { Icon } from '../icons/icon';
 import { conceptLabel, debtRows, fmtMoney, localInputToIso, nowLocalInput, parseMoney, resolveConcept, round2 } from '../finanzas/finanzas.calc';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { Button } from '../ui/button';
@@ -11,11 +12,6 @@ import { ToastService } from '../ui/toast';
 import { AddSheetService } from './add-sheet.service';
 import { ConceptInput } from './concept-input';
 
-const KINDS: Option[] = [
-  { value: 'cargo', label: 'Presté' },
-  { value: 'abono', label: 'Me pagó' },
-];
-
 /**
  * Préstamo o abono de una persona, con las mismas reglas de siempre. Lo prestado puede registrarse además como
  * compra de una tarjeta. Un pago se reparte entre los cargos pendientes de la persona (un abono por cada uno) y
@@ -23,11 +19,10 @@ const KINDS: Option[] = [
  */
 @Component({
   selector: 'app-add-loan',
-  imports: [Amount, Button, Choice, ConceptInput, ErrorState, Input, RouterLink, Select],
+  imports: [Amount, Button, Choice, ConceptInput, ErrorState, Icon, Input, RouterLink, Select],
   template: `
     <form (submit)="$event.preventDefault(); save()" novalidate>
-      <ui-choice label="¿Qué pasó?" [options]="kinds" [(value)]="kind" columns="repeat(2, minmax(0, 1fr))" />
-      <ui-amount [label]="kind() === 'abono' ? 'Cuánto pagó' : 'Monto'" [(value)]="amount" [error]="amountError()" />
+      <ui-amount [label]="kind() === 'abono' ? 'Cuánto te pagó' : 'Monto'" [(value)]="amount" [error]="amountError()" />
       @if (people().length) {
         <ui-select label="Persona" placeholder="Elige a quién" [options]="people()" [(value)]="person" />
         @if (personError()) {
@@ -38,26 +33,51 @@ const KINDS: Option[] = [
       }
       <app-concept-input label="Concepto (opcional)" placeholder="Ej. Recarga" [options]="conceptOptions()" [(text)]="concept" />
 
-      @if (splitting() && pending().length) {
-        <fieldset class="alloc">
-          <legend>¿A qué cargos aplica?</legend>
-          @for (c of pending(); track c.id) {
-            <div class="line">
-              <label [for]="'alloc-' + c.id">
-                <span class="t">{{ c.conceptName || 'Sin concepto' }}</span>
-                <span class="s">Pendiente {{ money(c.balance ?? 0) }}</span>
-              </label>
-              <input
-                [id]="'alloc-' + c.id" inputmode="decimal" placeholder="0.00" class="num"
-                [value]="alloc()[c.id] ?? ''" (input)="setAlloc(c.id, $any($event.target).value)"
-              />
-              <button type="button" (click)="fill(c.id, c.balance ?? 0)">Todo</button>
-            </div>
+      @if (splitting() && person()) {
+        <section class="apply" aria-label="Cómo se aplica el pago">
+          <div class="ah">
+            <span class="lg">Se aplica a</span>
+            @if (pending().length) {
+              <button type="button" class="tgl" (click)="toggleManual()">{{ manual() ? 'Aplicar automático' : 'Repartir manualmente' }}</button>
+            }
+          </div>
+          @if (!pending().length) {
+            <p class="note">Esta persona no tiene cargos pendientes: el pago queda sin asignar.</p>
+          } @else if (!manual()) {
+            @for (x of preview(); track x.id) {
+              <div class="pv">
+                <span class="ok"><app-icon name="check" [size]="16" /></span>
+                <span class="pn"><span class="t">{{ x.name }}</span><span class="s">Debe {{ money(x.balance) }}</span></span>
+                <span class="pa"><b class="num">{{ money(x.amount) }}</b><span class="s">{{ x.amount >= x.balance ? 'Queda saldado' : 'Quedan ' + money(x.balance - x.amount) }}</span></span>
+              </div>
+            } @empty {
+              <p class="note">Escribe cuánto te pagó para ver cómo se aplica.</p>
+            }
+            @if (parsed() && remaining() > 0) {
+              <p class="note">Sobran {{ money(remaining()) }}: quedan como pago sin asignar.</p>
+            }
+          } @else {
+            <fieldset class="alloc">
+              <legend class="sr-only">¿A qué cargos aplica?</legend>
+              @for (c of pending(); track c.id) {
+                <div class="line">
+                  <label [for]="'alloc-' + c.id">
+                    <span class="t">{{ c.conceptName || 'Sin concepto' }}</span>
+                    <span class="s">Debe {{ money(c.balance ?? 0) }}</span>
+                  </label>
+                  <input
+                    [id]="'alloc-' + c.id" inputmode="decimal" placeholder="0.00" class="num"
+                    [value]="alloc()[c.id] ?? ''" (input)="setAlloc(c.id, $any($event.target).value)"
+                  />
+                  <button type="button" (click)="fill(c.id, c.balance ?? 0)">Todo</button>
+                </div>
+              }
+              <p class="note" [class.err]="!!allocError()">
+                {{ allocError() || (remaining() > 0 ? 'Sin asignar a un cargo: ' + money(remaining()) : 'Todo el pago está repartido.') }}
+              </p>
+            </fieldset>
           }
-          <p class="note" [class.err]="!!allocError()">
-            {{ allocError() || (remaining() > 0 ? 'Sin asignar a un cargo: ' + money(remaining()) : 'Todo el pago está repartido.') }}
-          </p>
-        </fieldset>
+        </section>
       }
       @if (kind() === 'cargo' && cards().length) {
         <ui-choice label="¿Lo pagaste con tarjeta?" [options]="cardOptions()" [(value)]="card" />
@@ -67,7 +87,7 @@ const KINDS: Option[] = [
       @if (fin.error()) {
         <ui-error-state [inline]="true" [message]="fin.error()" (retry)="save()" />
       }
-      <button uiBtn block type="submit" [disabled]="busy()">{{ busy() ? 'Guardando…' : kind() === 'cargo' ? 'Guardar préstamo' : 'Guardar abono' }}</button>
+      <button uiBtn block type="submit" [disabled]="busy()">{{ busy() ? 'Guardando…' : kind() === 'cargo' ? 'Guardar préstamo' : 'Guardar pago' }}</button>
     </form>
   `,
   styles: `
@@ -77,6 +97,16 @@ const KINDS: Option[] = [
     .note a { color: var(--ac); font-weight: 600; }
     .err { font-size: 12px; color: var(--rd); font-weight: 500; }
     p.err { margin-top: -10px; }
+    .apply { display: flex; flex-direction: column; gap: 10px; }
+    .ah { display: flex; align-items: center; justify-content: space-between; }
+    .lg { font-size: 13px; line-height: 16px; font-weight: 600; color: var(--tx2); }
+    .tgl { min-height: 32px; padding: 0 4px; border: 0; background: none; color: var(--ac); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .pv { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--rf-3); background: var(--grs); box-shadow: inset 0 0 0 1px var(--bd); }
+    .ok { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--sf); color: var(--gr); }
+    .pn, .pa { display: flex; flex-direction: column; min-width: 0; }
+    .pn { flex: 1; }
+    .pa { align-items: flex-end; flex: none; }
+    .pa b { font-size: 15px; font-weight: 650; }
     .alloc { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
     legend { padding: 0; margin-bottom: 8px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--tx2); }
     .line { display: grid; grid-template-columns: minmax(0, 1fr) 7rem auto; align-items: center; gap: 8px; }
@@ -94,7 +124,6 @@ export class AddLoan {
   private readonly toasts = inject(ToastService);
 
   readonly saved = output<void>();
-  protected readonly kinds = KINDS;
   protected readonly money = fmtMoney;
 
   private readonly preset = inject(AddSheetService).preset();
@@ -121,14 +150,31 @@ export class AddLoan {
   private readonly rows = computed(() => debtRows(this.fin.debts(), new Date(), this.fin.people(), this.fin.concepts()));
 
   protected readonly splitting = computed(() => this.kind() === 'abono');
+  /** Repartir el pago a mano; si no, se aplica solo al cargo más antiguo primero. */
+  protected readonly manual = signal(false);
   /** Cargos pendientes de la persona elegida, entre los que se reparte el pago. */
   protected readonly pending = computed(() => {
     const p = this.person();
     if (!this.splitting() || !p) return [];
     return this.rows().filter((r) => r.kind === 'cargo' && r.personId === p && (r.balance ?? 0) > 0);
   });
+  /** Reparto automático: del cargo más antiguo al más reciente, hasta agotar lo que pagó. */
+  protected readonly auto = computed(() => {
+    let left = this.parsed() ?? 0;
+    return [...this.pending()]
+      .sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'))
+      .map((c) => {
+        const balance = c.balance ?? 0;
+        const amount = Math.max(0, Math.min(balance, left));
+        left = round2(left - amount);
+        return { id: c.id, name: c.conceptName || 'Sin concepto', balance, amount };
+      });
+  });
+  protected readonly preview = computed(() => this.auto().filter((x) => x.amount > 0));
   private readonly allocated = computed(() =>
-    this.pending().map((c) => ({ id: c.id, balance: c.balance ?? 0, amount: parseMoney(this.alloc()[c.id] ?? '') ?? 0 })),
+    this.manual()
+      ? this.pending().map((c) => ({ id: c.id, balance: c.balance ?? 0, amount: parseMoney(this.alloc()[c.id] ?? '') ?? 0 }))
+      : this.auto().map(({ id, balance, amount }) => ({ id, balance, amount })),
   );
   private readonly parsed = computed(() => parseMoney(this.amount()));
   /** Lo que queda sin aplicar a ningún cargo (negativo si se reparte de más). */
@@ -144,6 +190,12 @@ export class AddLoan {
     this.tried() && !(this.parsed() && this.parsed()! > 0) ? 'Escribe un monto mayor a cero' : '',
   );
   protected readonly personError = computed(() => (this.tried() && !this.person() ? 'Elige una persona' : ''));
+
+  /** Pasa a repartir a mano (con lo automático como punto de partida) o vuelve al reparto automático. */
+  protected toggleManual() {
+    if (!this.manual()) this.alloc.set(Object.fromEntries(this.auto().filter((x) => x.amount > 0).map((x) => [x.id, String(x.amount)])));
+    this.manual.update((m) => !m);
+  }
 
   protected setAlloc(id: string, value: string) {
     this.alloc.update((a) => ({ ...a, [id]: value }));
@@ -191,7 +243,7 @@ export class AddLoan {
     }
     this.busy.set(false);
     if (!ok) return; // el error queda a la vista y lo capturado, intacto
-    this.toasts.show({ message: this.splitting() ? 'Abono guardado' : 'Préstamo guardado' });
+    this.toasts.show({ message: this.splitting() ? 'Pago guardado' : 'Préstamo guardado' });
     this.saved.emit();
   }
 }
