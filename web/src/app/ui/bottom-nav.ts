@@ -3,7 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Icon } from '../icons/icon';
 import { NAV_AFTER_ADD, NAV_BEFORE_ADD } from './nav.config';
 
-/** Barra inferior fija (móvil): 4 destinos y el "+" al centro. En escritorio la reemplaza la barra lateral. */
+/** Barra inferior fija (móvil): 5 destinos y el "+" entre ellos. En escritorio la reemplaza la barra lateral. */
 @Component({
   selector: 'ui-bottom-nav',
   imports: [RouterLink, RouterLinkActive, Icon],
@@ -28,7 +28,7 @@ import { NAV_AFTER_ADD, NAV_BEFORE_ADD } from './nav.config';
       padding: 0 max(8px, env(safe-area-inset-right, 0px)) var(--safe-b) max(8px, env(safe-area-inset-left, 0px));
     }
     @media (min-width: 1024px) { :host { display: none; } }
-    nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; height: var(--nav-h); }
+    nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: center; height: var(--nav-h); }
     a {
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: var(--touch); height: 100%;
       color: var(--tx2); font-size: 11px; line-height: 14px; font-weight: 500; text-decoration: none;

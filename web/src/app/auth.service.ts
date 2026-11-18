@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { ConfigService } from './config.service';
 import { FinanzasService } from './finanzas/finanzas.service';
 import { HabitsStore } from './habits/habits.store';
+import { NotasService } from './notas/notas.service';
 import { LinksService } from './perfil/links.service';
 import { BadgesService } from './racha/badges.service';
 import { SupabaseService } from './supabase.service';
@@ -15,6 +16,7 @@ export class AuthService {
   private readonly habits = inject(HabitsStore);
   private readonly links = inject(LinksService);
   private readonly badges = inject(BadgesService);
+  private readonly notas = inject(NotasService);
 
   readonly session = signal<Session | null>(null);
   readonly user = computed(() => this.session()?.user ?? null);
@@ -32,6 +34,7 @@ export class AuthService {
         this.habits.reset();
         this.links.reset();
         this.badges.reset();
+        this.notas.reset();
       }
       this.session.set(session);
     });

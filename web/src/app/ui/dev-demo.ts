@@ -7,6 +7,8 @@ import { FinanzasService } from '../finanzas/finanzas.service';
 import { DEFAULT_HABITS } from '../habits/habits.config';
 import { HabitsStore } from '../habits/habits.store';
 import { inferGroup } from '../habits/mission-groups';
+import { Block } from '../notas/notas.blocks';
+import { Note, NotasService } from '../notas/notas.service';
 import { LinksService } from '../perfil/links.service';
 import { BadgesService } from '../racha/badges.service';
 import { DEFAULT_BADGES } from '../racha/logros.config';
@@ -24,6 +26,7 @@ export class DevDemo {
     const fin = inject(FinanzasService);
     const links = inject(LinksService);
     const badges = inject(BadgesService);
+    const notas = inject(NotasService);
     const router = inject(Router);
 
     const now = new Date();
@@ -131,6 +134,54 @@ export class DevDemo {
     badges.loaded.set(true);
     (badges as unknown as { loading: Promise<void> }).loading = Promise.resolve();
     (links as unknown as { loading: Promise<void> }).loading = Promise.resolve();
+
+    // Notas de ejemplo; el bloqueo y el guardado se simulan en memoria (la nota «Compras» la "edita otra pestaña").
+    const b = (id: string, type: Block['type'], text = '', done = false): Block => (type === 'todo' ? { id, type, text, done } : { id, type, text });
+    const hour = 3_600_000;
+    const demoNotes: Note[] = new URLSearchParams(location.search).has('empty')
+      ? []
+      : [
+          {
+            id: '11111111-1111-4111-8111-111111111111', title: 'Plan de la semana', updatedAt: new Date(now.getTime() - hour).toISOString(), lockHolder: null, lockUntil: null,
+            blocks: [
+              b('a1', 'h1', 'Prioridades'), b('a2', 'p', 'Lo que <b>no se negocia</b> esta semana, <i>en orden</i>: usa <code>Ctrl+B</code> o <s>tacha</s> lo hecho.'),
+              b('a3', 'todo', 'Terminar el módulo de notas', true), b('a4', 'todo', 'Repasar LeetCode 30 min'), b('a5', 'todo', 'Llamar a mamá'),
+              b('a6', 'hr'), b('a7', 'h2', 'Ideas'), b('a8', 'ul', 'Ahorro automático por quincena'), b('a9', 'ul', 'Meta de lectura'),
+              b('a10', 'quote', 'Lo importante es no romper la racha.'), b('a11', 'ol', 'Despertar 7:00'), b('a12', 'ol', 'Ejercicio'),
+            ],
+          },
+          {
+            id: '22222222-2222-4222-8222-222222222222', title: 'Compras', updatedAt: new Date(now.getTime() - 26 * hour).toISOString(),
+            lockHolder: 'otra-pestana', lockUntil: new Date(now.getTime() + hour).toISOString(),
+            blocks: [b('c1', 'ul', 'Leche'), b('c2', 'ul', 'Huevo'), b('c3', 'ul', 'Café')],
+          },
+          { id: '33333333-3333-4333-8333-333333333333', title: '', updatedAt: new Date(now.getTime() - 9 * 24 * hour).toISOString(), lockHolder: null, lockUntil: null, blocks: [b('d1', 'p', '')] },
+        ];
+    notas.notes.set(demoNotes);
+    notas.loaded.set(true);
+    (notas as unknown as { loading: Promise<void> }).loading = Promise.resolve();
+    const find = (id: string) => notas.notes().find((n) => n.id === id);
+    notas.fetchOne = async (id) => find(id) ?? null;
+    notas.acquire = async (id, force = false) => {
+      const n = find(id);
+      if (!n) return 'missing';
+      if (notas.lockedByOther(n) && !force) return 'locked';
+      notas.notes.update((l) => l.map((x) => (x.id === id ? { ...x, lockHolder: notas.holder, lockUntil: new Date(Date.now() + 45_000).toISOString() } : x)));
+      return 'ok';
+    };
+    notas.release = async (id) => notas.notes.update((l) => l.map((x) => (x.id === id && x.lockHolder === notas.holder ? { ...x, lockHolder: null, lockUntil: null } : x)));
+    notas.releaseOnExit = () => undefined;
+    notas.save = async (id, title, blocks) => {
+      if (!find(id)) return 'missing';
+      notas.notes.update((l) => l.map((x) => (x.id === id ? { ...x, title, blocks, updatedAt: new Date().toISOString() } : x)));
+      return 'ok';
+    };
+    notas.create = async () => {
+      const n: Note = { id: crypto.randomUUID(), title: '', blocks: [b('n' + Date.now(), 'p', '')], updatedAt: new Date().toISOString(), lockHolder: null, lockUntil: null };
+      notas.notes.update((l) => [n, ...l]);
+      return n;
+    };
+    notas.remove = async (id) => notas.notes.update((l) => l.filter((x) => x.id !== id));
 
     auth.session.set({ user: { id: 'demo', email: 'demo@example.test' } } as Session);
         void router.navigateByUrl(new URLSearchParams(location.search).get('to') ?? '/');

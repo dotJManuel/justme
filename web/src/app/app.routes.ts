@@ -18,6 +18,11 @@ export const routes: Routes = [
     loadChildren: () => import('./racha/racha.routes').then((m) => m.RACHA_ROUTES),
   },
   {
+    path: 'notas',
+    canActivate: [authGuard],
+    loadChildren: () => import('./notas/notas.routes').then((m) => m.NOTAS_ROUTES),
+  },
+  {
     path: 'finanzas',
     canActivate: [authGuard],
     loadChildren: () => import('./finanzas/finanzas.routes').then((m) => m.FINANZAS_ROUTES),
