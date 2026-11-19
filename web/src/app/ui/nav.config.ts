@@ -21,5 +21,5 @@ export const NAV_BEFORE_ADD: NavDestination[] = [
 export const NAV_AFTER_ADD: NavDestination[] = [
   { path: '/notas', label: 'Notas', icon: 'file-text' },
   { path: '/finanzas', label: 'Finanzas', icon: 'wallet' },
-  { path: '/perfil', label: 'Perfil', icon: 'user', desktopOnly: true },
+  { path: '/perfil', label: 'Perfil', icon: 'settings', desktopOnly: true },
 ];

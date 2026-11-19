@@ -3,13 +3,13 @@ import { RouterLink } from '@angular/router';
 import { Icon } from '../icons/icon';
 import { Logo } from './logo';
 
-/** Barra superior de móvil: la marca y el acceso a Perfil (que ya no está en la barra inferior). Se va con el scroll. */
+/** Barra superior de móvil: la marca y el acceso a Configuración (Perfil) (que ya no está en la barra inferior). Se va con el scroll. */
 @Component({
   selector: 'ui-top-bar',
   imports: [Icon, Logo, RouterLink],
   template: `
     <span class="brand"><ui-logo [size]="28" /><span class="name">JustMe</span></span>
-    <a class="user" routerLink="/perfil" aria-label="Perfil"><app-icon name="user" [size]="22" /></a>
+    <a class="user" routerLink="/perfil" aria-label="Configuración"><app-icon name="settings" [size]="22" /></a>
   `,
   styles: `
     :host { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 4px var(--sp-4) 0; }
