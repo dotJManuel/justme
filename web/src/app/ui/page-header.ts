@@ -24,5 +24,5 @@ import { Icon } from '../icons/icon';
 export class PageHeader {
   readonly title = input.required<string>();
   readonly back = input('/perfil');
-  readonly backLabel = input('Perfil');
+  readonly backLabel = input('Configuración');
 }

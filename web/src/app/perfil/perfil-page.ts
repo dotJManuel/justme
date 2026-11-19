@@ -26,7 +26,7 @@ interface Entry {
   template: `
     <div class="page">
       <header>
-        <h1>Perfil</h1>
+        <h1>Configuración</h1>
         @if (auth.user()?.email; as mail) {
           <span class="mail">{{ mail }}</span>
         }

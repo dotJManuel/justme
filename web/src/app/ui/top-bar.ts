@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Icon } from '../icons/icon';
 import { Logo } from './logo';
 
-/** Barra superior de móvil: la marca y el acceso a Configuración (Perfil) (que ya no está en la barra inferior). Se va con el scroll. */
+/** Barra superior de móvil: la marca y el acceso a Configuración (que ya no está en la barra inferior). Se va con el scroll. */
 @Component({
   selector: 'ui-top-bar',
   imports: [Icon, Logo, RouterLink],

@@ -11,7 +11,7 @@ export interface NavDestination {
 }
 
 /**
- * Escritorio: Hoy · Racha · Notas · Finanzas · Perfil. Móvil: Hoy · Racha · [+ Agregar] · Notas · Finanzas, con el "+"
+ * Escritorio: Hoy · Racha · Notas · Finanzas · Configuración. Móvil: Hoy · Racha · [+ Agregar] · Notas · Finanzas, con el "+"
  * justo al centro. El "+" no es una ruta: abre la hoja de captura.
  */
 export const NAV_BEFORE_ADD: NavDestination[] = [
@@ -21,5 +21,5 @@ export const NAV_BEFORE_ADD: NavDestination[] = [
 export const NAV_AFTER_ADD: NavDestination[] = [
   { path: '/notas', label: 'Notas', icon: 'file-text' },
   { path: '/finanzas', label: 'Finanzas', icon: 'wallet' },
-  { path: '/perfil', label: 'Perfil', icon: 'settings', desktopOnly: true },
+  { path: '/perfil', label: 'Configuración', icon: 'settings', desktopOnly: true },
 ];
