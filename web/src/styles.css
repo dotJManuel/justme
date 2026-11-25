@@ -39,3 +39,14 @@ h1, h2, h3, p { margin: 0; }
     scroll-behavior: auto !important;
   }
 }
+
+/* Texto con formato de las notas: el contenido de .rt se escribe en el DOM sin pasar por Angular, así que sus estilos son globales. */
+.rt b { font-weight: 700; }
+.rt i { font-style: italic; }
+.rt s { text-decoration: line-through; }
+.rt code {
+  padding: 1px 5px; border-radius: 4px; background: var(--s2); box-shadow: inset 0 0 0 1px var(--bd);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.9em;
+}
+.rt a { color: var(--ac); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.rt a:hover { color: var(--ach); }

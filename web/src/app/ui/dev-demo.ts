@@ -138,29 +138,53 @@ export class DevDemo {
     // Notas de ejemplo; el bloqueo y el guardado se simulan en memoria (la nota «Compras» la "edita otra pestaña").
     const b = (id: string, type: Block['type'], text = '', done = false): Block => (type === 'todo' ? { id, type, text, done } : { id, type, text });
     const hour = 3_600_000;
+    let order = 0;
+    const mk = (n: Partial<Note> & Pick<Note, 'id' | 'blocks'>, ago: number): Note => {
+      const at = new Date(now.getTime() - ago * hour).toISOString();
+      return { title: '', icon: '', parentId: null, lockHolder: null, lockUntil: null, updatedAt: at, createdAt: at, sortOrder: order++, pinOrder: null, ...n };
+    };
     const demoNotes: Note[] = new URLSearchParams(location.search).has('empty')
       ? []
       : [
-          {
-            id: '11111111-1111-4111-8111-111111111111', title: 'Plan de la semana', updatedAt: new Date(now.getTime() - hour).toISOString(), lockHolder: null, lockUntil: null,
-            blocks: [
-              b('a1', 'h1', 'Prioridades'), b('a2', 'p', 'Lo que <b>no se negocia</b> esta semana, <i>en orden</i>: usa <code>Ctrl+B</code> o <s>tacha</s> lo hecho.'),
-              b('a3', 'todo', 'Terminar el módulo de notas', true), b('a4', 'todo', 'Repasar LeetCode 30 min'), b('a5', 'todo', 'Llamar a mamá'),
-              b('a6', 'hr'), b('a7', 'h2', 'Ideas'), b('a8', 'ul', 'Ahorro automático por quincena'), b('a9', 'ul', 'Meta de lectura'),
-              b('a10', 'quote', 'Lo importante es no romper la racha.'), b('a11', 'ol', 'Despertar 7:00'), b('a12', 'ol', 'Ejercicio'),
-            ],
-          },
-          {
-            id: '22222222-2222-4222-8222-222222222222', title: 'Compras', updatedAt: new Date(now.getTime() - 26 * hour).toISOString(),
-            lockHolder: 'otra-pestana', lockUntil: new Date(now.getTime() + hour).toISOString(),
-            blocks: [b('c1', 'ul', 'Leche'), b('c2', 'ul', 'Huevo'), b('c3', 'ul', 'Café')],
-          },
-          { id: '33333333-3333-4333-8333-333333333333', title: '', updatedAt: new Date(now.getTime() - 9 * 24 * hour).toISOString(), lockHolder: null, lockUntil: null, blocks: [b('d1', 'p', '')] },
+          mk(
+            {
+              id: '11111111-1111-4111-8111-111111111111', title: 'Plan de la semana', icon: '🎯', pinOrder: 1,
+              blocks: [
+                b('a0', 'toc'),
+                b('a1', 'h1', 'Prioridades'), b('a2', 'p', 'Lo que <b>no se negocia</b> esta semana, <i>en orden</i>: usa <code>Ctrl+B</code> o <s>tacha</s> lo hecho. Más en <a href="https://interview-prepjm.netlify.app/">prep de entrevistas</a>.'),
+                { id: 'a2c', type: 'callout', text: 'Recuerda: la racha se cuida <b>todos los días</b>.', icon: '🔥' },
+                b('a3', 'todo', 'Terminar el módulo de notas', true), b('a4', 'todo', 'Repasar LeetCode 30 min'), b('a5', 'todo', 'Llamar a mamá'),
+                b('a6', 'hr'), b('a7', 'h2', 'Presupuesto'),
+                { id: 'a7t', type: 'table', text: '', rows: [['Concepto', 'Monto', 'Estado'], ['Renta', '<b>$4,155</b>', '✅ Pagada'], ['Netflix', '$348', '⏳ Pendiente'], ['Súper', '$1,200', '']] },
+                b('a8', 'h2', 'Ideas'), b('a9', 'ul', 'Ahorro automático por quincena'), b('a10', 'ul', 'Meta de lectura'),
+                b('a11', 'quote', 'Lo importante es no romper la racha.'),
+                { id: 'a11i', type: 'image', path: 'demo/foto.svg', text: 'Una imagen de ejemplo, con su <i>descripción</i>' },
+                { id: 'a12', type: 'code', text: 'const racha = dias.filter((d) =&gt; d.completo).length;\nconsole.log(racha);' },
+                { id: 'a13', type: 'page', text: '', ref: '44444444-4444-4444-8444-444444444444' },
+                b('a14', 'p', ''),
+              ],
+            },
+            1,
+          ),
+          mk({ id: '22222222-2222-4222-8222-222222222222', title: 'Compras', icon: '🛒', pinOrder: 0, blocks: [b('c1', 'ul', 'Leche'), b('c2', 'ul', 'Huevo'), b('c3', 'ul', 'Café')], lockHolder: 'otra-pestana', lockUntil: new Date(now.getTime() + hour).toISOString() }, 26),
+          mk({ id: '33333333-3333-4333-8333-333333333333', blocks: [b('d1', 'p', '')] }, 9 * 24),
+          mk(
+            {
+              id: '44444444-4444-4444-8444-444444444444', title: 'Rutina de ejercicio', icon: '💪', parentId: '11111111-1111-4111-8111-111111111111',
+              blocks: [b('r1', 'h2', 'Lunes'), b('r2', 'ul', 'Sentadillas 4×12'), b('r3', 'ul', 'Flexiones 3×15'), b('r4', 'p', 'Descansar 60 s entre series.')],
+            },
+            3,
+          ),
+          mk({ id: '55555555-5555-4555-8555-555555555555', title: 'Trabajo', icon: '💼', blocks: [b('t1', 'p', 'Todo lo del trabajo, agrupado.')] }, 5),
+          mk({ id: '66666666-6666-4666-8666-666666666666', title: 'Reuniones', icon: '📅', parentId: '55555555-5555-4555-8555-555555555555', blocks: [b('m1', 'p', 'Notas de reuniones.')] }, 6),
+          mk({ id: '77777777-7777-4777-8777-777777777777', title: 'Lunes 24', icon: '🗒️', parentId: '66666666-6666-4666-8666-666666666666', blocks: [b('l1', 'ul', 'Revisar el presupuesto')] }, 7),
+          mk({ id: '88888888-8888-4888-8888-888888888888', title: 'Proyecto Racha', icon: '🔥', parentId: '55555555-5555-4555-8555-555555555555', blocks: [b('p1', 'p', 'Ideas y avances.')] }, 8),
         ];
     notas.notes.set(demoNotes);
     notas.loaded.set(true);
     (notas as unknown as { loading: Promise<void> }).loading = Promise.resolve();
     const find = (id: string) => notas.notes().find((n) => n.id === id);
+    (notas as unknown as { rpc: (name: string) => Promise<unknown> }).rpc = async (name) => (name === 'note_move' ? 'ok' : undefined);
     notas.fetchOne = async (id) => find(id) ?? null;
     notas.acquire = async (id, force = false) => {
       const n = find(id);
@@ -171,17 +195,28 @@ export class DevDemo {
     };
     notas.release = async (id) => notas.notes.update((l) => l.map((x) => (x.id === id && x.lockHolder === notas.holder ? { ...x, lockHolder: null, lockUntil: null } : x)));
     notas.releaseOnExit = () => undefined;
-    notas.save = async (id, title, blocks) => {
+    notas.save = async (id, title, blocks, icon = '') => {
       if (!find(id)) return 'missing';
-      notas.notes.update((l) => l.map((x) => (x.id === id ? { ...x, title, blocks, updatedAt: new Date().toISOString() } : x)));
+      notas.notes.update((l) => l.map((x) => (x.id === id ? { ...x, title, blocks, icon, updatedAt: new Date().toISOString() } : x)));
       return 'ok';
     };
-    notas.create = async () => {
-      const n: Note = { id: crypto.randomUUID(), title: '', blocks: [b('n' + Date.now(), 'p', '')], updatedAt: new Date().toISOString(), lockHolder: null, lockUntil: null };
+    notas.create = async (parentId = null) => {
+      const n = mk({ id: crypto.randomUUID(), parentId, blocks: [b('n' + Date.now(), 'p', '')], sortOrder: 99 }, 0);
       notas.notes.update((l) => [n, ...l]);
       return n;
     };
-    notas.remove = async (id) => notas.notes.update((l) => l.filter((x) => x.id !== id));
+    // Imágenes de la demo: una ilustración SVG en lugar del almacenamiento privado.
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2e5781"/><stop offset="1" stop-color="#f47b2a"/></linearGradient></defs><rect width="640" height="320" fill="url(#g)"/><circle cx="480" cy="110" r="54" fill="#ffffffcc"/><path d="M0 320 L170 150 L300 250 L420 170 L640 320 Z" fill="#0b0b0d55"/></svg>';
+    const svgUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    notas.imageUrls.set({ 'demo/foto.svg': { url: svgUrl, exp: Date.now() + 1e12 } });
+    notas.ensureImageUrls = async () => undefined;
+    notas.uploadImage = async () => 'demo/foto.svg';
+    notas.deleteImage = async () => undefined;
+    notas.remove = async (id) => {
+      const gone = new Set([id, ...notas.descendants(id).map((x) => x.id)]);
+      notas.notes.update((l) => l.filter((x) => !gone.has(x.id)));
+    };
 
     auth.session.set({ user: { id: 'demo', email: 'demo@example.test' } } as Session);
         void router.navigateByUrl(new URLSearchParams(location.search).get('to') ?? '/');

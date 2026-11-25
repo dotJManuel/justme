@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, afterRenderEffect, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { skip } from 'rxjs';
 import { Icon } from '../icons/icon';
 import { Button } from '../ui/button';
 import { EmptyState, ErrorState, Skeleton } from '../ui/states';
 import { ToastService } from '../ui/toast';
 import { BlockEditor } from './block-editor';
+import { EmojiPicker } from './emoji-picker';
 import { Block, MAX_TITLE, newBlock, sameContent, toPlainText } from './notas.blocks';
+import { NotasNav } from './notas.nav';
+import { childrenOf } from './notas.tree';
 import { HEARTBEAT_MS, Note, NotasService } from './notas.service';
 
 /**
@@ -29,11 +33,19 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 @Component({
   selector: 'app-nota-page',
-  imports: [BlockEditor, Button, EmptyState, ErrorState, Icon, RouterLink, Skeleton],
+  imports: [BlockEditor, Button, EmojiPicker, EmptyState, ErrorState, Icon, RouterLink, Skeleton],
   template: `
     <div class="page">
       <div class="bar">
-        <a class="back" routerLink="/notas" aria-label="Volver a Notas"><app-icon name="chevron-left" [size]="22" /></a>
+        <a class="back" [routerLink]="backLink()" [attr.aria-label]="crumbs().length ? 'Volver a la página anterior' : 'Volver a Notas'"><app-icon name="chevron-left" [size]="22" /></a>
+        <button type="button" class="tool treebtn" aria-label="Abrir el árbol de notas" (click)="nav.drawerOpen.set(true)"><app-icon name="menu" [size]="18" /></button>
+        @if (crumbs().length) {
+          <nav class="crumbs" aria-label="Ubicación de la nota">
+            @for (c of crumbs(); track c.id) {
+              <a [routerLink]="['/notas', c.id]">{{ c.icon }} {{ c.title.trim() || 'Sin título' }}</a><span aria-hidden="true">›</span>
+            }
+          </nav>
+        }
         <span class="grow"></span>
         @if (mode() === 'editing') {
           <span class="state" role="status" [class.bad]="saveState() === 'failed'">
@@ -95,11 +107,38 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             </div>
           }
 
-          <textarea
-            #titleInput class="title" rows="1" placeholder="Sin título" aria-label="Título de la nota" autocomplete="off" [maxLength]="maxTitle"
-            [value]="title()" [readOnly]="!editable()" (input)="title.set($any($event.target).value)" (keydown.enter)="$event.preventDefault(); focusFirst()"
-          ></textarea>
-          <app-block-editor [(blocks)]="blocks" [readonly]="!editable()" />
+          <div class="trow">
+            <button type="button" class="ico" [disabled]="!editable()" [attr.aria-label]="icon() ? 'Cambiar el emoji de la nota' : 'Agregar un emoji a la nota'" (click)="iconOpen.set(true)">
+              @if (icon()) {
+                {{ icon() }}
+              } @else {
+                <app-icon name="file-text" [size]="26" />
+              }
+            </button>
+            <textarea
+              #titleInput class="title" rows="1" placeholder="Sin título" aria-label="Título de la nota" autocomplete="off" [maxLength]="maxTitle"
+              [value]="title()" [readOnly]="!editable()" (input)="title.set($any($event.target).value)" (keydown.enter)="$event.preventDefault(); focusFirst()"
+            ></textarea>
+          </div>
+          <app-block-editor [(blocks)]="blocks" [readonly]="!editable()" [noteId]="noteId()" />
+          @if (extraChildren().length || editable()) {
+            <section class="subs" aria-label="Subpáginas">
+              @if (extraChildren().length) {
+                <h2 class="subh">Subpáginas</h2>
+                @for (c of extraChildren(); track c.id) {
+                  <a class="sub" [routerLink]="['/notas', c.id]">
+                    <span class="subi" aria-hidden="true">{{ c.icon || '📄' }}</span>
+                    <span class="subt"><b>{{ c.title.trim() || 'Sin título' }}</b></span>
+                    <app-icon name="chevron-right" [size]="16" />
+                  </a>
+                }
+              }
+              @if (editable()) {
+                <button type="button" class="subadd" [disabled]="busy()" (click)="newSubpage()"><app-icon name="plus" [size]="16" />Nueva subpágina</button>
+              }
+            </section>
+          }
+          <app-emoji-picker [(open)]="iconOpen" [clearable]="true" title="Emoji de la nota" (picked)="setIcon($event)" />
         }
       }
     </div>
@@ -107,12 +146,26 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   styles: `
     :host { display: block; }
     .page { display: flex; flex-direction: column; gap: var(--sp-3); max-width: 720px; margin: 0 auto; padding: var(--sp-3) var(--sp-4) var(--sp-7); }
+    /* En escritorio, el asa de los bloques vive en el margen izquierdo: se le deja lugar. */
+    @media (min-width: 1024px) { .page { padding-left: 44px; } }
     .bar { display: flex; align-items: center; gap: 4px; min-height: var(--touch); }
     .back, .tool { display: grid; place-items: center; width: var(--touch); height: var(--touch); border: 0; border-radius: var(--rf-2); background: none; color: var(--tx); cursor: pointer; }
     .back { margin-left: -8px; }
     .tool { color: var(--tx2); }
     .back:hover, .tool:hover { background: var(--s2); }
     .grow { flex: 1; }
+    @media (min-width: 1024px) { .treebtn { display: none; } }
+    .crumbs { display: flex; align-items: center; gap: 2px; min-width: 0; overflow: hidden; font-size: 13px; color: var(--tx3); }
+    .crumbs a { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 6px; border-radius: 6px; color: var(--tx2); text-decoration: none; }
+    .crumbs a:hover { background: var(--s2); color: var(--tx); }
+    .trow { display: flex; align-items: flex-start; gap: 6px; }
+    .ico {
+      display: grid; place-items: center; flex: none; width: 48px; height: 48px; margin-top: 0; padding: 0; border: 0; border-radius: 10px; background: none;
+      color: var(--tx3); font-size: 32px; line-height: 1; cursor: pointer;
+    }
+    .ico:hover:not(:disabled) { background: var(--s2); }
+    .ico:disabled { cursor: default; }
+    .trow .title { flex: 1; min-width: 0; }
     .state { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tx2); }
     .state.bad { color: var(--rd); }
     .skel { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
@@ -131,12 +184,29 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     .bt b { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--tx); }
     .bt span { font-size: 13px; line-height: 18px; color: var(--tx2); }
     app-block-editor { margin-top: 4px; }
+    .subs { display: flex; flex-direction: column; gap: 6px; margin-top: var(--sp-3); }
+    .subh { padding: 0 2px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); }
+    .sub {
+      display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; border-radius: 10px; background: var(--sf);
+      color: var(--tx); text-decoration: none; box-shadow: inset 0 0 0 1px var(--bd2);
+    }
+    .sub:hover { background: var(--s2); }
+    .subi { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--s2); font-size: 20px; }
+    .subt { display: flex; flex: 1; min-width: 0; }
+    .subt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; line-height: 20px; font-weight: 600; }
+    .subadd {
+      display: flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none;
+      color: var(--tx2); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .subadd:hover:not(:disabled) { background: var(--s2); color: var(--tx); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotaPage implements OnInit {
   private readonly notas = inject(NotasService);
+  protected readonly nav = inject(NotasNav);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly toasts = inject(ToastService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
@@ -144,6 +214,28 @@ export class NotaPage implements OnInit {
   protected readonly mode = signal<Mode>('loading');
   protected readonly saveState = signal<SaveState>('saved');
   protected readonly title = signal('');
+  /** El emoji de la nota (vacío si no tiene). */
+  protected readonly icon = signal('');
+  protected readonly iconOpen = signal(false);
+  /** Id de la nota abierta (para el editor y las migas de pan). */
+  protected readonly noteId = signal('');
+  /** Las notas que contienen a esta (si es una subpágina), de la más alta a la más cercana. */
+  protected readonly crumbs = computed(() => this.notas.ancestors(this.noteId()));
+  /**
+   * Las subpáginas de esta nota que no tienen su propio bloque en el texto (las creadas desde el árbol o movidas aquí con
+   * «Mover a…»): se listan debajo, para que la página padre siempre muestre todo lo que contiene, como en Notion. Las que sí
+   * tienen bloque salen donde se pusieron.
+   */
+  protected readonly extraChildren = computed(() => {
+    const id = this.noteId();
+    if (!id) return [];
+    const linked = new Set(this.blocks().flatMap((b) => (b.type === 'page' && b.ref ? [b.ref] : [])));
+    return childrenOf(this.notas.notes(), id).filter((c) => !linked.has(c.id));
+  });
+  protected readonly backLink = computed(() => {
+    const parent = this.notas.byId(this.noteId())?.parentId;
+    return parent ? ['/notas', parent] : ['/notas'];
+  });
   protected readonly blocks = signal<Block[]>([newBlock()]);
   protected readonly busy = signal(false);
   /** Última versión de la nota en el servidor, vista desde aquí (para saber si el bloqueo ya está libre). */
@@ -158,7 +250,7 @@ export class NotaPage implements OnInit {
   });
 
   private id = '';
-  private saved: { title: string; blocks: Block[] } = { title: '', blocks: [] };
+  private saved: { title: string; blocks: Block[]; icon: string } = { title: '', blocks: [], icon: '' };
   private saveTimer?: ReturnType<typeof setTimeout>;
   private heartbeat?: ReturnType<typeof setInterval>;
   private poll?: ReturnType<typeof setInterval>;
@@ -186,6 +278,7 @@ export class NotaPage implements OnInit {
     effect(() => {
       this.title();
       this.blocks();
+      this.icon();
       untracked(() => {
         if (this.mode() !== 'editing') return;
         if (sameContent(this.current(), this.saved)) {
@@ -197,6 +290,10 @@ export class NotaPage implements OnInit {
         this.saveTimer = setTimeout(() => void this.flush(), SAVE_DELAY_MS);
       });
     });
+
+    // Se pasa de una nota a otra sin recrear la pantalla (por ejemplo de una página a su subpágina): se guarda y suelta la
+    // actual y se abre la nueva.
+    const route = this.route.paramMap.pipe(skip(1)).subscribe(() => void this.switchNote());
 
     const onVisibility = () => void this.onVisibility();
     const onHide = () => {
@@ -212,6 +309,7 @@ export class NotaPage implements OnInit {
 
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true;
+      route.unsubscribe();
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pagehide', onHide);
       window.removeEventListener('beforeunload', onUnload);
@@ -224,6 +322,27 @@ export class NotaPage implements OnInit {
     this.init();
   }
 
+  /** Guarda y suelta la nota abierta y abre la que indica la dirección. */
+  private async switchNote() {
+    await this.leave();
+    if (this.destroyed) return;
+    // Primero se detiene todo (así lo que sigue no se guarda sobre la nota anterior) y luego se limpia la pantalla.
+    this.mode.set('loading');
+    clearInterval(this.heartbeat);
+    this.stopPoll();
+    clearTimeout(this.saveTimer);
+    this.again = false;
+    this.released = false;
+    this.resuming.set(false);
+    this.remote.set(null);
+    this.saved = { title: '', blocks: [], icon: '' };
+    this.title.set('');
+    this.icon.set('');
+    this.blocks.set([newBlock()]);
+    this.saveState.set('saved');
+    void this.init();
+  }
+
   protected async init() {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     if (!UUID.test(id)) {
@@ -231,7 +350,10 @@ export class NotaPage implements OnInit {
       return;
     }
     this.id = id;
+    this.noteId.set(id);
     this.mode.set('loading');
+    // El resto de las notas (para los nombres de las subpáginas y las migas de pan): sin esperar y sin avisar si falla.
+    void this.notas.load().catch(() => undefined);
     try {
       const note = await this.notas.fetchOne(id);
       if (this.destroyed) return;
@@ -295,9 +417,10 @@ export class NotaPage implements OnInit {
   }
 
   private load(note: Note) {
-    this.saved = { title: note.title, blocks: note.blocks };
+    this.saved = { title: note.title, blocks: note.blocks, icon: note.icon };
     this.remote.set(note);
     this.title.set(note.title);
+    this.icon.set(note.icon);
     this.blocks.set(note.blocks);
     this.saveState.set('saved');
   }
@@ -308,7 +431,7 @@ export class NotaPage implements OnInit {
     this.mode.set('editing');
     clearInterval(this.heartbeat);
     this.heartbeat = setInterval(() => void this.renew(), HEARTBEAT_MS);
-    if (focusTitle) setTimeout(() => this.host.querySelector<HTMLInputElement>('input.title')?.focus());
+    if (focusTitle) setTimeout(() => this.host.querySelector<HTMLTextAreaElement>('textarea.title')?.focus());
   }
 
   private startLocked() {
@@ -353,7 +476,7 @@ export class NotaPage implements OnInit {
   // ── Guardado y bloqueo ─────────────────────────────────────────────────────
 
   private current() {
-    return { title: this.title(), blocks: this.blocks() };
+    return { title: this.title(), blocks: this.blocks(), icon: this.icon() };
   }
 
   /** Guarda ya, si hay algo distinto. Un guardado a la vez; si se escribe mientras tanto, sigue otro. */
@@ -372,7 +495,7 @@ export class NotaPage implements OnInit {
     this.saveState.set('saving');
     this.inflight = (async () => {
       try {
-        const result = await this.notas.save(this.id, snap.title, snap.blocks);
+        const result = await this.notas.save(this.id, snap.title, snap.blocks, snap.icon);
         if (result === 'ok') {
           this.saved = snap;
           this.saveState.set(sameContent(this.current(), this.saved) ? 'saved' : 'dirty');
@@ -472,13 +595,33 @@ export class NotaPage implements OnInit {
 
   // ── Interfaz ───────────────────────────────────────────────────────────────
 
+  /** Crea una subpágina de esta nota y la abre. */
+  protected async newSubpage() {
+    if (this.busy() || !this.id) return;
+    this.busy.set(true);
+    try {
+      const child = await this.notas.create(this.id);
+      this.nav.expand(this.id);
+      await this.router.navigate(['/notas', child.id]);
+    } catch {
+      this.toasts.error('No se pudo crear la subpágina. Revisa tu conexión e intenta de nuevo.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** Pone (o quita, con una cadena vacía) el emoji de la nota. */
+  protected setIcon(emoji: string) {
+    if (this.editable()) this.icon.set(emoji);
+  }
+
   protected focusFirst() {
     this.host.querySelector<HTMLElement>('app-block-editor .rt')?.focus();
   }
 
   protected async copy() {
     try {
-      await navigator.clipboard.writeText(toPlainText(this.title(), this.blocks()));
+      await navigator.clipboard.writeText(toPlainText(this.title(), this.blocks(), (id) => this.notas.byId(id)?.title.trim() || 'Subpágina'));
       this.toasts.show({ message: 'Texto copiado' });
     } catch {
       this.toasts.error('No se pudo copiar. Selecciona el texto y cópialo a mano.');
