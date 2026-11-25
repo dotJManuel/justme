@@ -411,7 +411,7 @@ const markOf = (e: KeyboardEvent): Mark | null => {
     .rt.done { color: var(--tx3); text-decoration: line-through; }
     hr { flex: 1; margin: 12px 0; border: 0; border-top: 1px solid var(--bd2); }
     /* Asa para mover un bloque. En escritorio vive en el margen izquierdo y aparece al pasar el puntero; en pantallas angostas
-       (sin margen) va al final de los bloques que no son texto (subpáginas, imágenes, tablas…). */
+       (sin margen) va a la derecha de cada bloque. */
     .blocks { position: relative; }
     .drag {
       position: absolute; left: -28px; top: 4px; display: grid; place-items: center; width: 24px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 6px;
@@ -423,8 +423,11 @@ const markOf = (e: KeyboardEvent): Mark | null => {
     .blocks.sorting .drag { cursor: grabbing; }
     .blk.dragging { border-radius: var(--rf-2); }
     @media (max-width: 1023.98px) {
-      .drag { position: static; flex: none; width: 28px; margin-top: 4px; opacity: 1; }
-      .blk:not(.rich) > .drag { display: none; }
+      /* Sin margen lateral: el asa va a la derecha, en un espacio reservado. Siempre visible en subpáginas, imágenes, tablas…; en los
+         párrafos y títulos aparece al tocarlos (así no hay un asa en cada línea). */
+      .blk { padding-right: 28px; }
+      .drag { left: auto; right: -2px; width: 30px; top: 2px; height: 32px; }
+      .blk.rich > .drag, .blk:focus-within > .drag { opacity: 1; }
     }
     .rm { display: grid; place-items: center; flex: none; width: 28px; height: 28px; margin-top: 5px; border: 0; border-radius: 6px; background: none; color: var(--tx3); cursor: pointer; opacity: 0; }
     .blk:hover .rm, .rm:focus-visible { opacity: 1; }
