@@ -5,6 +5,7 @@ import { EditIncome } from '../finanzas/edit/edit-simple';
 import { exportTodo } from '../finanzas/export-gastos';
 import { FinanzasService } from '../finanzas/finanzas.service';
 import { Icon, IconName } from '../icons/icon';
+import { RespaldoSection } from '../respaldo/respaldo-section';
 import { EnlacesSection } from './enlaces-section';
 import { ThemeMode, ThemeService } from '../theme.service';
 import { Button } from '../ui/button';
@@ -22,7 +23,7 @@ interface Entry {
 /** Perfil: ingreso mensual, tema y accesos a lo que se configura una vez (misiones, catálogos, historial). */
 @Component({
   selector: 'app-perfil-page',
-  imports: [Button, EditIncome, EnlacesSection, Icon, RouterLink, Segmented],
+  imports: [Button, EditIncome, EnlacesSection, Icon, RespaldoSection, RouterLink, Segmented],
   template: `
     <div class="page">
       <header>
@@ -79,8 +80,12 @@ interface Entry {
         <app-enlaces />
       </section>
 
+      <section>
+        <app-respaldo />
+      </section>
+
       <section class="acts">
-        <button uiBtn variant="secondary" block type="button" [disabled]="!fin.loaded()" (click)="exportAll()"><app-icon name="download" [size]="18" />Exportar todo a Excel</button>
+        <button uiBtn variant="secondary" block type="button" [disabled]="!fin.loaded()" (click)="exportAll()"><app-icon name="download" [size]="18" />Solo finanzas a Excel</button>
         <button uiBtn variant="ghost" block type="button" (click)="signOut()"><app-icon name="logout" [size]="18" />Cerrar sesión</button>
       </section>
     </div>

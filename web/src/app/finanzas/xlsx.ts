@@ -172,7 +172,8 @@ export function crc32(bytes: Uint8Array): number {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-function zip(files: { name: string; data: Uint8Array }[]): Uint8Array {
+/** Arma un archivo .zip (sin comprimir) con esos archivos. */
+export function zip(files: { name: string; data: Uint8Array }[]): Uint8Array {
   const enc = new TextEncoder();
   const now = new Date();
   const time = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);

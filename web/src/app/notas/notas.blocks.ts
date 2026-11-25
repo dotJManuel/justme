@@ -423,21 +423,38 @@ export function searchText(title: string, blocks: Block[]): string {
   return (title + ' ' + blocks.map(blockText).join(' ')).toLowerCase();
 }
 
-/** La nota como texto con marcas de Markdown (para copiarla). `pageTitle` da el nombre de una subpágina por su id. */
-export function toPlainText(title: string, blocks: Block[], pageTitle: (id: string) => string = () => 'Subpágina'): string {
-  const lines = blocks.map((b, i) => {
+/** Cómo escribir los bloques que apuntan a algo fuera de ellos (subpáginas e imágenes) y el estilo de las tareas. */
+export interface MarkdownOptions {
+  /** Dirección (relativa) del archivo de una subpágina; null si no se incluye. */
+  pageHref?: (id: string) => string | null;
+  /** Dirección (relativa o web) de la imagen de un bloque; null si no se pudo incluir. */
+  imageSrc?: (b: Block) => string | null;
+  /** Tareas como «- [ ] texto» (GitHub, Obsidian…) en lugar de «[ ] texto». */
+  gfm?: boolean;
+}
+
+/** Cada bloque como su texto en Markdown (una cadena por bloque). `pageTitle` da el nombre de una subpágina por su id. */
+export function blockLines(blocks: Block[], pageTitle: (id: string) => string = () => 'Subpágina', opts: MarkdownOptions = {}): string[] {
+  return blocks.map((b, i) => {
     const t = hasText(b.type) ? inlineToMarkdown(b.text) : '';
     switch (b.type) {
       case 'h1': return `# ${t}`;
       case 'h2': return `## ${t}`;
       case 'ul': return `- ${t}`;
       case 'ol': return `${listNumber(blocks, i)}. ${t}`;
-      case 'todo': return `${b.done ? '[x]' : '[ ]'} ${t}`;
+      case 'todo': return `${opts.gfm ? '- ' : ''}${b.done ? '[x]' : '[ ]'} ${t}`;
       case 'quote': return `> ${t}`;
       case 'callout': return `> ${b.icon ?? DEFAULT_CALLOUT_ICON} ${t}`;
       case 'code': return '```\n' + plain(b.text) + '\n```';
-      case 'page': return `[${pageTitle(b.ref ?? '')}]`;
-      case 'image': return `![${plain(b.text)}](${b.url ?? 'imagen'})`;
+      case 'page': {
+        const title = pageTitle(b.ref ?? '');
+        const href = opts.pageHref?.(b.ref ?? '') ?? null;
+        return href ? `[${title}](${href})` : `[${title}]`;
+      }
+      case 'image': {
+        const src = opts.imageSrc ? opts.imageSrc(b) : (b.url ?? null);
+        return `![${plain(b.text)}](${src ?? 'imagen'})`;
+      }
       case 'toc': return headings(blocks).map((h) => `${h.level === 2 ? '  ' : ''}- ${h.text}`).join('\n');
       case 'table': {
         const rows = (b.rows ?? []).map((r) => '| ' + r.map((c) => inlineToMarkdown(c).replace(/\|/g, '\\|')).join(' | ') + ' |');
@@ -449,7 +466,25 @@ export function toPlainText(title: string, blocks: Block[], pageTitle: (id: stri
       default: return t;
     }
   });
-  return [title.trim(), ...lines].filter((l, i) => i > 0 || l).join('\n');
+}
+
+/** La nota como texto con marcas de Markdown (para copiarla). */
+export function toPlainText(title: string, blocks: Block[], pageTitle: (id: string) => string = () => 'Subpágina', opts: MarkdownOptions = {}): string {
+  return [title.trim(), ...blockLines(blocks, pageTitle, opts)].filter((l, i) => i > 0 || l).join('\n');
+}
+
+/** Los bloques como un documento Markdown: una línea en blanco entre bloques, salvo entre elementos seguidos de una misma lista. */
+export function blocksToMarkdown(blocks: Block[], pageTitle?: (id: string) => string, opts: MarkdownOptions = {}): string {
+  const lines = blockLines(blocks, pageTitle, { gfm: true, ...opts });
+  let out = '';
+  lines.forEach((line, i) => {
+    if (i > 0) {
+      const prev = blocks[i - 1].type;
+      out += isList(prev) && prev === blocks[i].type ? '\n' : '\n\n';
+    }
+    out += line;
+  });
+  return out;
 }
 
 /** ¿Dos versiones de la nota son iguales? (para no guardar sin cambios). */

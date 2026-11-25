@@ -2,7 +2,7 @@ import { conceptLabel, debtRows, monthSummary, personSummaries, sortDebtRows } f
 import { cutsSheet, expensesSheet, familySheet, movementsSheet, peopleSheet, summarySheet, today } from './finanzas.export';
 import { Expense, FamilyMove } from './finanzas.models';
 import { FinanzasService } from './finanzas.service';
-import { downloadXlsx } from './xlsx';
+import { Sheet, downloadXlsx } from './xlsx';
 
 /** Un libro con el resumen, una hoja por tarjeta activa, los gastos fijos y los cortes (lo que exportaba "Gastos"). */
 export function exportGastos(fin: FinanzasService): void {
@@ -20,6 +20,11 @@ export function exportGastos(fin: FinanzasService): void {
 
 /** Todo en un solo libro: gastos y cortes, dinero que me deben (por persona y movimientos) y dinero con familia. */
 export function exportTodo(fin: FinanzasService): void {
+  downloadXlsx(`JustMe - ${today()}`, todoSheets(fin));
+}
+
+/** Las hojas de ese libro (también las usa el respaldo completo). */
+export function todoSheets(fin: FinanzasService): Sheet[] {
   const concepts = fin.concepts();
   const people = fin.people();
   const expenses = fin.expenses();
@@ -28,7 +33,7 @@ export function exportTodo(fin: FinanzasService): void {
   const rows = debtRows(fin.debts(), new Date(), people, concepts);
   const family = (direction: FamilyMove['direction'], name: string, header: string) =>
     familySheet(name, fin.family().filter((m) => m.direction === direction), header, (m) => conceptLabel(concepts, m.conceptId, m.conceptText), (m) => people.find((p) => p.id === m.personId)?.name ?? '');
-  downloadXlsx(`JustMe - ${today()}`, [
+  return [
     summarySheet(monthSummary(expenses, fin.income(), fin.cards())),
     ...cards.map((c) => expensesSheet(`Tarjeta ${c.name}`, expenses.filter((e) => e.cardId === c.id), true, label)),
     expensesSheet('Gastos fijos', expenses.filter((e) => e.section === 'fijos'), false, label),
@@ -37,5 +42,5 @@ export function exportTodo(fin: FinanzasService): void {
     movementsSheet(sortDebtRows(rows, []), rows),
     family('recibido', 'Recibido', 'De quién'),
     family('dado', 'Entregado', 'Para quién'),
-  ]);
+  ];
 }

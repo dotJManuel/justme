@@ -10,6 +10,7 @@ import { inferGroup } from '../habits/mission-groups';
 import { Block } from '../notas/notas.blocks';
 import { Note, NotasService } from '../notas/notas.service';
 import { LinksService } from '../perfil/links.service';
+import { RespaldoService } from '../respaldo/respaldo.service';
 import { BadgesService } from '../racha/badges.service';
 import { DEFAULT_BADGES } from '../racha/logros.config';
 
@@ -27,6 +28,7 @@ export class DevDemo {
     const links = inject(LinksService);
     const badges = inject(BadgesService);
     const notas = inject(NotasService);
+    const respaldo = inject(RespaldoService);
     const router = inject(Router);
 
     const now = new Date();
@@ -217,6 +219,29 @@ export class DevDemo {
       const gone = new Set([id, ...notas.descendants(id).map((x) => x.id)]);
       notas.notes.update((l) => l.filter((x) => !gone.has(x.id)));
     };
+
+    // Respaldo: en la demo no se lee de la base de datos; se arman las filas con los datos de ejemplo de arriba.
+    {
+      const filas: Record<string, Record<string, unknown>[]> = {
+        notes: notas.notes().map((n) => ({
+          id: n.id, title: n.title, icon: n.icon, parent_id: n.parentId, sort_order: n.sortOrder, pin_order: n.pinOrder, created_at: n.createdAt, updated_at: n.updatedAt, content: n.blocks,
+        })),
+        habits: DEFAULT_HABITS.map((h, i) => ({ key: h.k, name: h.name, when_text: h.when, position: i, active: true, group_id: null })),
+        days: Object.entries(store.days()).map(([date, habits]) => ({ date, habits })),
+        links: [{ title: 'Prep de entrevistas', url: 'https://interview-prepjm.netlify.app/', note: 'Preguntas, y "respuestas"', position: 0 }],
+        badges: [{ name: 'Constante', kind: 'racha', target: 7, habit_key: null, active: true, position: 0 }],
+        settings: [{ goal: 6, freeze_min: 15, active_days: [1, 2, 3, 4, 5] }],
+      };
+      const priv = respaldo as unknown as { leerTabla: (n: string) => Promise<unknown[]>; descargarImagenes: (i: { path: string; file: string }[], t: (i: { path: string; file: string }, b: Uint8Array | null) => Promise<void>, a: (n: number) => void) => Promise<void> };
+      priv.leerTabla = async (n) => filas[n] ?? [];
+      priv.descargarImagenes = async (imgs, termina, avanza) => {
+        let k = 0;
+        for (const img of imgs) {
+          await termina(img, new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"/>'));
+          avanza(++k);
+        }
+      };
+    }
 
     auth.session.set({ user: { id: 'demo', email: 'demo@example.test' } } as Session);
         void router.navigateByUrl(new URLSearchParams(location.search).get('to') ?? '/');
