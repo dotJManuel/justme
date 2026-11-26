@@ -20,10 +20,10 @@ type Mode = 'menu' | 'move' | 'delete';
   template: `
     <ui-bottom-sheet [title]="title()" [open]="mode() === 'menu' && noteId() !== null" (openChange)="closed('menu', $event)">
       <div class="list">
-        <button type="button" (click)="pin()"><app-icon name="pin" [size]="18" />{{ note()?.pinOrder !== null ? 'Quitar de fijadas' : 'Fijar arriba' }}</button>
+        <button type="button" (click)="pin()"><app-icon name="pin" [size]="18" />{{ note()?.pinOrder !== null ? 'Quitar de fijados' : 'Fijar arriba' }}</button>
         @if (note()?.pinOrder !== null) {
-          <button type="button" [disabled]="!canPinShift(-1)" (click)="pinShift(-1)"><app-icon name="arrow-up" [size]="18" />Subir entre las fijadas</button>
-          <button type="button" [disabled]="!canPinShift(1)" (click)="pinShift(1)"><app-icon name="arrow-down" [size]="18" />Bajar entre las fijadas</button>
+          <button type="button" [disabled]="!canPinShift(-1)" (click)="pinShift(-1)"><app-icon name="arrow-up" [size]="18" />Subir entre los fijados</button>
+          <button type="button" [disabled]="!canPinShift(1)" (click)="pinShift(1)"><app-icon name="arrow-down" [size]="18" />Bajar entre los fijados</button>
         }
         <button type="button" (click)="newSub()"><app-icon name="plus" [size]="18" />Nueva subpágina</button>
         <button type="button" (click)="mode.set('move')"><app-icon name="folder" [size]="18" />Mover a…</button>
@@ -100,8 +100,8 @@ export class NoteActions {
     const id = this.noteId();
     const subs = id ? this.notas.descendants(id).length : 0;
     return subs
-      ? `La nota se borra para siempre, junto con sus ${subs} subpágina${subs === 1 ? '' : 's'}; no se puede recuperar.`
-      : 'La nota se borra para siempre; no se puede recuperar.';
+      ? `El doc se borra para siempre, junto con sus ${subs} subpágina${subs === 1 ? '' : 's'}; no se puede recuperar.`
+      : 'El doc se borra para siempre; no se puede recuperar.';
   });
 
   constructor() {
@@ -117,7 +117,7 @@ export class NoteActions {
   }
 
   private fail(e: unknown, fallback: string) {
-    this.toasts.error(e instanceof Error && e.message === 'cycle' ? 'No se puede meter una nota dentro de sí misma ni de sus subpáginas.' : fallback);
+    this.toasts.error(e instanceof Error && e.message === 'cycle' ? 'No se puede meter un doc dentro de sí mismo ni de sus subpáginas.' : fallback);
   }
 
   // ── Fijadas ────────────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ export class NoteActions {
     this.noteId.set(null);
     try {
       await this.notas.togglePin(id);
-      this.toasts.show({ message: wasPinned ? 'Se quitó de las fijadas' : 'Nota fijada' });
+      this.toasts.show({ message: wasPinned ? 'Se quitó de los fijados' : 'Doc fijado' });
     } catch (e) {
       this.fail(e, 'No se pudo fijar. Revisa tu conexión e intenta de nuevo.');
     }
@@ -198,7 +198,7 @@ export class NoteActions {
     try {
       await this.notas.move(id, parentId);
       if (parentId) this.nav.expand(parentId);
-      this.toasts.show({ message: parentId ? 'Nota movida' : 'Nota movida al nivel principal' });
+      this.toasts.show({ message: parentId ? 'Doc movido' : 'Doc movido al nivel principal' });
     } catch (e) {
       this.fail(e, 'No se pudo mover. Revisa tu conexión e intenta de nuevo.');
     }
@@ -213,7 +213,7 @@ export class NoteActions {
     const affected = here ? isInside(this.notas.notes(), here, id) : false;
     try {
       await this.notas.remove(id);
-      this.toasts.show({ message: 'Nota eliminada' });
+      this.toasts.show({ message: 'Doc eliminado' });
       this.noteId.set(null);
       if (affected) await this.router.navigate(['/notas']);
     } catch {

@@ -94,9 +94,9 @@ const MENU: MenuItem[] = [
   { type: 'callout', label: 'Llamada', hint: 'Una idea destacada con emoji', glyph: '💡', words: 'llamada callout aviso nota destacada' },
   { type: 'table', label: 'Tabla', hint: 'Filas y columnas', glyph: '▦', words: 'tabla table filas columnas celdas' },
   { type: 'code', label: 'Código', hint: 'Texto con letra monoespaciada', glyph: '</>', words: 'codigo code bloque programacion' },
-  { type: 'page', label: 'Subpágina', hint: 'Una nota dentro de esta', glyph: '📄', words: 'subpagina pagina nota hija documento' },
+  { type: 'page', label: 'Subpágina', hint: 'Un doc dentro de este', glyph: '📄', words: 'subpagina pagina nota doc hijo documento' },
   { type: 'image', label: 'Imagen', hint: 'Subir una imagen o pegar un enlace', glyph: '🖼️', words: 'imagen foto fotografia picture' },
-  { type: 'toc', label: 'Índice', hint: 'Lista de los títulos de la nota', glyph: '☰', words: 'indice tabla de contenido toc titulos' },
+  { type: 'toc', label: 'Índice', hint: 'Lista de los títulos del doc', glyph: '☰', words: 'indice tabla de contenido toc titulos' },
   { type: 'emoji', label: 'Emoji', hint: 'Insertar un emoji', glyph: '😀', words: 'emoji emoticono carita' },
   { type: 'hr', label: 'Separador', hint: 'Una línea divisoria', glyph: '—', words: 'separador linea divisor' },
 ];
@@ -200,12 +200,12 @@ const markOf = (e: KeyboardEvent): Mark | null => {
             }
           }
           @case ('toc') {
-            <nav class="toc" aria-label="Índice de la nota">
-              <span class="toch">Índice</span>
+            <nav class="toc" aria-label="Índice del doc">
+              <app-icon class="toch" name="list" [size]="16" aria-hidden="true" />
               @for (h of toc(); track h.id) {
                 <button type="button" class="toci" [class.l2]="h.level === 2" (click)="goTo(h.id)">{{ h.text }}</button>
               } @empty {
-                <span class="none">Agrega títulos a la nota y aparecerán aquí.</span>
+                <span class="none">Agrega títulos al doc y aparecerán aquí.</span>
               }
             </nav>
             @if (!readonly()) {
@@ -215,7 +215,7 @@ const markOf = (e: KeyboardEvent): Mark | null => {
           @case ('page') {
             <a class="pg" [routerLink]="['/notas', b.ref]">
               <span class="pgi" aria-hidden="true">{{ pageIcon(b.ref) }}</span>
-              <span class="pgt"><b>{{ pageTitle(b.ref) }}</b><span>Subpágina</span></span>
+              <span class="pgt"><b>{{ pageTitle(b.ref) }}</b></span>
               <app-icon name="chevron-right" [size]="16" />
             </a>
             @if (!readonly()) {
@@ -262,11 +262,11 @@ const markOf = (e: KeyboardEvent): Mark | null => {
               </div>
               @if (!readonly() && tblFocus()?.id === b.id) {
                 <div class="tbar" role="toolbar" aria-label="Opciones de la tabla">
-                  <button type="button" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'row+')">+ Fila</button>
-                  <button type="button" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'col+')">+ Columna</button>
-                  <button type="button" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'row-')">− Fila</button>
-                  <button type="button" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'col-')">− Columna</button>
-                  <button type="button" class="danger" (mousedown)="$event.preventDefault()" (click)="askDrop(i)">Quitar tabla</button>
+                  <button type="button" aria-label="Agregar fila" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'row+')"><app-icon name="rowplus" [size]="18" /></button>
+                  <button type="button" aria-label="Agregar columna" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'col+')"><app-icon name="colplus" [size]="18" /></button>
+                  <button type="button" aria-label="Quitar fila" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'row-')"><app-icon name="rowminus" [size]="18" /></button>
+                  <button type="button" aria-label="Quitar columna" (mousedown)="$event.preventDefault()" (click)="tableAct(i, 'col-')"><app-icon name="colminus" [size]="18" /></button>
+                  <button type="button" class="danger" aria-label="Quitar tabla" (mousedown)="$event.preventDefault()" (click)="askDrop(i)"><app-icon name="trash" [size]="18" /></button>
                 </div>
               }
             </div>
@@ -433,6 +433,9 @@ const markOf = (e: KeyboardEvent): Mark | null => {
     .blk:hover .rm, .rm:focus-visible { opacity: 1; }
     .rm:hover { background: var(--s2); color: var(--tx); }
     @media (hover: none) { .rm { opacity: 1; } }
+    /* Subpágina, índice y separador: botón de quitar y asa centrados con la tarjeta */
+    .t-page .rm, .t-toc .rm, .t-hr .rm, .t-image .rm { align-self: center; width: 36px; height: 44px; margin-top: 0; }
+    .t-page > .drag, .t-toc > .drag, .t-hr > .drag, .t-image > .drag, .t-table > .drag { top: 50%; transform: translateY(-50%); height: 44px; }
     .tail { display: block; width: 100%; min-height: 96px; padding: 0; border: 0; background: none; cursor: text; }
 
     /* Tabla */
@@ -450,7 +453,7 @@ const markOf = (e: KeyboardEvent): Mark | null => {
     tr.head .rt { font-weight: 650; }
     .tbar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .tbar button {
-      min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--s2); color: var(--tx); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+      display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: var(--s2); color: var(--tx); cursor: pointer;
     }
     .tbar button:hover { background: var(--s3); }
     .tbar .danger { color: var(--rd); }
@@ -461,10 +464,9 @@ const markOf = (e: KeyboardEvent): Mark | null => {
       background: var(--sf); color: var(--tx); text-decoration: none; box-shadow: inset 0 0 0 1px var(--bd2);
     }
     .pg:hover { background: var(--s2); }
-    .pgi { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--s2); font-size: 20px; }
+    .pgi { display: grid; place-items: center; flex: none; width: 36px; height: 36px; line-height: 1; border-radius: 8px; background: var(--s2); font-size: 20px; }
     .pgt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
     .pgt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; line-height: 20px; font-weight: 600; }
-    .pgt span { font-size: 12px; line-height: 16px; color: var(--tx2); }
 
     /* Índice */
     .toc { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; margin: 6px 0; padding: 10px 12px; border-radius: 10px; background: var(--s2); box-shadow: inset 0 0 0 1px var(--bd); }
@@ -628,7 +630,7 @@ export class BlockEditor {
     if (this.readonly()) return '';
     const hints: Partial<Record<BlockType, string>> = {
       p: 'Escribe algo, o «/» para elegir un bloque', h1: 'Título 1', h2: 'Título 2', ul: 'Elemento', ol: 'Elemento', todo: 'Tarea', quote: 'Cita',
-      callout: 'Escribe una nota destacada', code: 'Código',
+      callout: 'Escribe algo destacado', code: 'Código',
     };
     return hints[b.type] ?? '';
   }
@@ -867,7 +869,7 @@ export class BlockEditor {
   }
 
   protected imgAlt(b: Block): string {
-    return plain(b.text) || 'Imagen de la nota';
+    return plain(b.text) || 'Imagen del doc';
   }
 
   /** Una imagen no cargó: si es subida, se pide una dirección nueva una vez (la anterior pudo vencer); si no, se avisa. */

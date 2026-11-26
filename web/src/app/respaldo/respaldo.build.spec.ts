@@ -143,7 +143,7 @@ describe('daysRows', () => {
 describe('readme', () => {
   it('describe el contenido y avisa de lo que no se pudo incluir', () => {
     const t = readme({ creado: new Date('2026-11-25T12:00:00Z'), notas: 3, imagenes: 2, imagenesFallidas: 1, omitidas: ['fin_audit'] });
-    expect(t).toContain('3 nota(s)');
+    expect(t).toContain('3 doc(s)');
     expect(t).toContain('2 imagen(es)');
     expect(t).toContain('1 imagen(es) no se pudieron');
     expect(t).toContain('fin_audit');

@@ -15,19 +15,19 @@ import { NotasNav } from './notas.nav';
   template: `
     <div class="wrap">
       @if (nav.treeOpen()) {
-        <aside class="tree" aria-label="Árbol de notas">
+        <aside class="tree" aria-label="Árbol de docs">
           <app-notes-tree [collapsible]="true" (collapse)="nav.toggleTree()" />
         </aside>
       }
       <div class="content">
         @if (!nav.treeOpen()) {
-          <button type="button" class="reveal" aria-label="Mostrar el árbol de notas" (click)="nav.toggleTree()"><app-icon name="sidebar" [size]="18" /></button>
+          <button type="button" class="reveal" aria-label="Mostrar el árbol de docs" (click)="nav.toggleTree()"><app-icon name="sidebar" [size]="18" /></button>
         }
         <router-outlet />
       </div>
     </div>
 
-    <ui-bottom-sheet title="Notas" [(open)]="nav.drawerOpen">
+    <ui-bottom-sheet title="Docs" [(open)]="nav.drawerOpen">
       @if (nav.drawerOpen()) {
         <app-notes-tree />
       }

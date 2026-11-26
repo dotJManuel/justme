@@ -18,7 +18,7 @@ function size(bytes: number): string {
     <h2 class="sec" id="resp-h">Respaldo</h2>
     <div class="panel" aria-labelledby="resp-h">
       <p class="lead">
-        Un solo archivo <b>.zip</b> con todo lo tuyo: finanzas en Excel, rutina y enlaces en CSV, tus notas en Markdown con sus imágenes, y una copia
+        Un solo archivo <b>.zip</b> con todo lo tuyo: finanzas en Excel, rutina y enlaces en CSV, tus docs en Markdown con sus imágenes, y una copia
         completa en <b>datos.json</b>. Se abre sin la app y lo puedes llevar a otra herramienta.
       </p>
 
@@ -67,7 +67,7 @@ function size(bytes: number): string {
           <li><b>finanzas.xlsx</b>: gastos, cortes, lo que te deben y dinero con familia.</li>
           <li><b>rutina/</b>: misiones, días marcados e insignias en CSV.</li>
           <li><b>enlaces.csv</b>: tus enlaces.</li>
-          <li><b>notas/</b>: una nota por archivo .md; las subpáginas en carpetas.</li>
+          <li><b>notas/</b>: un doc por archivo .md; las subpáginas en carpetas.</li>
           <li><b>imagenes/</b>: las imágenes de tus notas.</li>
         </ul>
       </details>
@@ -123,7 +123,7 @@ export class RespaldoSection {
 
   /** «con 8 notas y 1 imagen». */
   protected contents(r: Resumen): string {
-    const notas = `${r.notas} nota${r.notas === 1 ? '' : 's'}`;
+    const notas = `${r.notas} doc${r.notas === 1 ? '' : 's'}`;
     return r.imagenes ? `con ${notas} y ${r.imagenes} imagen${r.imagenes === 1 ? '' : 'es'}` : `con ${notas}`;
   }
 

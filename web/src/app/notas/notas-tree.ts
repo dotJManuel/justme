@@ -24,11 +24,11 @@ interface DropHint {
   imports: [Icon, NoteActions, RouterLink],
   template: `
     <div class="head">
-      <h2>Notas</h2>
+      <h2>Docs</h2>
       <span class="grow"></span>
-      <button type="button" class="tool" aria-label="Nueva nota" (click)="create()"><app-icon name="plus" [size]="18" /></button>
+      <button type="button" class="tool" aria-label="Nuevo doc" (click)="create()"><app-icon name="plus" [size]="18" /></button>
       @if (collapsible()) {
-        <button type="button" class="tool" aria-label="Ocultar el árbol de notas" (click)="collapse.emit()"><app-icon name="sidebar" [size]="18" /></button>
+        <button type="button" class="tool" aria-label="Ocultar el árbol de docs" (click)="collapse.emit()"><app-icon name="sidebar" [size]="18" /></button>
       }
     </div>
 
@@ -36,8 +36,8 @@ interface DropHint {
       <p class="hint" aria-busy="true">Cargando…</p>
     } @else {
       @if (pins().length) {
-        <h3 class="sec">Fijadas</h3>
-        <ul class="tree" role="list" aria-label="Notas fijadas" (dragover)="$event.preventDefault()">
+        <div class="sec" role="img" aria-label="Fijados"><app-icon name="pin" [size]="14" [stroke]="2" /><i></i></div>
+        <ul class="tree" role="list" aria-label="Docs fijados" (dragover)="$event.preventDefault()">
           @for (n of pins(); track n.id) {
             <li
               class="row" [class.on]="n.id === activeId()" [class.before]="hint()?.id === n.id && hint()?.zone === 'before'" [class.after]="hint()?.id === n.id && hint()?.zone === 'after'"
@@ -47,14 +47,14 @@ interface DropHint {
               <a class="ttl" [routerLink]="['/notas', n.id]" [attr.aria-current]="n.id === activeId() ? 'page' : null" (click)="go()">
                 <span class="emo" aria-hidden="true">{{ n.icon || '📄' }}</span><span class="name">{{ n.title.trim() || 'Sin título' }}</span>
               </a>
-              <button type="button" class="more" [attr.aria-label]="'Opciones de ' + (n.title.trim() || 'nota sin título')" (click)="actionsFor.set(n.id)"><app-icon name="more" [size]="16" /></button>
+              <button type="button" class="more" [attr.aria-label]="'Opciones de ' + (n.title.trim() || 'doc sin título')" (click)="actionsFor.set(n.id)"><app-icon name="more" [size]="16" /></button>
             </li>
           }
         </ul>
       }
 
-      <h3 class="sec">{{ pins().length ? 'Todas' : 'Mis notas' }}</h3>
-      <ul class="tree" role="tree" aria-label="Todas las notas">
+      <div class="sec" role="img" [attr.aria-label]="pins().length ? 'Todos los docs' : 'Mis docs'"><app-icon name="list" [size]="14" [stroke]="2" /><i></i></div>
+      <ul class="tree" role="tree" aria-label="Todos los docs">
         @for (r of rows(); track r.note.id) {
           <li
             class="row" role="treeitem" [attr.aria-level]="r.depth + 1" [attr.aria-expanded]="r.hasChildren ? r.expanded : null" [class.on]="r.note.id === activeId()"
@@ -63,7 +63,7 @@ interface DropHint {
           >
             <span class="indent" [style.width.px]="r.depth * 16"></span>
             @if (r.hasChildren) {
-              <button type="button" class="chev" [attr.aria-label]="(r.expanded ? 'Contraer ' : 'Expandir ') + (r.note.title.trim() || 'nota sin título')" (click)="nav.toggle(r.note.id)">
+              <button type="button" class="chev" [attr.aria-label]="(r.expanded ? 'Contraer ' : 'Expandir ') + (r.note.title.trim() || 'doc sin título')" (click)="nav.toggle(r.note.id)">
                 <app-icon [name]="r.expanded ? 'chevron-down' : 'chevron-right'" [size]="14" />
               </button>
             } @else {
@@ -72,7 +72,7 @@ interface DropHint {
             <a class="ttl" [routerLink]="['/notas', r.note.id]" [attr.aria-current]="r.note.id === activeId() ? 'page' : null" (click)="go()">
               <span class="emo" aria-hidden="true">{{ r.note.icon || '📄' }}</span><span class="name">{{ r.note.title.trim() || 'Sin título' }}</span>
             </a>
-            <button type="button" class="more" [attr.aria-label]="'Opciones de ' + (r.note.title.trim() || 'nota sin título')" (click)="actionsFor.set(r.note.id)"><app-icon name="more" [size]="16" /></button>
+            <button type="button" class="more" [attr.aria-label]="'Opciones de ' + (r.note.title.trim() || 'doc sin título')" (click)="actionsFor.set(r.note.id)"><app-icon name="more" [size]="16" /></button>
           </li>
         } @empty {
           <li class="hint">Aún no hay notas.</li>
@@ -89,7 +89,8 @@ interface DropHint {
     .grow { flex: 1; }
     .tool { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 8px; background: none; color: var(--tx2); cursor: pointer; }
     .tool:hover { background: var(--s2); color: var(--tx); }
-    .sec { padding: 12px 12px 4px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); }
+    .sec { display: flex; align-items: center; gap: 8px; padding: 12px 12px 4px; color: var(--tx3); }
+    .sec i { flex: 1; height: 1px; background: var(--bd); }
     .tree { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
     .row { position: relative; display: flex; align-items: center; min-height: 36px; padding-right: 2px; border-radius: 8px; }
     .row:hover { background: var(--s2); }
@@ -169,7 +170,7 @@ export class NotesTree implements OnInit {
       this.nav.drawerOpen.set(false);
       await this.router.navigate(['/notas', note.id]);
     } catch {
-      this.toasts.error('No se pudo crear la nota. Revisa tu conexión e intenta de nuevo.');
+      this.toasts.error('No se pudo crear el doc. Revisa tu conexión e intenta de nuevo.');
     }
   }
 
@@ -231,7 +232,7 @@ export class NotesTree implements OnInit {
         else await this.notas.move(d.id, parent, order);
       }
     } catch (err) {
-      this.toasts.error(err instanceof Error && err.message === 'cycle' ? 'No se puede meter una nota dentro de sí misma ni de sus subpáginas.' : 'No se pudo mover. Revisa tu conexión e intenta de nuevo.');
+      this.toasts.error(err instanceof Error && err.message === 'cycle' ? 'No se puede meter un doc dentro de sí mismo ni de sus subpáginas.' : 'No se pudo mover. Revisa tu conexión e intenta de nuevo.');
     }
   }
 }

@@ -2,9 +2,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Icon } from '../icons/icon';
+import { BottomSheet } from '../ui/bottom-sheet';
 import { Button } from '../ui/button';
-import { Option, Select } from '../ui/fields';
-import { Input } from '../ui/input';
 import { EmptyState, ErrorState, Skeleton } from '../ui/states';
 import { ToastService } from '../ui/toast';
 import { NoteActions } from './notas-actions';
@@ -27,94 +26,90 @@ function readSort(): SortMode {
 }
 
 /**
- * Lista de notas: las fijadas arriba (en el orden que se les dio) y debajo las demás, ordenadas como se elija (recientes, mi
- * orden, título o creación). Con buscador y «⋯» para acomodar, mover o eliminar cada una.
+ * Lista de docs: los fijados arriba (en el orden que se les dio) y debajo los demás, ordenados como se elija (recientes, mi
+ * orden, título o creación). Casi todo son íconos: ordenar, acomodar, nuevo, fijar y «⋯» (mover o eliminar).
  */
 @Component({
   selector: 'app-notas-page',
-  imports: [Button, EmptyState, ErrorState, Icon, Input, NgTemplateOutlet, NoteActions, RouterLink, Select, Skeleton, Sortable],
+  imports: [BottomSheet, Button, EmptyState, ErrorState, Icon, NgTemplateOutlet, NoteActions, RouterLink, Skeleton, Sortable],
   template: `
     <div class="page">
       <header>
-        <button type="button" class="tool treebtn" aria-label="Abrir el árbol de notas" (click)="nav.drawerOpen.set(true)"><app-icon name="menu" [size]="20" /></button>
-        <h1>Notas</h1>
+        <button type="button" class="ib treebtn" aria-label="Abrir el árbol de docs" (click)="nav.drawerOpen.set(true)"><app-icon name="menu" [size]="22" /></button>
+        <h1>Docs</h1>
         <span class="grow"></span>
         @if (notas.loaded() && notas.notes().length > 1) {
-          <button uiBtn small [variant]="reordering() ? 'primary' : 'secondary'" type="button" (click)="toggleReorder()">
-            @if (reordering()) {
-              <app-icon name="check" [size]="16" [stroke]="2.4" />Listo
-            } @else {
-              <app-icon name="sort" [size]="16" />Ordenar
-            }
-          </button>
+          @if (!reordering()) {
+            <button type="button" class="ib" aria-label="Ordenar por" (click)="sortOpen.set(true)"><app-icon name="list-sort" [size]="22" /></button>
+          }
+          <button
+            type="button" class="ib" [class.on]="reordering()" [attr.aria-pressed]="reordering()"
+            [attr.aria-label]="reordering() ? 'Terminar de acomodar' : 'Acomodar a mano'" (click)="toggleReorder()"
+          ><app-icon [name]="reordering() ? 'check' : 'sort'" [size]="22" [stroke]="reordering() ? 2.4 : 1.8" /></button>
         }
         @if (!reordering()) {
-          <button uiBtn small type="button" [disabled]="busy()" (click)="create()"><app-icon name="plus" [size]="16" />Nueva nota</button>
+          <button type="button" class="ib add" aria-label="Nuevo doc" [disabled]="busy()" (click)="create()"><app-icon name="plus" [size]="22" [stroke]="2.4" /></button>
         }
       </header>
 
       @if (failed()) {
-        <ui-error-state message="No se pudieron cargar tus notas" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" />
+        <ui-error-state message="No se pudieron cargar tus docs" detail="Revisa tu conexión e intenta de nuevo." (retry)="load()" />
       } @else if (!notas.loaded()) {
-        <div class="panel" aria-busy="true" aria-label="Cargando notas">
-          <ui-skeleton height="72px" radius="0" /><ui-skeleton height="72px" radius="0" /><ui-skeleton height="72px" radius="0" />
+        <div class="panel" aria-busy="true" aria-label="Cargando">
+          <ui-skeleton height="68px" radius="0" /><ui-skeleton height="68px" radius="0" /><ui-skeleton height="68px" radius="0" />
         </div>
       } @else if (!notas.notes().length) {
         <div class="panel">
-          <ui-empty-state icon="file-text" title="Aún no hay notas" text="Escribe ideas, listas o pendientes. Se guardan solas.">
-            <button uiBtn small type="button" [disabled]="busy()" (click)="create()"><app-icon name="plus" [size]="16" />Nueva nota</button>
+          <ui-empty-state icon="file-text" title="Aún no hay docs" text="Escribe ideas, listas o pendientes. Se guardan solos.">
+            <button uiBtn small type="button" aria-label="Nuevo doc" [disabled]="busy()" (click)="create()"><app-icon name="plus" [size]="18" [stroke]="2.4" /></button>
           </ui-empty-state>
         </div>
       } @else {
         @if (reordering()) {
-          <p class="hint" role="status">
-            Arrastra <app-icon name="grip" [size]="16" [stroke]="2.6" /> para mover una nota, o usa las flechas. Se guarda sola.
-          </p>
           @if (pins().length) {
-            <h2 class="sec">Fijadas</h2>
-            <ul class="panel" aria-label="Orden de las notas fijadas" [appSortable]="pinIds()" (reordered)="reorderPins($event)">
+            <div class="sec" role="img" aria-label="Fijados"><app-icon name="pin" [size]="15" [stroke]="2" /><i></i></div>
+            <ul class="panel" aria-label="Orden de los docs fijados" [appSortable]="pinIds()" (reordered)="reorderPins($event)">
               @for (n of pins(); track n.id; let i = $index; let c = $count) {
                 <ng-container [ngTemplateOutlet]="sortRow" [ngTemplateOutletContext]="{ $implicit: n, index: i, count: c, pinned: true }" />
               }
             </ul>
             @if (shown().length) {
-              <h2 class="sec">Otras notas</h2>
+              <div class="sec" role="img" aria-label="Otros docs"><app-icon name="list" [size]="15" [stroke]="2" /><i></i></div>
             }
           }
-          <ul class="panel" aria-label="Orden de las notas" [appSortable]="shownIds()" (reordered)="reorderOthers($event)">
+          <ul class="panel" aria-label="Orden de los docs" [appSortable]="shownIds()" (reordered)="reorderOthers($event)">
             @for (n of shown(); track n.id; let i = $index; let c = $count) {
               <ng-container [ngTemplateOutlet]="sortRow" [ngTemplateOutletContext]="{ $implicit: n, index: i, count: c, pinned: false }" />
             }
           </ul>
         } @else {
-          <div class="controls">
-            @if (notas.notes().length > 4) {
-              <ui-input label="Buscar" type="search" placeholder="Título o contenido" [(value)]="query" autocomplete="off" />
-            }
-            <ui-select label="Ordenar por" [options]="sortOptions" [value]="sort()" (valueChange)="setSort($event)" />
-          </div>
-
+          @if (notas.notes().length > 4) {
+            <label class="search">
+              <app-icon name="search" [size]="18" />
+              <span class="sr-only">Buscar docs</span>
+              <input type="search" placeholder="Buscar" autocomplete="off" [value]="query()" (input)="query.set($any($event.target).value)" />
+            </label>
+          }
           @if (showPins()) {
-            <h2 class="sec">Fijadas</h2>
-            <ul class="panel" aria-label="Notas fijadas">
+            <div class="sec" role="img" aria-label="Fijados"><app-icon name="pin" [size]="15" [stroke]="2" /><i></i></div>
+            <ul class="panel" aria-label="Docs fijados">
               @for (n of pins(); track n.id) {
                 <ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: n }" />
               }
             </ul>
             @if (shown().length) {
-              <h2 class="sec">Otras notas</h2>
+              <div class="sec" role="img" aria-label="Otros docs"><app-icon name="list" [size]="15" [stroke]="2" /><i></i></div>
             }
           }
-          <ul class="panel" aria-label="Notas">
+          <ul class="panel" aria-label="Docs">
             @for (n of shown(); track n.id) {
               <ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: n }" />
             } @empty {
               @if (!showPins()) {
-                <li><ui-empty-state icon="search" title="Sin resultados" text="Ninguna nota coincide con tu búsqueda." /></li>
+                <li><ui-empty-state icon="search" title="Sin resultados" text="Ningún doc coincide con tu búsqueda." /></li>
               }
             }
           </ul>
-
         }
       }
     </div>
@@ -122,35 +117,37 @@ function readSort(): SortMode {
     <ng-template #row let-n>
       <li class="item">
         <a class="row" [routerLink]="['/notas', n.id]">
-          <span class="ico">
+          <span class="tile">
             @if (n.icon) {
               <span class="emo">{{ n.icon }}</span>
             } @else {
-              <app-icon name="file-text" [size]="18" />
+              <app-icon name="file-text" [size]="20" />
             }
           </span>
           <span class="lt">
             <span class="ln">{{ n.title.trim() || 'Sin título' }}</span>
-            <span class="ls">{{ snippet(n) || 'Nota vacía' }}</span>
-            <span class="when">
-              {{ when(n.updatedAt) }}
+            @if (snippet(n); as s) {
+              <span class="ls">{{ s }}</span>
+            }
+            <span class="meta">
+              <span>{{ when(n.updatedAt) }}</span>
               @if (subCount(n); as k) {
-                · {{ k }} subpágina{{ k === 1 ? '' : 's' }}
+                <span class="mi" [attr.aria-label]="k + (k === 1 ? ' subpágina' : ' subpáginas')"><app-icon name="folder" [size]="13" [stroke]="2" />{{ k }}</span>
               }
               @if (query().trim() && n.parentId) {
-                · en {{ parentName(n) }}
+                <span class="mi" [attr.aria-label]="'En ' + parentName(n)"><app-icon name="folder" [size]="13" [stroke]="2" />{{ parentName(n) }}</span>
               }
               @if (notas.lockedByOther(n)) {
-                · <app-icon name="lock" [size]="12" /> Se está editando en otro lugar
+                <app-icon name="lock" [size]="13" [stroke]="2" aria-label="Se está editando en otro lugar" />
               }
             </span>
           </span>
         </a>
         <button
           type="button" class="act pin" [class.on]="n.pinOrder !== null" [attr.aria-pressed]="n.pinOrder !== null"
-          [attr.aria-label]="(n.pinOrder !== null ? 'Quitar de fijadas: ' : 'Fijar: ') + (n.title.trim() || 'nota sin título')" (click)="togglePin(n)"
-        ><app-icon name="pin" [size]="18" /></button>
-        <button type="button" class="act" [attr.aria-label]="'Más opciones de ' + (n.title.trim() || 'nota sin título')" (click)="actionsFor.set(n.id)"><app-icon name="more" [size]="18" /></button>
+          [attr.aria-label]="(n.pinOrder !== null ? 'Quitar de fijados: ' : 'Fijar: ') + (n.title.trim() || 'doc sin título')" (click)="togglePin(n)"
+        ><app-icon name="pin" [size]="19" /></button>
+        <button type="button" class="act" [attr.aria-label]="'Más opciones de ' + (n.title.trim() || 'doc sin título')" (click)="actionsFor.set(n.id)"><app-icon name="more" [size]="19" /></button>
       </li>
     </ng-template>
 
@@ -158,57 +155,81 @@ function readSort(): SortMode {
       <li class="item sortitem" [attr.data-sort-id]="n.id">
         <button
           type="button" class="grip" data-sort-handle
-          [attr.aria-label]="'Mover ' + (n.title.trim() || 'nota sin título') + ': arrastra, o usa las flechas arriba y abajo del teclado'"
+          [attr.aria-label]="'Mover ' + (n.title.trim() || 'doc sin título') + ': arrastra, o usa las flechas arriba y abajo del teclado'"
         ><app-icon name="grip" [size]="20" [stroke]="2.6" /></button>
         <span class="row static">
-          <span class="ico">
+          <span class="tile">
             @if (n.icon) {
               <span class="emo">{{ n.icon }}</span>
             } @else {
-              <app-icon name="file-text" [size]="18" />
+              <app-icon name="file-text" [size]="20" />
             }
           </span>
           <span class="lt"><span class="ln">{{ n.title.trim() || 'Sin título' }}</span></span>
         </span>
-        <button type="button" class="act big" [disabled]="i === 0" [attr.aria-label]="'Subir ' + (n.title.trim() || 'nota sin título')" (click)="step(n.id, -1, pinned)"><app-icon name="arrow-up" [size]="20" /></button>
-        <button type="button" class="act big" [disabled]="i === count - 1" [attr.aria-label]="'Bajar ' + (n.title.trim() || 'nota sin título')" (click)="step(n.id, 1, pinned)"><app-icon name="arrow-down" [size]="20" /></button>
+        <button type="button" class="act" [disabled]="i === 0" [attr.aria-label]="'Subir ' + (n.title.trim() || 'doc sin título')" (click)="step(n.id, -1, pinned)"><app-icon name="arrow-up" [size]="20" /></button>
+        <button type="button" class="act" [disabled]="i === count - 1" [attr.aria-label]="'Bajar ' + (n.title.trim() || 'doc sin título')" (click)="step(n.id, 1, pinned)"><app-icon name="arrow-down" [size]="20" /></button>
       </li>
     </ng-template>
+
+    <ui-bottom-sheet title="Ordenar por" [(open)]="sortOpen">
+      <div class="opts" role="radiogroup" aria-label="Ordenar por">
+        @for (m of sortModes; track m.value) {
+          <button type="button" role="radio" [attr.aria-checked]="sort() === m.value" (click)="pickSort(m.value)">
+            {{ m.label }}
+            @if (sort() === m.value) {
+              <app-icon class="chk" name="check" [size]="18" [stroke]="2.4" />
+            }
+          </button>
+        }
+      </div>
+    </ui-bottom-sheet>
 
     <app-note-actions [(noteId)]="actionsFor" />
   `,
   styles: `
     :host { display: block; }
-    .page { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 720px; margin: 0 auto; padding: var(--sp-5) var(--sp-4) var(--sp-6); }
-    header { display: flex; align-items: center; gap: var(--sp-2); }
+    .page { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 720px; margin: 0 auto; padding: var(--sp-4) var(--sp-4) var(--sp-6); }
+    header { display: flex; align-items: center; gap: 2px; min-height: 48px; }
     .grow { flex: 1; }
     h1 { font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; }
-    .tool { display: grid; place-items: center; width: var(--touch); height: var(--touch); margin-left: -8px; border: 0; border-radius: var(--rf-2); background: none; color: var(--tx2); cursor: pointer; }
-    .tool:hover { background: var(--s2); color: var(--tx); }
+    /* Botones de solo ícono: todos del mismo tamaño y centrados. */
+    .ib { display: grid; place-items: center; flex: none; width: var(--touch); height: var(--touch); padding: 0; border: 0; border-radius: var(--rf-3); background: none; color: var(--tx2); cursor: pointer; }
+    .ib:hover:not(:disabled) { background: var(--s2); color: var(--tx); }
+    .ib.on { background: var(--acs); color: var(--ac); }
+    .ib.add { margin-left: 4px; background: var(--ac); color: var(--onac); }
+    .ib.add:hover:not(:disabled) { background: var(--ach); color: var(--onac); }
+    .treebtn { margin-left: -8px; margin-right: 2px; }
     @media (min-width: 1024px) { .treebtn { display: none; } }
-    .controls { display: grid; grid-template-columns: 1fr; gap: var(--sp-3); }
-    @media (min-width: 560px) { .controls:has(ui-input) { grid-template-columns: 1fr 200px; } }
-    .sec { margin-bottom: -8px; padding: 0 4px; font-size: 13px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tx3); }
-    .panel { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border-radius: var(--rf-3); background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd); overflow: hidden; }
-    .item { display: flex; align-items: center; }
+    .search {
+      display: flex; align-items: center; gap: 10px; height: var(--touch); padding: 0 14px; border-radius: var(--rf-3); background: var(--sf);
+      box-shadow: inset 0 0 0 1px var(--bd); color: var(--tx3);
+    }
+    .search:focus-within { box-shadow: inset 0 0 0 1px var(--ac); }
+    .search input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: none; color: var(--tx); font: inherit; font-size: 15px; }
+    .search input::placeholder { color: var(--tx3); }
+    .sec { display: flex; align-items: center; gap: 10px; margin: 2px 4px -6px; color: var(--tx3); }
+    .sec i { flex: 1; height: 1px; background: var(--bd); }
+    .panel { position: relative; display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border-radius: var(--rf-3); background: var(--sf); box-shadow: var(--sh1), inset 0 0 0 1px var(--bd); overflow: hidden; }
+    .item { display: flex; align-items: center; background: var(--sf); }
     .item + .item { border-top: 1px solid var(--bd); }
-    .row { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 72px; padding: 12px 4px 12px 16px; color: inherit; text-decoration: none; }
+    .row { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 68px; padding: 10px 4px 10px 14px; color: inherit; text-decoration: none; }
     .row:hover { background: var(--s2); }
-    .ico { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 8px; background: var(--s2); color: var(--tx2); }
-    .emo { font-size: 20px; line-height: 1; }
-    .lt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .tile { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--s2); color: var(--tx2); }
+    .emo { font-size: 21px; line-height: 1; }
+    .lt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
     .ln { font-size: 15px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ls { font-size: 13px; line-height: 18px; color: var(--tx2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .when { font-size: 12px; line-height: 16px; color: var(--tx3); }
+    .meta { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 12px; line-height: 16px; color: var(--tx3); }
+    .mi { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .act { display: grid; place-items: center; flex: none; width: 40px; height: var(--touch); border: 0; border-radius: var(--rf-2); background: none; color: var(--tx3); cursor: pointer; }
     .act:last-child { margin-right: 4px; }
-    .act:hover { background: var(--s2); color: var(--tx); }
+    .act:hover:not(:disabled) { background: var(--s2); color: var(--tx); }
+    .act:disabled { opacity: 0.35; cursor: default; }
     .pin.on { background: var(--acs); color: var(--ac); }
-    .hint { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 10px 14px; border-radius: var(--rf-3); background: var(--acs); color: var(--ac); font-size: 14px; line-height: 20px; }
 
-    /* Modo ordenar */
-    .panel { position: relative; }
-    .sortitem { position: relative; background: var(--sf); touch-action: manipulation; }
+    /* Acomodar a mano */
+    .sortitem { position: relative; touch-action: manipulation; }
     .sortitem.dragging { border-radius: var(--rf-2); }
     .grip {
       display: grid; place-items: center; flex: none; width: 48px; align-self: stretch; min-height: 64px; margin: 0; padding: 0; border: 0; background: none; color: var(--tx3);
@@ -218,8 +239,16 @@ function readSort(): SortMode {
     .sorting .grip { cursor: grabbing; }
     .row.static { cursor: default; padding-left: 4px; min-height: 64px; }
     .row.static:hover { background: none; }
-    .act.big { width: 44px; height: 48px; }
-    .act:disabled { opacity: 0.35; cursor: default; }
+
+    /* Hoja de «Ordenar por» */
+    .opts { display: flex; flex-direction: column; }
+    .opts button {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: var(--touch); padding: 0 14px; border: 0; border-radius: var(--rf-2);
+      background: none; color: var(--tx); font: inherit; font-size: 15px; text-align: left; cursor: pointer;
+    }
+    .opts button:hover { background: var(--s2); }
+    .opts button[aria-checked='true'] { font-weight: 600; }
+    .chk { color: var(--ac); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -233,23 +262,24 @@ export class NotasPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly query = signal('');
   protected readonly actionsFor = signal<string | null>(null);
-  /** Modo «Ordenar»: asas para arrastrar y flechas en cada fila. */
+  protected readonly sortOpen = signal(false);
+  /** Modo «Acomodar a mano»: asas para arrastrar y flechas en cada fila. */
   protected readonly reordering = signal(false);
   private changed = false;
 
-  protected readonly sortOptions: Option[] = SORT_MODES.map((m) => ({ value: m.value, label: m.label }));
+  protected readonly sortModes = SORT_MODES;
   protected readonly sort = signal<SortMode>(readSort());
 
   protected readonly pins = computed(() => pinnedNotes(this.notas.notes()));
   protected readonly searching = computed(() => this.query().trim() !== '');
   protected readonly showPins = computed(() => !this.searching() && this.pins().length > 0);
 
-  /** Las notas de abajo: buscando, todas las que coincidan; si no, las del nivel principal en el orden elegido (sin las fijadas, que van arriba). */
+  /** Los de abajo: buscando, todos los que coincidan; si no, los del nivel principal en el orden elegido (sin los fijados, que van arriba). */
   protected readonly shown = computed(() => {
     const q = this.query().trim().toLowerCase();
     const all = this.notas.notes();
     if (q) return all.filter((n) => searchText(n.title, n.blocks).includes(q));
-    // Ordenando, las notas se ven en «Mi orden»: es el único orden que se puede acomodar a mano.
+    // Acomodando, se ven en «Mi orden»: es el único orden que se puede acomodar a mano.
     return sortRoots(all, this.reordering() ? 'manual' : this.sort()).filter((n) => n.pinOrder === null);
   });
 
@@ -276,10 +306,15 @@ export class NotasPage implements OnInit {
     this.notas.load().catch(() => this.failed.set(true));
   }
 
+  protected pickSort(value: SortMode) {
+    this.sort.set(value);
+    this.sortOpen.set(false);
+  }
+
   protected toggleReorder() {
     if (this.reordering()) {
       this.reordering.set(false);
-      // Si se acomodaron notas, la lista pasa a «Mi orden» para que se vea justo como quedó.
+      // Si se acomodaron docs, la lista pasa a «Mi orden» para que se vea justo como quedó.
       if (this.changed && this.sort() !== 'manual') {
         this.sort.set('manual');
         this.toasts.show({ message: 'Orden guardado · se muestran en «Mi orden»' });
@@ -300,7 +335,7 @@ export class NotasPage implements OnInit {
     }
   }
 
-  /** Reordena las notas de abajo sin mover las fijadas (que no se ven ahí pero ocupan su lugar en el orden manual). */
+  /** Reordena los de abajo sin mover los fijados (que no se ven ahí pero ocupan su lugar en el orden manual). */
   protected async reorderOthers(ids: string[]) {
     const full = sortRoots(this.notas.notes(), 'manual').map((n) => n.id);
     try {
@@ -315,10 +350,6 @@ export class NotasPage implements OnInit {
   protected step(id: string, dir: -1 | 1, pinned: boolean) {
     if (pinned) void this.reorderPins(shift(this.pinIds(), id, dir));
     else void this.reorderOthers(shift(this.shownIds(), id, dir));
-  }
-
-  protected setSort(value: string) {
-    if (SORT_MODES.some((m) => m.value === value)) this.sort.set(value as SortMode);
   }
 
   protected snippet(n: Note): string {

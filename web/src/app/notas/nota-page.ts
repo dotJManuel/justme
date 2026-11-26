@@ -37,10 +37,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   template: `
     <div class="page">
       <div class="bar">
-        <a class="back" [routerLink]="backLink()" [attr.aria-label]="crumbs().length ? 'Volver a la página anterior' : 'Volver a Notas'"><app-icon name="chevron-left" [size]="22" /></a>
-        <button type="button" class="tool treebtn" aria-label="Abrir el árbol de notas" (click)="nav.drawerOpen.set(true)"><app-icon name="menu" [size]="18" /></button>
+        <a class="back" [routerLink]="backLink()" [attr.aria-label]="crumbs().length ? 'Volver a la página anterior' : 'Volver a Docs'"><app-icon name="chevron-left" [size]="22" /></a>
+        <button type="button" class="tool treebtn" aria-label="Abrir el árbol de docs" (click)="nav.drawerOpen.set(true)"><app-icon name="menu" [size]="18" /></button>
         @if (crumbs().length) {
-          <nav class="crumbs" aria-label="Ubicación de la nota">
+          <nav class="crumbs" aria-label="Ubicación del doc">
             @for (c of crumbs(); track c.id) {
               <a [routerLink]="['/notas', c.id]">{{ c.icon }} {{ c.title.trim() || 'Sin título' }}</a><span aria-hidden="true">›</span>
             }
@@ -48,32 +48,35 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         }
         <span class="grow"></span>
         @if (mode() === 'editing') {
-          <span class="state" role="status" [class.bad]="saveState() === 'failed'">
+          <span
+            class="state" role="status" [class.bad]="saveState() === 'failed'" [class.busy]="saveState() === 'saving'"
+            [attr.aria-label]="saveState() === 'saving' ? 'Guardando' : saveState() === 'dirty' ? 'Sin guardar' : saveState() === 'failed' ? 'Sin conexión, se reintenta' : 'Guardado'"
+          >
             @switch (saveState()) {
-              @case ('saving') { Guardando… }
-              @case ('dirty') { Sin guardar }
-              @case ('failed') { Sin conexión · se reintenta }
-              @default { <app-icon name="check" [size]="14" [stroke]="2.4" /> Guardado }
+              @case ('saving') { <app-icon name="refresh" [size]="18" [stroke]="2.2" /> }
+              @case ('dirty') { <i class="dot"></i> }
+              @case ('failed') { <app-icon name="alert" [size]="18" [stroke]="2.2" /> }
+              @default { <app-icon name="check" [size]="20" [stroke]="2.4" /> }
             }
           </span>
         }
         @if (mode() === 'editing' || mode() === 'locked' || mode() === 'lost') {
-          <button type="button" class="tool" aria-label="Copiar el texto de la nota" (click)="copy()"><app-icon name="copy" [size]="18" /></button>
+          <button type="button" class="tool" aria-label="Copiar el texto del doc" (click)="copy()"><app-icon name="copy" [size]="18" /></button>
         }
       </div>
 
       @switch (mode()) {
         @case ('loading') {
-          <div class="skel" aria-busy="true" aria-label="Cargando nota">
+          <div class="skel" aria-busy="true" aria-label="Cargando doc">
             <ui-skeleton height="40px" width="60%" /><ui-skeleton height="20px" /><ui-skeleton height="20px" width="85%" /><ui-skeleton height="20px" width="70%" />
           </div>
         }
         @case ('error') {
-          <ui-error-state message="No se pudo abrir la nota" detail="Revisa tu conexión e intenta de nuevo." (retry)="init()" />
+          <ui-error-state message="No se pudo abrir el doc" detail="Revisa tu conexión e intenta de nuevo." (retry)="init()" />
         }
         @case ('missing') {
-          <ui-empty-state icon="file-text" title="Esta nota ya no existe" text="Pudo haberse eliminado desde otro dispositivo.">
-            <a uiBtn small routerLink="/notas">Ver mis notas</a>
+          <ui-empty-state icon="file-text" title="Este doc ya no existe" text="Pudo haberse eliminado desde otro dispositivo.">
+            <a uiBtn small routerLink="/notas">Ver mis docs</a>
           </ui-empty-state>
         }
         @default {
@@ -108,7 +111,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           }
 
           <div class="trow">
-            <button type="button" class="ico" [disabled]="!editable()" [attr.aria-label]="icon() ? 'Cambiar el emoji de la nota' : 'Agregar un emoji a la nota'" (click)="iconOpen.set(true)">
+            <button type="button" class="ico" [disabled]="!editable()" [attr.aria-label]="icon() ? 'Cambiar el emoji del doc' : 'Agregar un emoji al doc'" (click)="iconOpen.set(true)">
               @if (icon()) {
                 {{ icon() }}
               } @else {
@@ -116,7 +119,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
               }
             </button>
             <textarea
-              #titleInput class="title" rows="1" placeholder="Sin título" aria-label="Título de la nota" autocomplete="off" [maxLength]="maxTitle"
+              #titleInput class="title" rows="1" placeholder="Sin título" aria-label="Título del doc" autocomplete="off" [maxLength]="maxTitle"
               [value]="title()" [readOnly]="!editable()" (input)="title.set($any($event.target).value)" (keydown.enter)="$event.preventDefault(); focusFirst()"
             ></textarea>
           </div>
@@ -124,7 +127,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           @if (extraChildren().length || editable()) {
             <section class="subs" aria-label="Subpáginas">
               @if (extraChildren().length) {
-                <h2 class="subh">Subpáginas</h2>
+                <div class="subh" role="img" aria-label="Subpáginas"><app-icon name="folder" [size]="16" [stroke]="2" /><i></i></div>
                 @for (c of extraChildren(); track c.id) {
                   <a class="sub" [routerLink]="['/notas', c.id]">
                     <span class="subi" aria-hidden="true">{{ c.icon || '📄' }}</span>
@@ -134,11 +137,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                 }
               }
               @if (editable()) {
-                <button type="button" class="subadd" [disabled]="busy()" (click)="newSubpage()"><app-icon name="plus" [size]="16" />Nueva subpágina</button>
+                <button type="button" class="subadd" aria-label="Nueva subpágina" [disabled]="busy()" (click)="newSubpage()"><app-icon name="plus" [size]="20" /></button>
               }
             </section>
           }
-          <app-emoji-picker [(open)]="iconOpen" [clearable]="true" title="Emoji de la nota" (picked)="setIcon($event)" />
+          <app-emoji-picker [(open)]="iconOpen" [clearable]="true" title="Emoji del doc" (picked)="setIcon($event)" />
         }
       }
     </div>
@@ -166,8 +169,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     .ico:hover:not(:disabled) { background: var(--s2); }
     .ico:disabled { cursor: default; }
     .trow .title { flex: 1; min-width: 0; }
-    .state { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tx2); }
+    .state { display: grid; place-items: center; width: var(--touch); height: var(--touch); color: var(--gr, var(--ac)); }
+    .state.busy { color: var(--tx3); }
     .state.bad { color: var(--rd); }
+    .state .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yl, var(--tx3)); }
     .skel { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
     .title {
       display: block; width: 100%; padding: 4px 2px; border: 0; border-radius: 4px; resize: none; overflow: hidden; background: none; color: var(--tx);
@@ -185,18 +190,19 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     .bt span { font-size: 13px; line-height: 18px; color: var(--tx2); }
     app-block-editor { margin-top: 4px; }
     .subs { display: flex; flex-direction: column; gap: 6px; margin-top: var(--sp-3); }
-    .subh { padding: 0 2px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx3); }
+    .subh { display: flex; align-items: center; gap: 10px; padding: 0 4px; color: var(--tx3); }
+    .subh i { flex: 1; height: 1px; background: var(--bd); }
     .sub {
       display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; border-radius: 10px; background: var(--sf);
       color: var(--tx); text-decoration: none; box-shadow: inset 0 0 0 1px var(--bd2);
     }
     .sub:hover { background: var(--s2); }
-    .subi { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--s2); font-size: 20px; }
+    .subi { display: grid; place-items: center; flex: none; width: 36px; height: 36px; line-height: 1; border-radius: 8px; background: var(--s2); font-size: 20px; }
     .subt { display: flex; flex: 1; min-width: 0; }
     .subt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; line-height: 20px; font-weight: 600; }
     .subadd {
-      display: flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none;
-      color: var(--tx2); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+      display: grid; place-items: center; align-self: flex-start; width: var(--touch); height: var(--touch); padding: 0; border: 0; border-radius: var(--rf-2); background: none;
+      color: var(--tx2); cursor: pointer;
     }
     .subadd:hover:not(:disabled) { background: var(--s2); color: var(--tx); }
   `,
@@ -410,7 +416,7 @@ export class NotaPage implements OnInit {
       this.load(fresh);
       this.startLocked();
     } catch {
-      this.toasts.error('No se pudo cargar la nota. Intenta de nuevo.');
+      this.toasts.error('No se pudo cargar el doc. Intenta de nuevo.');
     } finally {
       this.busy.set(false);
     }

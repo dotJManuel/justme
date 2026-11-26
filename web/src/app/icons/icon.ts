@@ -54,6 +54,12 @@ const PATHS = {
   menu: 'M4 6h16M4 12h16M4 18h16',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
   grip: 'M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01',
+  list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  'list-sort': 'M7 7h13M7 12h9M7 17h5M3 7h.01M3 12h.01M3 17h.01',
+  rowplus: 'M3 5h18v6H3zM12 14v7M8.5 17.5h7',
+  rowminus: 'M3 5h18v6H3zM8.5 17.5h7',
+  colplus: 'M5 3v18h6V3zM14 12h7M17.5 8.5v7',
+  colminus: 'M5 3v18h6V3zM14 12h7',
   sidebar: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM9 5v14',
 } as const;
 

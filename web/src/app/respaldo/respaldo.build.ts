@@ -183,7 +183,7 @@ export function readme(i: ReadmeInfo): string {
     '  finanzas.xlsx         Tus finanzas en Excel: gastos por tarjeta, cortes, lo que te deben y dinero con familia.',
     '  rutina/               misiones.csv, dias.csv (cada misión marcada), insignias.csv.',
     '  enlaces.csv           Tus enlaces de Configuración.',
-    `  notas/                ${i.notas} nota(s) en Markdown (.md), una por archivo. Las subpáginas van en carpetas, como en Notion.`,
+    `  notas/                ${i.notas} doc(s) en Markdown (.md), una por archivo. Las subpáginas van en carpetas, como en Notion.`,
     `  imagenes/             ${i.imagenes} imagen(es) de tus notas; los .md las enlazan con rutas relativas.`,
     '',
     'CÓMO ABRIRLO',
