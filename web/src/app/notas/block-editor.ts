@@ -1201,8 +1201,8 @@ export class BlockEditor {
     if (b.type === 'table' && !tableHasContent(b.rows ?? [])) return this.drop(i);
     this.dropIndex = i;
     if (b.type === 'page') {
-      this.dropTitle.set(`¿Eliminar la subpágina «${this.pageTitle(b.ref)}»?`);
-      this.dropMessage.set('Se elimina para siempre, con todo lo que contiene. No se puede recuperar.');
+      this.dropTitle.set(`¿Quitar la subpágina «${this.pageTitle(b.ref)}»?`);
+      this.dropMessage.set('Se manda a la papelera con todo lo que contiene; puedes restaurarla desde ahí.');
     } else {
       this.dropTitle.set('¿Eliminar la tabla?');
       this.dropMessage.set('Se pierde lo que escribiste en ella. No se puede recuperar.');
@@ -1216,7 +1216,7 @@ export class BlockEditor {
     if (!b) return void this.dropOpen.set(false);
     this.busy.set(true);
     try {
-      if (b.type === 'page' && b.ref && this.notas.byId(b.ref)) await this.notas.remove(b.ref);
+      if (b.type === 'page' && b.ref && this.notas.byId(b.ref)) await this.notas.trashNote(b.ref);
       // Por si la lista cambió mientras se esperaba: se busca el bloque por su id.
       const k = this.blocks().findIndex((x) => x.id === b.id);
       if (k >= 0) this.drop(k);
@@ -1457,7 +1457,7 @@ export class BlockEditor {
       const k = list.findIndex((b) => b.id === blockId);
       if (k < 0) {
         // El bloque ya no está: la subpágina recién creada no tendría enlace, así que no se deja huérfana.
-        await this.notas.remove(child.id).catch(() => undefined);
+        await this.notas.trashNote(child.id).catch(() => undefined);
         return;
       }
       const next = list.map((b, j) => (j === k ? ({ id: b.id, type: 'page', text: '', ref: child.id } as Block) : b));

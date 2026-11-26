@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Note } from './notas.service';
-import { ancestorIds, byManual, childrenOf, dropZone, isInside, mergeOrder, pinnedNotes, placeNear, shift, sortRoots, visibleRows } from './notas.tree';
+import { ancestorIds, byManual, childrenOf, dropZone, isInside, mergeOrder, pinnedNotes, placeNear, shift, sortAll, sortRoots, trashFamily, trashRoots, visibleRows } from './notas.tree';
 
 let n = 0;
 const note = (id: string, o: Partial<Note> = {}): Note => ({
@@ -120,5 +120,23 @@ describe('mergeOrder', () => {
   it('si la lista nueva no trae los mismos ids, no cambia nada', () => {
     expect(mergeOrder(['a', 'b', 'c'], ['a', 'b'], ['a', 'x'])).toEqual(['a', 'b', 'c']);
     expect(mergeOrder(['a', 'b', 'c'], ['a', 'b'], ['a'])).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('todas las notas y la papelera', () => {
+  const a = note('a', { sortOrder: 0, updatedAt: '2026-01-01T00:00:00Z' });
+  const s = note('s', { parentId: 'a', updatedAt: '2026-05-01T00:00:00Z' });
+  const b = note('b', { sortOrder: 1, updatedAt: '2026-03-01T00:00:00Z' });
+
+  it('sortAll incluye las subpáginas; en «Mi orden» van tras su padre', () => {
+    expect(sortAll([a, s, b], 'recientes').map((x) => x.id)).toEqual(['s', 'b', 'a']);
+    expect(sortAll([a, s, b], 'manual').map((x) => x.id)).toEqual(['a', 's', 'b']);
+  });
+
+  it('trashRoots deja solo lo eliminado por sí mismo y trashFamily junta lo que se fue con él', () => {
+    const at = '2026-06-01T00:00:00Z';
+    const t = [note('p', { deletedAt: at }), note('h', { parentId: 'p', deletedAt: at }), note('x', { parentId: 'p', deletedAt: '2026-05-01T00:00:00Z' })];
+    expect(trashRoots(t).map((x) => x.id).sort()).toEqual(['p', 'x']);
+    expect(trashFamily(t, 'p').map((x) => x.id)).toEqual(['p', 'h']);
   });
 });

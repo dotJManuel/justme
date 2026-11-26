@@ -111,7 +111,7 @@ export class RespaldoService {
     );
 
     // 4) Notas en Markdown y sus imágenes
-    const notas: ExportNote[] = tablas['notes'].map((r) => ({
+    const notas: ExportNote[] = tablas['notes'].filter((r) => !r['deleted_at']).map((r) => ({
       id: String(r['id']),
       title: String(r['title'] ?? ''),
       icon: String(r['icon'] ?? ''),

@@ -215,10 +215,23 @@ export class DevDemo {
     notas.ensureImageUrls = async () => undefined;
     notas.uploadImage = async () => 'demo/foto.svg';
     notas.deleteImage = async () => undefined;
-    notas.remove = async (id) => {
+    notas.trashNote = async (id) => {
       const gone = new Set([id, ...notas.descendants(id).map((x) => x.id)]);
+      const at = new Date().toISOString();
+      const moved = notas.notes().filter((x) => gone.has(x.id)).map((x) => ({ ...x, deletedAt: at, pinOrder: null }));
       notas.notes.update((l) => l.filter((x) => !gone.has(x.id)));
+      notas.trash.update((l) => [...moved, ...l]);
     };
+    notas.loadTrash = async () => notas.trashLoaded.set(true);
+    notas.restore = async (id) => {
+      const at = notas.trash().find((x) => x.id === id)?.deletedAt;
+      const back = notas.trash().filter((x) => x.deletedAt === at);
+      const parentOk = (p: string | null) => !p || notas.notes().some((x) => x.id === p);
+      notas.notes.update((l) => [...back.map((x) => ({ ...x, deletedAt: null, parentId: x.id === id && !parentOk(x.parentId) ? null : x.parentId })), ...l]);
+      notas.trash.update((l) => l.filter((x) => !back.some((y) => y.id === x.id)));
+    };
+    notas.purge = async (ids) => notas.trash.update((l) => l.filter((x) => !ids.includes(x.id) && !(x.parentId && ids.includes(x.parentId))));
+    notas.emptyTrash = async () => notas.trash.set([]);
 
     // Respaldo: en la demo no se lee de la base de datos; se arman las filas con los datos de ejemplo de arriba.
     {

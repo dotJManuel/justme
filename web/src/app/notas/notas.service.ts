@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { SupabaseService } from '../supabase.service';
+import { trashFamily, trashRoots } from './notas.tree';
 import { Block, MAX_TITLE, newBlock, newId, parseBlocks, serializeBlocks } from './notas.blocks';
 
 export interface Note {
@@ -22,6 +23,8 @@ export interface Note {
   /** Quién edita ahora (id de una pestaña); null si nadie. */
   lockHolder: string | null;
   lockUntil: string | null;
+  /** ISO de cuando se mandó a la papelera; null si no está en ella. */
+  deletedAt?: string | null;
 }
 
 /** Resultado de tomar o usar el bloqueo de edición. */
@@ -39,9 +42,10 @@ interface NoteRow {
   parent_id: string | null;
   lock_holder: string | null;
   lock_until: string | null;
+  deleted_at: string | null;
 }
 
-const COLS = 'id, title, content, updated_at, created_at, sort_order, pin_order, icon, parent_id, lock_holder, lock_until';
+const COLS = 'id, title, content, updated_at, created_at, sort_order, pin_order, icon, parent_id, lock_holder, lock_until, deleted_at';
 
 /** Almacenamiento privado de las imágenes (ver supabase/26_notas_imagenes_y_arreglo.sql). */
 const BUCKET = 'note-images';
@@ -71,7 +75,11 @@ const toNote = (r: NoteRow): Note => ({
   parentId: r.parent_id,
   lockHolder: r.lock_holder,
   lockUntil: r.lock_until,
+  deletedAt: r.deleted_at,
 });
+
+/** Días que un doc se queda en la papelera antes de borrarse solo. */
+export const TRASH_DAYS = 30;
 
 const byRecent = (a: Note, b: Note) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0);
 
@@ -89,6 +97,9 @@ export class NotasService {
   readonly holder = newHolder();
   readonly notes = signal<Note[]>([]);
   readonly loaded = signal(false);
+  /** Lo que hay en la papelera (se carga al abrirla). */
+  readonly trash = signal<Note[]>([]);
+  readonly trashLoaded = signal(false);
   /** Direcciones firmadas de las imágenes subidas, por ruta del archivo. */
   readonly imageUrls = signal<Record<string, SignedUrl>>({});
   private loading?: Promise<void>;
@@ -112,6 +123,8 @@ export class NotasService {
     this.loading = undefined;
     this.notes.set([]);
     this.loaded.set(false);
+    this.trash.set([]);
+    this.trashLoaded.set(false);
   }
 
   /** Crea una nota vacía; con `parentId`, como subpágina de esa nota. */
@@ -128,19 +141,54 @@ export class NotasService {
     return note;
   }
 
-  async remove(id: string): Promise<void> {
-    const { error } = await this.client.from('notes').delete().eq('id', id);
-    if (error) throw error;
-    // La base de datos borra también las subpáginas (en cascada): aquí se quitan del caché.
+  /** Manda un doc (y sus subpáginas) a la papelera; se puede restaurar. */
+  async trashNote(id: string): Promise<void> {
+    await this.rpc('note_trash', { p_id: id });
     const gone = new Set([id, ...this.descendants(id).map((n) => n.id)]);
+    const at = new Date().toISOString();
+    const moved = this.notes().filter((n) => gone.has(n.id)).map((n) => ({ ...n, deletedAt: at, pinOrder: null }));
     this.notes.update((l) => l.filter((n) => !gone.has(n.id)));
-    // Las imágenes de esas notas ya no se necesitan: se borran del almacenamiento (sin bloquear ni avisar si falla).
-    void this.deleteNoteFiles([...gone]);
+    this.trash.update((l) => [...moved, ...l]);
+  }
+
+  /** Lee la papelera. Lo que lleva más de TRASH_DAYS días se borra para siempre. */
+  async loadTrash(): Promise<void> {
+    const { data, error } = await this.client.from('notes').select(COLS).not('deleted_at', 'is', null).order('deleted_at', { ascending: false });
+    if (error) throw error;
+    const all = (data as NoteRow[]).map(toNote);
+    const limit = new Date(Date.now() - TRASH_DAYS * 86_400_000).toISOString();
+    const old = trashRoots(all).filter((n) => (n.deletedAt ?? '') < limit);
+    this.trash.set(all);
+    this.trashLoaded.set(true);
+    if (old.length) void this.purge(old.map((n) => n.id)).catch(() => undefined);
+  }
+
+  /** Saca un doc de la papelera, con lo que se fue junto con él. Si su padre sigue en la papelera, vuelve al nivel principal. */
+  async restore(id: string): Promise<void> {
+    const r = await this.rpc('note_restore', { p_id: id });
+    if (r === 'missing') throw new Error('missing');
+    await this.fetchAll();
+    await this.loadTrash();
+  }
+
+  /** Borra para siempre los docs de la papelera indicados (y lo que se eliminó con ellos), con sus imágenes. */
+  async purge(ids: string[]): Promise<void> {
+    const family = new Set(ids.flatMap((id) => trashFamily(this.trash(), id).map((n) => n.id)));
+    for (const id of ids) family.add(id);
+    const { error } = await this.client.from('notes').delete().in('id', ids).not('deleted_at', 'is', null);
+    if (error) throw error;
+    this.trash.update((l) => l.filter((n) => !family.has(n.id)));
+    void this.deleteNoteFiles([...family]);
+  }
+
+  /** Vacía la papelera. */
+  async emptyTrash(): Promise<void> {
+    await this.purge(trashRoots(this.trash()).map((n) => n.id));
   }
 
   /** Trae una nota fresca (y la deja en la lista). null si ya no existe. */
   async fetchOne(id: string): Promise<Note | null> {
-    const { data, error } = await this.client.from('notes').select(COLS).eq('id', id).maybeSingle();
+    const { data, error } = await this.client.from('notes').select(COLS).eq('id', id).is('deleted_at', null).maybeSingle();
     if (error) throw error;
     if (!data) {
       this.notes.update((l) => l.filter((n) => n.id !== id));
@@ -355,7 +403,7 @@ export class NotasService {
   }
 
   private async fetchAll(): Promise<void> {
-    const { data, error } = await this.client.from('notes').select(COLS).order('updated_at', { ascending: false });
+    const { data, error } = await this.client.from('notes').select(COLS).is('deleted_at', null).order('updated_at', { ascending: false });
     if (error) throw error;
     this.notes.set((data as NoteRow[]).map(toNote));
     this.loaded.set(true);

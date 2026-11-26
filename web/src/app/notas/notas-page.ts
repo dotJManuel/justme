@@ -11,7 +11,7 @@ import { preview, searchText } from './notas.blocks';
 import { NotasNav } from './notas.nav';
 import { Note, NotasService } from './notas.service';
 import { Sortable } from './notas.sortable';
-import { SORT_MODES, SortMode, mergeOrder, pinnedNotes, shift, sortRoots } from './notas.tree';
+import { SORT_MODES, SortMode, mergeOrder, pinnedNotes, shift, sortAll, sortRoots } from './notas.tree';
 
 const SAVE_ERROR = 'No se pudo completar. Revisa tu conexión e intenta de nuevo.';
 const SORT_KEY = 'justme.notas.sort';
@@ -48,6 +48,7 @@ function readSort(): SortMode {
           ><app-icon [name]="reordering() ? 'check' : 'sort'" [size]="22" [stroke]="reordering() ? 2.4 : 1.8" /></button>
         }
         @if (!reordering()) {
+          <a class="ib" routerLink="/notas/papelera" aria-label="Papelera"><app-icon name="trash" [size]="22" /></a>
           <button type="button" class="ib add" aria-label="Nuevo doc" [disabled]="busy()" (click)="create()"><app-icon name="plus" [size]="22" [stroke]="2.4" /></button>
         }
       </header>
@@ -134,7 +135,7 @@ function readSort(): SortMode {
               @if (subCount(n); as k) {
                 <span class="mi" [attr.aria-label]="k + (k === 1 ? ' subpágina' : ' subpáginas')"><app-icon name="folder" [size]="13" [stroke]="2" />{{ k }}</span>
               }
-              @if (query().trim() && n.parentId) {
+              @if (n.parentId) {
                 <span class="mi" [attr.aria-label]="'En ' + parentName(n)"><app-icon name="folder" [size]="13" [stroke]="2" />{{ parentName(n) }}</span>
               }
               @if (notas.lockedByOther(n)) {
@@ -280,7 +281,9 @@ export class NotasPage implements OnInit {
     const all = this.notas.notes();
     if (q) return all.filter((n) => searchText(n.title, n.blocks).includes(q));
     // Acomodando, se ven en «Mi orden»: es el único orden que se puede acomodar a mano.
-    return sortRoots(all, this.reordering() ? 'manual' : this.sort()).filter((n) => n.pinOrder === null);
+    // Acomodando, solo los del nivel principal (las subpáginas se acomodan dentro de su doc). Si no, todos, también las subpáginas.
+    if (this.reordering()) return sortRoots(all, 'manual').filter((n) => n.pinOrder === null);
+    return sortAll(all, this.sort()).filter((n) => n.pinOrder === null);
   });
 
   protected readonly pinIds = computed(() => this.pins().map((n) => n.id));

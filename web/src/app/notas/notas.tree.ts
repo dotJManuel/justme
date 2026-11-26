@@ -20,19 +20,48 @@ export function childrenOf(notes: Note[], parentId: string | null): Note[] {
   return notes.filter((n) => n.parentId === parentId).sort(byManual);
 }
 
-/** Las notas del nivel principal, ordenadas como se pida. */
-export function sortRoots(notes: Note[], mode: SortMode): Note[] {
-  const roots = notes.filter((n) => !n.parentId);
+function sortBy(list: Note[], mode: SortMode): Note[] {
   switch (mode) {
     case 'manual':
-      return roots.sort(byManual);
+      return list.sort(byManual);
     case 'titulo':
-      return roots.sort((a, b) => collator.compare(a.title.trim() || '￿', b.title.trim() || '￿') || byManual(a, b));
+      return list.sort((a, b) => collator.compare(a.title.trim() || '￿', b.title.trim() || '￿') || byManual(a, b));
     case 'creadas':
-      return roots.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+      return list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
     default:
-      return roots.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+      return list.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
   }
+}
+
+/** Las notas del nivel principal, ordenadas como se pida. */
+export function sortRoots(notes: Note[], mode: SortMode): Note[] {
+  return sortBy(notes.filter((n) => !n.parentId), mode);
+}
+
+/** Todas las notas (también las subpáginas). En «Mi orden» salen como en el árbol: cada nota seguida de sus subpáginas. */
+export function sortAll(notes: Note[], mode: SortMode): Note[] {
+  if (mode === 'manual') return visibleRows(notes, new Set(notes.map((n) => n.id))).map((r) => r.note);
+  return sortBy([...notes], mode);
+}
+
+/** Lo que hay en la papelera: los docs que se eliminaron por sí mismos (no junto con su padre), del más reciente al más antiguo. */
+export function trashRoots(trash: Note[]): Note[] {
+  const byId = new Map(trash.map((n) => [n.id, n]));
+  return trash
+    .filter((n) => {
+      const p = n.parentId ? byId.get(n.parentId) : undefined;
+      return !p || p.deletedAt !== n.deletedAt;
+    })
+    .sort((a, b) => ((a.deletedAt ?? '') < (b.deletedAt ?? '') ? 1 : -1));
+}
+
+/** Un doc de la papelera y todo lo que se eliminó junto con él. */
+export function trashFamily(trash: Note[], id: string): Note[] {
+  const root = trash.find((n) => n.id === id);
+  if (!root) return [];
+  const out = [root];
+  for (let i = 0; i < out.length; i++) out.push(...trash.filter((n) => n.parentId === out[i].id && n.deletedAt === root.deletedAt));
+  return out;
 }
 
 /** Las notas fijadas, en el orden en que se fijaron o acomodaron. */

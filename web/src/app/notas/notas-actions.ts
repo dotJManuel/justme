@@ -2,13 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, model, si
 import { Router } from '@angular/router';
 import { Icon } from '../icons/icon';
 import { BottomSheet } from '../ui/bottom-sheet';
-import { ConfirmDialog } from '../ui/confirm-dialog';
 import { ToastService } from '../ui/toast';
 import { NotasNav } from './notas.nav';
 import { NotasService } from './notas.service';
 import { childrenOf, isInside, pinnedNotes, shift, visibleRows } from './notas.tree';
 
-type Mode = 'menu' | 'move' | 'delete';
+type Mode = 'menu' | 'move';
 
 /**
  * Lo que se puede hacer con una nota: fijarla, acomodarla, crearle una subpágina, moverla dentro de otra (agrupar) o
@@ -16,7 +15,7 @@ type Mode = 'menu' | 'move' | 'delete';
  */
 @Component({
   selector: 'app-note-actions',
-  imports: [BottomSheet, ConfirmDialog, Icon],
+  imports: [BottomSheet, Icon],
   template: `
     <ui-bottom-sheet [title]="title()" [open]="mode() === 'menu' && noteId() !== null" (openChange)="closed('menu', $event)">
       <div class="list">
@@ -29,7 +28,7 @@ type Mode = 'menu' | 'move' | 'delete';
         <button type="button" (click)="mode.set('move')"><app-icon name="folder" [size]="18" />Mover a…</button>
         <button type="button" [disabled]="!canShift(-1)" (click)="shiftSibling(-1)"><app-icon name="arrow-up" [size]="18" />Subir en mi orden</button>
         <button type="button" [disabled]="!canShift(1)" (click)="shiftSibling(1)"><app-icon name="arrow-down" [size]="18" />Bajar en mi orden</button>
-        <button type="button" class="danger" (click)="mode.set('delete')"><app-icon name="trash" [size]="18" />Eliminar</button>
+        <button type="button" class="danger" (click)="remove()"><app-icon name="trash" [size]="18" />Mover a la papelera</button>
       </div>
     </ui-bottom-sheet>
 
@@ -52,10 +51,6 @@ type Mode = 'menu' | 'move' | 'delete';
       </div>
     </ui-bottom-sheet>
 
-    <ui-confirm-dialog
-      [open]="mode() === 'delete' && noteId() !== null" (openChange)="closed('delete', $event)" [title]="'¿Eliminar «' + title() + '»?'" [message]="deleteMessage()"
-      confirmLabel="Eliminar" [busy]="busy()" (confirmed)="remove()"
-    />
   `,
   styles: `
     .list { display: flex; flex-direction: column; }
@@ -94,14 +89,6 @@ export class NoteActions {
     const all = this.notas.notes();
     const ok = all.filter((n) => !isInside(all, n.id, id));
     return visibleRows(ok, new Set(ok.map((n) => n.id)));
-  });
-
-  protected readonly deleteMessage = computed(() => {
-    const id = this.noteId();
-    const subs = id ? this.notas.descendants(id).length : 0;
-    return subs
-      ? `El doc se borra para siempre, junto con sus ${subs} subpágina${subs === 1 ? '' : 's'}; no se puede recuperar.`
-      : 'El doc se borra para siempre; no se puede recuperar.';
   });
 
   constructor() {
@@ -207,19 +194,20 @@ export class NoteActions {
   protected async remove() {
     const id = this.noteId();
     if (!id) return;
-    this.busy.set(true);
-    // Si se está viendo la nota (o una de sus subpáginas), al borrarla se vuelve a la lista.
+    // Si se está viendo el doc (o una de sus subpáginas), al mandarlo a la papelera se vuelve a la lista.
     const here = this.router.url.match(/^\/notas\/([^/?#]+)/)?.[1];
     const affected = here ? isInside(this.notas.notes(), here, id) : false;
+    this.noteId.set(null);
     try {
-      await this.notas.remove(id);
-      this.toasts.show({ message: 'Doc eliminado' });
-      this.noteId.set(null);
+      await this.notas.trashNote(id);
+      this.toasts.show({
+        message: 'Enviado a la papelera',
+        actionLabel: 'Deshacer',
+        onAction: () => void this.notas.restore(id).catch(() => this.toasts.error('No se pudo restaurar. Revisa tu conexión e intenta de nuevo.')),
+      });
       if (affected) await this.router.navigate(['/notas']);
     } catch {
-      this.toasts.error('No se pudo eliminar. Revisa tu conexión e intenta de nuevo.');
-    } finally {
-      this.busy.set(false);
+      this.toasts.error('No se pudo mover a la papelera. Revisa tu conexión e intenta de nuevo.');
     }
   }
 }

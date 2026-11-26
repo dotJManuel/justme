@@ -26,6 +26,7 @@ interface DropHint {
     <div class="head">
       <h2>Docs</h2>
       <span class="grow"></span>
+      <a class="tool" routerLink="/notas/papelera" aria-label="Papelera" (click)="go()"><app-icon name="trash" [size]="18" /></a>
       <button type="button" class="tool" aria-label="Nuevo doc" (click)="create()"><app-icon name="plus" [size]="18" /></button>
       @if (collapsible()) {
         <button type="button" class="tool" aria-label="Ocultar el árbol de docs" (click)="collapse.emit()"><app-icon name="sidebar" [size]="18" /></button>
@@ -75,7 +76,7 @@ interface DropHint {
             <button type="button" class="more" [attr.aria-label]="'Opciones de ' + (r.note.title.trim() || 'doc sin título')" (click)="actionsFor.set(r.note.id)"><app-icon name="more" [size]="16" /></button>
           </li>
         } @empty {
-          <li class="hint">Aún no hay notas.</li>
+          <li class="hint">Aún no hay docs.</li>
         }
       </ul>
     }
